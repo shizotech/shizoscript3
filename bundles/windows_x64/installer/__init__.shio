@@ -1,7 +1,7 @@
 
 using std;
 
-//hideconsole();
+hideconsole();
 
 app_path = std.system_path("%LOCALAPPDATA%/Shizoscript");
 
@@ -41,11 +41,21 @@ run_install()
 	return true;
 }
 
-res = messagebox("Do you want to install shizoscript?", "Installer", MB_YESNO);
+res = 0;
+
+if(std.has_admin_privilege())
+	res = messagebox("Do you want to install shizoscript?", "Installer", MB_YESNO);
+else
+	res = messagebox("Note: it is recommended to run this installer as administrator.\nThis is necessary to associate .shio and .shx files on this system.\nYou can still install it without admin rights, but you won't be able to open/run shizoscript files directly, proceed installation?", "Installer", MB_YESNO);
+
 if(res == 6)
 {
 	if(run_install())
-		messagebox("Successfully installed shizoscript.", "Success", MB_OK);
+	{
+		if(std.has_admin_privilege())
+			std.system("call \"" + app_path + "/shz.exe\" install");
+		messagebox("Successfully installed shizoscript to:\n\n" + app_path, "Success", MB_OK | MB_ICONINFORMATION);
+	}
 	else
 		messagebox("Could not install shizoscript. Maybe try to run the installer as administrator.", "Error", MB_OK | MB_ICONERROR);
 }
