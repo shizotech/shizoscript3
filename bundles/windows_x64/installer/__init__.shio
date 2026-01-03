@@ -11,8 +11,7 @@ if(fileio.is_directory(app_path))
 
 	if(res == 6)
 	{
-		//TODO run uninstall script
-		//std.system("call \"" + app_path + "/shzupdate.exe uninstall\"");
+		std.system("call \"" + app_path + "/shz.exe\" uninstall");
 		if(fileio.remove(app_path))
 			messagebox("Successfully uninstalled shizoscript.\nRun this installer again if you wish to re-install it.", "Success", MB_OK);
 		else
