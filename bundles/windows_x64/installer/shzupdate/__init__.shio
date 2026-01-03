@@ -1,6 +1,34 @@
 
 using std;
 
-print("shzupdate !");
+ver = fileio.read_json("shizotech/version.json");
+remote_ver = std.json(std.web_get("https://raw.githubusercontent.com/shizotech/shizoscript3/refs/heads/main/shizotech/version.json"));
+
+
+print(ver);
+print(remote_ver);
+
+if(ver.version < remote_ver.version)
+{
+	print("New version available!");
+	fileio.mkdir("shztmp");
+	fileio.write_string("shztmp/new_version.zip", std.web_get("https://github.com/shizotech/shizoscript3/raw/refs/heads/main/bundles/windows_x64.zip"));
+	std.system("powershell -Command \"Expand-Archive -Path 'shztmp/new_version.zip' -DestinationPath 'shztmp/new_version'\"");
+	
+	
+	if(!fileio.copy("shztmp/new_version/data", "."))
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful!");
+		return;
+	
+	ver = fileio.read_json("shizotech/version.json");
+	
+	if(ver.version != remote_ver.version)
+		std.print("Update was NOT successful!");
+	else
+		std.print("Updated to newest version.");
+}
+else
+	print("Up-to-date.");
 
 std.input();
