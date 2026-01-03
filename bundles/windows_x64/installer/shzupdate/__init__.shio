@@ -25,14 +25,19 @@ if(ver.version < remote_ver.version)
 		std.print("Update was NOT successful! (any other script running maybe?)");
 		return;
 	
-	if(!fileio.copy("shztmp/new_version/installer/shzupdate", "./shzupdate"))
+	if(!fileio.remove("shzupdate"))
 		fileio.remove("shztmp");
-		std.print("Update was NOT successful!");
+		std.print("Update was NOT successful! (any other script running maybe?)");
+		return;
+	
+	if(!fileio.copy("shztmp/new_version/installer/shzupdate", "shzupdate"))
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (2)");
 		return;
 	
 	if(!fileio.copy("shztmp/new_version/data", "."))
 		fileio.remove("shztmp");
-		std.print("Update was NOT successful!");
+		std.print("Update was NOT successful! (3)");
 		return;
 	
 	fileio.remove("shztmp");
