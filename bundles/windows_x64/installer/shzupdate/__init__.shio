@@ -15,6 +15,16 @@ if(ver.version < remote_ver.version)
 	fileio.write_string("shztmp/new_version.zip", std.web_get("https://github.com/shizotech/shizoscript3/raw/refs/heads/main/bundles/windows_x64.zip"));
 	std.system("powershell -Command \"Expand-Archive -Path 'shztmp/new_version.zip' -DestinationPath 'shztmp/new_version'\"");
 	
+	if(!fileio.remove("shz.exe"))
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (any other script running maybe?)");
+		return;
+		
+	if(!fileio.remove("shizotech"))
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (any other script running maybe?)");
+		return;
+	
 	if(!fileio.copy("shztmp/new_version/installer/shzupdate", "./shzupdate"))
 		fileio.remove("shztmp");
 		std.print("Update was NOT successful!");
