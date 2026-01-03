@@ -21,6 +21,8 @@ if(ver.version < remote_ver.version)
 		std.print("Update was NOT successful!");
 		return;
 	
+	fileio.remove("shztmp");
+	
 	ver = fileio.read_json("shizotech/version.json");
 	
 	if(ver.version != remote_ver.version)
