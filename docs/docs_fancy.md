@@ -1,211 +1,284 @@
-# 📄 **Shizonet Script Language Reference**
+# ShizScript Language Reference
 
-Welcome to the official reference for the Shizonet scripting language – a lightweight, cross‑platform scripting system that ships a collection of convenient namespaces for file I/O, mathematics, networking, documentation utilities, tests, and standard library helpers.
-
-> **Tip:** To keep your scripts clean, you can bring a namespace into the global scope with  
-> `using <namespace>;` – e.g. `using std;` makes all `std.*` members accessible directly.
+> A lightweight, JavaScript‑/Python‑style scripting language with a **simple syntax** and a wide set of utilities.  
+> The documentation below covers all **available namespaces** and their public API.
 
 ---
 
-## 📁 Namespace `fileio` – File System Helpers
+## Table of Contents
 
-| Function | Parameters | Description |
-|--------|------------|-------------| 
-| **fileio.copy(src, dest)** | `src: string` – Source file or directory. <br> `dest: string` – Destination path. | Copies a file or an entire directory tree.   <br> Destination folders are created automatically if missing. |
-| **fileio.exists(path)** | `path: string` | Returns `true` if the given path exists (file or directory). |
-| **fileio.file_dir()** | – | <strong>Placeholder</strong> – This is a stub; real usage depends on internal logic. |
-| **fileio.file_name()** | – | <strong>Placeholder</strong> – Represents the filename part extracted from a full path. |
-| **fileio.files(path, recursive = true)** | `path: string` – Directory to scan.<br>`recursive: bool` – `true` to descend into sub‑folders. | Returns a list of file paths (strings) inside the given directory. |
-| **fileio.is_directory(path)** | `path: string` | Returns `true` if the path points to a directory. |
-| **fileio.is_file(path)** | `path: string` | Returns `true` if the path points to a regular file. | 
-| **fileio.mkdir()** | – | <strong>Placeholder</strong> – Creates a new directory; usage specifics are internal. |
-| **fileio.move(src, dest)** | `src: string` – File/dir to move.<br>`dest: string` – New location or name. | Tries to rename/move the path. Falls back to a copy/delete strategy if the underlying OS cannot rename. | 
-| **fileio.pure_name()** | – | <strong>Placeholder</strong> – Returns the bare filename without any path or extension. |
-| **fileio.read_file(path)** | `path: string` | Reads the entire file into a *binary buffer* (`byte[]`). | 
-| **fileio.read_json(path)** | `path: string` | Parses a JSON file and returns a native native object (`dictionary`, `list`, etc.). |
-| **fileio.read_string(path)** <br>**fileio.read_text(path)** | `path: string` | Reads the file as a UTF‑8 string and returns it. They are aliases. |
-| **fileio.remove(path)** | `path: string \| list` – One or more paths. | Recursively removes a file or directory. |  |
-| **fileio.rename(src, dest)** | `src: string` – Existing path.<br>`dest: string` – New name or location. | Like `fileio.move`, but strictly performs a rename operation. | 
-| **fileio.write_file(path, data)** | `path: string`<br>`data: object` – Serializable value | Serialises `data` into binary and writes it to `path`. Returns `true` if successful. | 
-| **fileio.write_json(path, data)** | `path: string`<br>`data: string` – JSON text | Writes the exact JSON string to a file. **Never** mutates the source string; copy it if reused. |
-| **fileio.write_string(path, data)** <br>**fileio.write_text(path, data)** | `path: string`<br>`data: string` | Writes text to a file; the two functions are interchangeable. |
-
-> **Example Usage**
-> ```shz
-> using fileio;
-> 
-> // Copy a config folder
-> fileio.copy("C:/Configs", "D:/Backup/Configs");
->  ```
+1. [Namespaces](#namespaces)
+   - [fileio](#fileio)
+   - [math](#math)
+   - [shizonet](#shizonet)
+   - [shzdocs](#shzdocs)  
+   - [shztests](#shztests)
+   - [std](#std)  
+2. [Usage](#usage)
+3. [Examples](#examples)  
 
 ---
 
-## 🔢 Namespace `math` – Trigonometry, Math Utilities & Constants
+## Namespaces
 
-| Constant | Value | Description |
-|----------|-------|-------------| 
-| `math.PI` | 3.141593 | The value of π (pi). |
+Namespaces group related functions and constants.  
+They can be imported with the `using` keyword:
 
-| Function | Parameters | Description |
-|----------|------------|-------------| 
-| **math.abs(value)** | `value: float` | Absolute value of a number. |
-| **math.acos(x)** | `x: float` (-1 ≤ x ≤ 1) | Inverse cosine (arccos). |
-| **math.asin(x)** | `x: float` (-1 ≤ x ≤ 1) | Inverse sine (arcsin). |
-| **math.atan(x)** | `x: float` | Inverse tangent (arctan). |
-| **math.atan2(y, x)** | `y: float`, `x: float` | `atan2` produces the angle from `x` and `y` vectors. |
-| **math.cbrt(x)** | `x: float` | Cube root. |
-| **math.ceil(value)** | `value: float` | Smallest integer ≥ value. |
-| **math.clamp(x, min, max)** | `x: float`, `min: float`, `max: float` | Constrain `x` within `[min, max]`. |
-| **math.cos(x)** | `x: float` | Cosine of `x` (radians). |
-| **math.exp(x)** | `x: float` | `e^x`, the natural exponential. | 
-| **math.floor(value)** | `value: float` | Largest integer ≤ value. |
-| **math.fract(x)** | `x: float` | Fractional part of `x` (x − floor(x)). | 
-| **math.lerp(a, b, t)** | `a: float`, `b: float`, `t: float (0..1)` | Linear interpolation. |
-| **math.log(x)** | `x: float` (> 0) | Natural logarithm (`ln`). |
-| **math.log10(x)** | `x: float` (> 0) | Base‑10 logarithm. | 
-| **math.log2(x)** | `x: float` (> 0) | Base‑2 logarithm. | 
-| **math.max(values …)** | `values: float…` | Largest value. |
-| **math.min(values …)** | `values: float…` | Smallest value. |
-| **math.pow(base, exp)** | `base: float`, `exp: float` | Exponentiation. | 
-| **math.rand()** | – | Random float in `[0, 1)`. | 
-| **math.round(value)** | `value: float` | Nearest integer. |
-| **math.sign(x)** | `x: float` | Returns `+1`, `0`, or `-1`. |
-| **math.sin(x)** | `x: float` | Sine of `x` (radians). | 
-| **math.smoothstep(edge0, edge1, x)** | `edge0: float`, `edge1: float`, `x: float` | Smooth interpolation between `edge0` and `edge1`. |
-| **math.sqrt(x)** | `x: float` | Square root. |
-| **math.tan(x)** | `x: float` | Tangent of `x` (radians). | 
+```shiz
+using fileio;   // imports fileio namespace
+```
+
+If you import the namespace, members can be used without the namespace prefix:
+
+```shiz
+using fileio;
+copy("src.txt", "dest.txt");   // same as fileio.copy(...) after import
+```
 
 ---
 
-## 🌐 Namespace `shizonet` – Lightweight Networking
+### Namespace: `fileio`
 
-| Function | Parameters | Description |
-|----------|------------|-------------|
-| **shizonet.client(node_name, port = SHZNET_CLIENT_PORT)** | `node_name: string`, `port: int` | Creates a new network *client* instance that connects to **0.0.0.0** on the given port (defaults to the library constant). | 
-| **shizonet.server(node_name, port = SHZNET_SERVER_PORT)** | `node_name: string`, `port: int` | Creates a new network *server* instance that listens on the specified port. | 
+| Symbol | Type | Description |
+|--------|------|-------------|
+| `fileio` | namespace | Provides utilities for file and directory manipulation. |
 
-> **Example**
-> ```shz
-> using shizonet; // Network API
-> auto cli = shizonet.client("ClientA", 9000);
-> auto srv = shizonet.server("ServerB", 9000);
-> ```
+#### Functions
 
----
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `fileio.copy` | `src: string, dest: string` | Copy a file or directory. Creates destination folders if needed. |
+| `fileio.exists` | `path: string` | Return `true` if the specified path exists (file or folder). | 
+| `fileio.file_dir` | `path: string` | *Not documented.* Return the directory component of `path`. |
+| `fileio.file_name` | `path: string` | *Not documented.* Return the file name component of `path`. |
+| `fileio.files` | `path: string, recursive: bool = true` | List all files in a directory. If `recursive` is `false`, only top‑level files are returned. |
+| `fileio.is_directory` | `path: string` | Return `true` if the path refers to a directory. |
+| `fileio.is_file` | `path: string` | Return `true` if the path refers to a file. |
+| `fileio.mkdir` | `path: string` | *Not documented.* Create a directory (including intermediate paths). |
+| `fileio.move` | `src: string, dest: string` | Move a file or directory. Uses rename; falls back to copy/del if rename fails. |
+| `fileio.pure_name` | `path: string` | *Not documented.* Return the base name of `path` without extension. |
+| `fileio.read_file` | `path: string` | Read a file into a binary buffer. |
+| `fileio.read_json` | `path: string` | Read a JSON file and return the parsed object. | 
+| `fileio.read_string` | `path: string` | Read a text file into a string. |
+| `fileio.read_text` | `path: string` | Synonym for `read_string`. |
+| `fileio.remove` | `path: string | list` | Recursively delete the specified file(s) or directory. |
+| `fileio.rename` | `src: string, dest: string` | Rename a file or directory. |
+| `fileio.write_file` | `path: string, data: object` | Write a binary object to a file. Returns `true` on success. |
+| `fileio.write_json` | `path: string, data: string` | Write a JSON string to a file. Do **not** modify the source string in other threads. |
+| `fileio.write_string` | `path: string, data: string` | Write a text string to a file. |
+| `fileio.write_text` | `path: string, data: string` | Synonym for `write_string`. |
 
-## 📚 Namespace `shzdocs` – Built‑in Documentation Browser
-
-| Function | Parameters | Description |
-|----------|------------|-------------| 
-| **shzdocs.find_all(Keyword)** | `Keyword: string` | Search all documented symbols (functions, classes, variables) containing `Keyword` and return the matches. |
-| **shzdocs.get_all()** | – | Retrieve the complete documentation tree (useful for generating custom docs). |
-
----
-
-## 🧪 Namespace `shztests` – Quick Test Helpers
-
-| Function | Parameters | Description |
-|----------|------------|-------------| 
-| **shztests.check_object()** | – | <strong>Placeholder</strong> – Used internally by test frameworks. |
-| **shztests.test_object()** | – | Creates and returns a test object instance for sandboxed tests. | 
-
----
-
-## ⚙️ Namespace `std` – Standard Library
-
-> All standard library functions are available after `using std;`.  
-> `std` also contains message‑box constants used by **std.messagebox**.
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `std.MB_ICONERROR` | 16 | Display icon for error messages. |
-| `std.MB_ICONINFORMATION` | 64 | Icon for informational messages. |
-| `std.MB_ICONWARNING` | 48 | Warning icon. |
-| `std.MB_OK` | 0 | `OK` button(s). |
-| `std.MB_OKCANCEL` | 1 | `OK` and `Cancel` buttons. |
-| `std.MB_RETRYCANCEL` | 5 | `Retry` and `Cancel`. |
-| `std.MB_YESNO` | 4 | `Yes` & `No`. |
-| `std.MB_YESNOCANCEL` | 3 | `Yes`, `No`, and `Cancel`. |
-
-### Core Helpers
-
-| Function | Parameters | Description |
-|----------|------------|-------------| 
-| **std.argc()** | – | Returns the total number of command‑line arguments. |
-| **std.argv(index)** | `index: int` | Returns the `index`‑th command‑line argument. |
-| **std.buffer()** | – | Creates a new `shz_std_buffer` object (generic binary buffer). |
-| **std.cd(path)** | `path: string` | Change the current working directory. |
-| **std.count(value)** | `value: object` | Alias for `len()`: the number of elements. |
-| **std.cout()** | – | Print to terminal (direct output). |
-| **std.error()** | – | Print to the console’s error stream. |
-| **std.float()** | – | <strong>Placeholder** – Intended as a type‑converter. |
-| **std.free(value)** | `value: object` | Frees/ deletes an object (GC‑like). | 
-| **std.has_admin_privilege()** | – | Returns `true` if the script runs with administrator rights (Windows only). |
-| **std.hideconsole()** | – | Detaches and hides the console window (Windows). |
-| **std.import()** | – | <strong>Placeholder** – Dynamically imports modules. |
-| **std.import_all()** | – | <strong>Placeholder** – Bulk import. |
-| **std.indentation()** | – | <strong>Placeholder** – Helper for formatting output. |
-| **std.input(prompt)** | `prompt: string` | Reads a line of text from stdin, optionally prefixed by `prompt`. | 
-| **std.int()** | – | <strong>Placeholder** – Type‑converter. |
-| **std.is_function(value)** | – | <strong>Placeholder** – Returns `true` if `value` is callable. |
-| **std.is_json(value)** | – | <strong>Placeholder** – Checks if a string is valid JSON. | 
-| **std.is_list(value)** | – | <strong>Placeholder** – Detects array types. |
-| **std.is_string(value)** | – | <strong>Placeholder** – Detects string types. |
-| **std.json(json)** | `json: string` | Parses a JSON string and creates a JSON object. | 
-| **std.len(value)** | `value: object` | Alias for `len()`. |
-| **std.messagebox(text, caption, buttons)** | `text: string`, `caption: string`, `buttons: btns` | Shows a GUI message box with the specified text, caption and button set (uses the constants from `std`). |
-| **std.millis()** | – | <strong>Placeholder** – Current time in milliseconds. |
-| **std.print()** | – | Console printing – accepts multiple arguments, prints them spaced. |
-| **std.runtime_error()** | – | Prints an error message to the console. | 
-| **std.sleep(milliseconds)** | `milliseconds: Duration` | Pauses script execution asynchronously. |
-| **std.string(value)** | `value: string` | Returns a new `std.string` instance (wrapper). |
-| **std.system(command)** | `command: string` | Executes a shell command, returning its exit code. | 
-| **std.system_path(path)** | `path: string` | Expands env vars and normalises a file system path. | 
-| **std.thread(callback)** | `callback: function` | Creates a new thread that runs `callback`. | 
-| **std.timestamp()** | – | <strong>Placeholder** – Current time stamp. |
-| **std.vaddress(value)** | `value: variable` | Returns the memory address of `value`. | 
-| **std.vtype(value)** | `value: variable` | Returns the runtime type name of `value`. | 
-| **std.warn()** | – | Prints a warning message. | 
-| **std.wd()** | – | <strong>Placeholder** – Current working directory. |
-| **std.web_get(url)** | `url: string` | Simple HTTP GET, returns response body as string. |
-
-> **Example: Console IO & Math**
-> ```shz
-> using std;
-> using math;
-> 
-> print("Hello, world!");
-> 
-> auto num = -3.14;
-> print("Absolute value:", math.abs(num));
-> 
-> // Basic arithmetic
-> auto result = math.log2(8) + math.pow(2, 3);
-> print("Result =", result);
-> ```
 
 ---
 
-## 📦 Getting Started
+### Namespace: `math`
 
-1. **Create a script file**: `my_script.shz`
-2. **Import namespaces**:
-   ```shz
-   using std;
-   using fileio;
-   using math;
-   ```
-3. **Write your script**:
-   ```shz
-   print("Copying config:", ...);
-   ```
-4. **Run**:  
-   ```bash
-   shizonet my_script.shz
-   ```  
+| Symbol | Type | Description |
+|--------|------|-------------| 
+| `math` | namespace | Provides mathematical constants and utilities. |
+| `math.PI` | constant | `3.141593` – value of π. |
+
+#### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------| 
+| `math.abs` | `value: float` | Return the absolute value of the input. |
+| `math.acos` | `x: float` | Inverse cosine – returns an angle in radians. |
+| `math.asin` | `x: float` | Inverse sine – returns an angle in radians. | 
+| `math.atan` | `x: float` | Inverse tangent – returns an angle in radians. |
+| `math.atan2` | `y: float, x: float` | Calculate `atan2(y, x)` – arctangent from coordinates. |
+| `math.cbrt` | `x: float` | Cube root of `x`. |
+| `math.ceil` | `value: float` | Return the smallest integer ≥ “value”. |
+| `math.clamp` | `x: float, min: float, max: float` | Clamp `x` to stay between `min` and `max`. | 
+| `math.cos` | `x: float` | Cosine of an angle in radians. |
+| `math.exp` | `x: float` | Exponential function `e^x`. |
+| `math.floor` | `value: float` | Return the largest integer ≤ “value”. |
+| `math.fract` | `x: float` | Return the fractional part of `x`. |
+| `math.lerp` | `a: float, b: float, t: float` | Linear interpolation: `(1‑t) * a + t * b`. |
+| `math.log` | `x: float` | Natural logarithm (base e). |
+| `math.log10` | `x: float` | Base‑10 logarithm. |
+| `math.log2` | `x: float` | Base‑2 logarithm. |
+| `math.max` | `values: float...` | Return the maximum of the given numbers. | 
+| `math.min` | `values: float...` | Return the minimum of the given numbers. | 
+| `math.pow` | `base: float, exp: float` | Compute `base^exp`. | 
+| `math.rand` | `()` | Random floating point in `[0, 1)`. |
+| `math.round` | `value: float` | Round to the nearest integer. |
+| `math.sign` | `x: float` | Return `+1` if x > 0, `-1` if x < 0, or `0` if x = 0. | 
+| `math.sin` | `x: float` | Sine of an angle in radians. |
+| `math.smoothstep` | `edge0: float, edge1: float, x: float` | Smoothstep interpolation. | 
+| `math.sqrt` | `x: float` | Square root of `x`. |
+| `math.tan` | `x: float` | Tangent of an angle in radians. |
+
 
 ---
 
-## ⚖️ Licensing
+### Namespace: `shizonet` (Network)
 
-This documentation is provided under the [MIT License](LICENSE). Feel free to adapt or extend it for your own use‑cases. Happy coding!
+| Symbol | Type | Description |
+|--------|------|-------------| 
+| `shizonet` | namespace | Provides client/server utilities for inter-node communication. |
+
+#### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------| 
+| `shizonet.client` | `node_name: string, port: int = SHZNET_CLIENT_PORT` | Create a new network client with the given node name and optional listening port. |
+| `shizonet.server` | `node_name: string, port: int = SHZNET_SERVER_PORT` | Create a new network server with the given node name and optional listening port. |
+
+
+---
+
+### Namespace: `shzdocs`
+
+| Symbol | Type | Description |
+|--------|------|-------------| 
+| `shzdocs` | namespace | Documentation query helpers. |
+
+#### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `shzdocs.find_all` | `Keyword: string` | Return all documentation entries that include the given keyword. | 
+| `shzdocs.get_all` | `()` | Return documentation for all available functions, classes, etc. |
+
+---
+
+### Namespace: `shztests` (Testing)
+
+| Symbol | Type | Description |
+|--------|------|-------------|  |
+| `shztests` | namespace | Test harness utilities. |
+
+#### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `shztests.check_object` | `()` | Placeholder – perform a test check. | 
+| `shztests.test_object` | `() -> test_object` | Return test object instance. |
+
+
+---
+
+### Namespace: `std` (Standard Library)
+
+| Symbol | Type | Description |
+|--------|------|-------------|  |
+| `std` | namespace | Core utilities and system interaction. |
+| `std.MB_ICONERROR` | constant | 16 |
+| `std.MB_ICONINFORMATION` | constant | 64 |
+| `std.MB_ICONWARNING` | constant | 48 |
+| `std.MB_OK` | constant | 0 | 
+| `std.MB_OKCANCEL` | constant | 1 |
+| `std.MB_RETRYCANCEL` | constant | 5 |
+| `std.MB_YESNO` | constant | 4 |
+| `std.MB_YESNOCANCEL` | constant | 3 |
+
+#### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------| 
+| `std.argc` | `()` | Return the number of command‑line arguments. |
+| `std.argv` | `index: int` | Return the `index`‑th command‑line argument. |
+| `std.buffer` | `()` | Create a new `shz_std_buffer` object. |
+| `std.cd` | `path: string` | Change the current working directory. |
+| `std.count` | `value: Container | string | object` | Alias for `len()`. |
+| `std.cout` | `(...args)` | Print values directly to the terminal. |
+| `std.error` | `(...args)` | Print to the console (stderr). |
+| `std.float` | `()` | Placeholder – create a float object. |
+| `std.free` | `obj` | Delete an object. |
+| `std.has_admin_privilege` | `()` | Return `true` if the script runs with administrator rights. | 
+| `std.hideconsole` | `()` | Detach and hide the console window (Windows only). |
+| `std.import` | `()` | Placeholder – load a specific module. |
+| `std.import_all` | `()` | Placeholder – load all modules. |
+| `std.indentation` | `()` | Placeholder – handle indentation. |
+| `std.input` | `prompt: string = ""` | Read a line from stdin, optionally displaying a prompt. | 
+| `std.int` | `()` | Placeholder – create an integer object. | 
+| `std.is_function` | `()` | Placeholder – check if a variable is a function. | 
+| `std.is_json` | `()` | Placeholder – check if a variable is a JSON object. | 
+| `std.is_list` | `()` | Placeholder – check if a variable is a list. | 
+| `std.is_string` | `()` | Placeholder – check if a variable is a string. | 
+| `std.json` | `json: string = ""` | Create a JSON object, optionally parsed from a string. |
+| `std.len` | `value: Container | string | object` | Return length of a container, string or object. | 
+| `std.messagebox` | `text: string, caption: string, buttons: btns` | Display a modal message box. | 
+| `std.millis` | `()` | Placeholder – current milliseconds. | 
+| `std.print` | `(...args)` | Print to console output. | 
+| `std.runtime_error` | `()` | Placeholder – raise a runtime error. | 
+| `std.sleep` | `milliseconds: int` | Asynchronously pause execution for the specified duration. |  |
+| `std.string` | `value: string = ""` | Create a new string object. |
+| `std.system` | `command: string` | Execute a shell command and return its exit code. | 
+| `std.system_path` | `path: string` | Expand environment variables and normalise filesystem path. | 
+| `std.thread` | `callback: function` | Create a new thread executing the provided function. | 
+| `std.timestamp` | `()` | Placeholder – get current timestamp. | 
+| `std.vaddress` | `value: any` | Inspect memory address of a variable. | 
+| `std.vtype` | `value: any` | Determine the type of a variable. | 
+| `std.warn` | `(...args)` | Print a warning to console output. | 
+| `std.wd` | `()` | Placeholder – working directory helper. | 
+| `std.web_get` | `url: string` | Perform an HTTP GET request and return the raw response body. |
+
+
+---
+
+## Usage
+
+1. **Import the desired namespace**   (or use the fully‑qualified name).
+2. **Call functions** or access constants as shown in the examples.
+
+```shiz
+using fileio;
+use math;                // import all math utilities
+
+// copy a file
+fileio.copy("config.json", "/etc/config.json");
+
+// simple math
+var area = math.PI * 5 * 5;
+print("Area of circle:", area);
+
+// server
+node = shizonet.server("mynode", 9090);
+```
+
+---
+
+## Examples
+
+### Listing a directory (recursive)
+
+```shiz
+files = fileio.files("/home/user/project", true);
+foreach(file in files) {
+    print(file);
+}
+```
+
+### Quick math snippet
+
+```shiz
+var a = 3;
+var b = 4;
+var c = math.sqrt(a * a + b * b);   // Pythagorean theorem
+print("hypotenuse = ", c);           // Outputs: hypotenuse = 5
+```
+
+### Basic network client
+
+```shiz
+client = shizonet.client("myclient", 8000);
+client.send("Hello, server!");
+```
+
+### Show a message box
+
+```shiz
+std.messagebox("Operation completed successfully.",
+               "Info", std.MB_OK | std.MB_ICONINFORMATION);
+```
+
+
+---
+
+> **Note:** All functions are *asynchronous* unless explicitly stated; use `await` if needed in a coroutine context.
+
+---
+
+*For more advanced topics, consult the in‑language docs or contact the development team.*
