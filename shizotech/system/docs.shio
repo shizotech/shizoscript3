@@ -1,7 +1,7 @@
 
 using std;
 
-print(argv());
+std.import_all();
 
 docs = argv().size() >= 2 ? shzdocs.find_all(argv(1)).sort() : shzdocs.get_all().sort();
 
@@ -18,13 +18,13 @@ handle_namespace(name, &ns)
 	if(ns.functions.size() == 0 &&
 		ns.vars.size() == 0 &&
 		ns.children.size() == 0)
-		return 0;
+		return "";
 
-    result = "\n" + repeat_char("=", 40) + "\n";
+    result = "\n\n\n" + repeat_char("=", 40) + "\n";
     result += "Namespace: " + name + "\n";
     result += repeat_char("=", 40) + "\n\n";
 	
-	result += "Usage: using " + name + ";\n\n";
+	result += "using " + name + ";\n\n";
 
     if(ns.vars ?? 0)
     {
@@ -97,7 +97,6 @@ handle_namespace(name, &ns)
             }
 
 			//result += repeat_char(" ", 8) + repeat_char("-", 30) + "\n";
-            //result += "\n\n";
         }
     }
 
@@ -105,10 +104,6 @@ handle_namespace(name, &ns)
 
     return result;
 }
-
-print("TEST START*****");
-print(shzdocs.get_all().sort());
-print("TEST END******");
 
 docs.namespaces.sort();
 
