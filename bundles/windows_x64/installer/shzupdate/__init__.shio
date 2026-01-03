@@ -1,0 +1,6 @@
+
+using std;
+
+print("shzupdate !");
+
+std.input();
