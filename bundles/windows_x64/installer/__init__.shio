@@ -1,0 +1,53 @@
+
+using std;
+
+//hideconsole();
+
+app_path = std.system_path("%LOCALAPPDATA%/Shizoscript");
+
+if(fileio.is_directory(app_path))
+{
+	res = messagebox("It seems like shizoscript is already installed - uninstall ?", "Uninstall?", MB_YESNOCANCEL | MB_ICONERROR);
+
+	if(res == 6)
+	{
+		//TODO run uninstall script
+		//std.system("call \"" + app_path + "/shzupdate.exe uninstall\"");
+		if(fileio.remove(app_path))
+			messagebox("Successfully uninstalled shizoscript.\nRun this installer again if you wish to re-install it.", MB_OK);
+		else
+			messagebox("Could not remove shizoscript. Maybe try to run the installer as administrator.", MB_OK | MB_ICONERROR);
+	}
+	
+	return;
+}
+
+run_install()
+{
+	fileio.mkdir(app_path);
+	
+	if(!fileio.copy("shizotech/includes", app_path + "/shizotech/includes"))
+		return false;
+
+	if(!fileio.copy("shizotech/system", app_path + "/shizotech/system"))
+		return false;
+	
+	if(fileio.is_directory("shizotech/packages") && !fileio.copy("shizotech/packages", app_path + "/shizotech/packages"))
+		return false;
+
+	if(!fileio.copy("shizotech/shz.exe", app_path + "/shz.exe"))
+		return false;
+	
+	return true;
+}
+
+res = messagebox("Do you want to install shizoscript?", "Installer", MB_YESNO);
+if(res == 6)
+{
+	if(run_install())
+		messagebox("Successfully installed shizoscript.", "Success", MB_OK);
+	else
+		messagebox("Could not install shizoscript. Maybe try to run the installer as administrator.", "Error", MB_OK | MB_ICONERROR);
+}
+	
+std.input();
