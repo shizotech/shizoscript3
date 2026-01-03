@@ -1,11 +1,9 @@
 
-//Das hier ein standard script machen iwie und dann sowas
-//shzscript show_docs oder so was dieses script dann im standard ordner ausführt
-//auch nen shzscript netmon command machen welces shznet devices auflistet usw
-
 using std;
 
-docs = argv().size() >= 2 ? shzdocs.find_all(argv(1)).sort_ascend() : shzdocs.get_all().sort();
+print(argv());
+
+docs = argv().size() >= 2 ? shzdocs.find_all(argv(1)).sort() : shzdocs.get_all().sort();
 
 repeat_char(c,x)
 {
@@ -20,7 +18,6 @@ handle_namespace(name, &ns)
 	if(ns.functions.size() == 0 &&
 		ns.vars.size() == 0 &&
 		ns.children.size() == 0)
-		print("SKIPPING!");
 		return 0;
 
     result = "\n" + repeat_char("=", 40) + "\n";
@@ -109,7 +106,11 @@ handle_namespace(name, &ns)
     return result;
 }
 
-docs.namespaces.sort_ascend();
+print("TEST START*****");
+print(shzdocs.get_all().sort());
+print("TEST END******");
+
+docs.namespaces.sort();
 
 docstr = "";
 
