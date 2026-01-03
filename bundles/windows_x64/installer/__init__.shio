@@ -45,7 +45,7 @@ res = 0;
 if(std.has_admin_privilege())
 	res = messagebox("Install shizoscript?", "Installer", MB_YESNO | MB_ICONINFORMATION);
 else
-	res = messagebox("Note: it is recommended to run this installer as administrator.\nThis is necessary to associate .shio and .shx files on this system.\nYou can still install it without admin rights, but you won't be able to open/run shizoscript files directly, proceed installation?", "Installer", MB_YESNO | MB_ICONINFORMATION);
+	res = messagebox("Note: it is recommended to run this installer as administrator.\nThis is necessary to associate .shio and .shx files on this system.\nYou can still install it without admin rights, but you won't be able to open/run shizoscript files directly.\nDo you still want to proceed without admin rights?", "Installer", MB_YESNO | MB_ICONINFORMATION);
 
 if(res == 6)
 {
