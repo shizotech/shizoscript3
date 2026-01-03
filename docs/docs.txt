@@ -15,6 +15,12 @@ fileio.copy (
 
   - Copy file or directory
 ------------------------------------------------------------
+fileio.exists (
+    path: string - Path to test
+)
+
+  - Check if path is a directory
+------------------------------------------------------------
 fileio.file_dir()
 
   - placholder_desc

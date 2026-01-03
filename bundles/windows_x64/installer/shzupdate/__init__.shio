@@ -5,7 +5,9 @@ ver = fileio.read_json("shizotech/version.json");
 remote_ver = std.json(std.web_get("https://raw.githubusercontent.com/shizotech/shizoscript3/refs/heads/main/shizotech/version.json"));
 
 
+print("Current version:");
 print(ver);
+print("Remote version:");
 print(remote_ver);
 
 if(ver.version < remote_ver.version)
