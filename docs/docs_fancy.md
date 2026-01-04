@@ -1,187 +1,171 @@
-# Shizoscript Documentation
+# ShizoScript Documentation
+
+ShizoScript is a dynamically-typed scripting language designed for simplicity and flexibility. Key features include:
+- No explicit typing system (all variables are dynamically typed)
+- Source files use `.shio` extension, compiled binaries use `.shx`
+- `using` keyword imports namespaces into the global scope
+- C-style syntax with classes, functions, and control structures
+- Built-in support for file I/O, math operations, networking, and system functions
 
 ## Table of Contents
-- [File I/O](#file-io)
-- [Math](#math)
-- [Shizonet](#shizonet)
-- [Shzdocs](#shzdocs)
-- [Shztests](#shztests)
-- [Standard Library](#standard-library)
+- [File I/O Namespace](#file-io-namespace)
+- [Math Namespace](#math-namespace)
+- [ShizoNet Namespace](#shizonet-namespace)
+- [ShizDocs Namespace](#shzdocs-namespace)
+- [ShizTests Namespace](#shztests-namespace)
+- [Standard Library Namespace](#std-namespace)
 
-## File I/O
+---
 
-The `fileio` namespace provides functions for file and directory operations.
-
-### Functions
+## File I/O Namespace
+Handles file and directory operations with intuitive path manipulation.
 
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `copy` | `src: string` - Source path<br>`dest: string` - Destination path | Copy file or directory (folders will be created if required) |
-| `exists` | `path: string` - Path to test | Check if path is a directory |
-| `file_dir` | | Placeholder description |
-| `file_name` | | Placeholder description |
-| `files` | `path: string` - Directory to list<br>`recursive: bool` (default: true) - true = include subfolders; false = top-level only | List files in directory |
-| `is_directory` | `path: string` - Path to test | Check if path is a directory |
-| `is_file` | `path: string` - Path to test | Check if path is a file |
-| `mkdir` | | Placeholder description |
-| `move` | `src: string` - Path to file or directory<br>`dest: string` - New location or name | Move file or directory (uses rename or copy/delete fallback) |
-| `pure_name` | | Placeholder description |
-| `read_file` | `path: string` - Path to the file | Read file into binary buffer |
-| `read_json` | `path: string` - Path to the JSON file | Read JSON file and return parsed object |
-| `read_string` | `path: string` - File path to read as text | Read text file into string |
-| `read_text` | `path: string` - File path to read as text | Read text file into string |
-| `remove` | `path: string|list` - File(s) or directory to delete | Remove files or directories (recursive) |
-| `rename` | `src: string` - Path of the existing file<br>`dest: string` - New name or destination path | Rename file or directory |
-| `write_file` | `path: string` - File path to write to<br>`data: object` - Object to serialize and write as binary | Write binary data from a serializable object to a file, returning true if the write succeeds |
-| `write_json` | `path: string` - Path to the destination file<br>`data: string` - JSON string to write | Writes a JSON string to a file. IMPORTANT: Do NOT MODIFY the json that is passed, in another thread! Always pass unique non-mutable jsons (copy before if needed). |
-| `write_string` | `path: string` - Destination file path<br>`data: string` - Text string to be written | Write string to file |
-| `write_text` | `path: string` - Destination file path<br>`data: string` - Text string to be written | Write string to file |
+| `copy` | `src: string`<br>`dest: string` | Copy file or directory (creates folders if needed) |
+| `dirs` | `path: string`<br>`recursive: bool (default: true)` | List directories inside a directory |
+| `exists` | `path: string` | Check if path exists |
+| `file_dir` | `path: string` | Extract directory from a file path |
+| `file_name` | `path: string` | Extract filename with extension |
+| `files` | `path: string`<br>`recursive: bool (default: true)` | List files in directory |
+| `is_directory` | `path: string` | Check if path is a directory |
+| `is_file` | `path: string` | Check if path is a file |
+| `mkdir` | | Create directory (placeholder) |
+| `move` | `src: string`<br>`dest: string` | Move/rename file or directory |
+| `pure_name` | `path: string` | Extract filename without extension |
+| `read_file` | `path: string` | Read file into binary buffer |
+| `read_json` | `path: string` | Read and parse JSON file |
+| `read_string` | `path: string` | Read text file into string |
+| `read_text` | `path: string` | Read text file into string |
+| `remove` | `path: string\|list` | Delete files/directories (recursive) |
+| `rename` | `src: string`<br>`dest: string` | Rename file or directory |
+| `write_file` | `path: string`<br>`data: object` | Write serializable object as binary |
+| `write_json` | `path: string`<br>`data: string` | Write JSON string to file |
+| `write_string` | `path: string`<br>`data: string` | Write string to file |
+| `write_text` | `path: string`<br>`data: string` | Write string to file |
 
-## Math
+---
 
-The `math` namespace provides mathematical functions and constants.
+## Math Namespace
+Comprehensive mathematical functions and constants.
 
 ### Constants
-
-| Constant | Value |
-|----------|-------|
-| `PI` | 3.141593 |
+- `PI` → 3.141593
 
 ### Functions
-
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `abs` | `value: float` - Input number (integer or floating point) | Return the absolute value of a numeric input |
-| `acos` | `x: float` - Value in range [-1,1] | Inverse cosine (arccos) |
-| `asin` | `x: float` - Value in range [-1,1] | Inverse sine (arcsin) |
-| `atan` | `x: float` - Ratio y/x | Inverse tangent (arctan) |
-| `atan2` | `y: float`<br>`x: float` | Arctangent from y and x |
-| `cbrt` | `x: float` - Value | Cube root |
-| `ceil` | `value: float` - Input number | Return the smallest integer greater than or equal to the given number |
-| `clamp` | `x: float` - Value<br>`min: float` - Minimum value<br>`max: float` - Maximum value | Clamp value between min and max |
-| `cos` | `x: float` - Angle in radians | Cosine of angle (radians) |
-| `exp` | `x: float` - Exponent | Exponential function (e^x) |
-| `floor` | `value: float` - Floating point number to floor | Return the largest integer less than or equal to the given number |
-| `fract` | `x: float` - Value | Fractional part of value |
-| `lerp` | `a: float` - Start value<br>`b: float` - End value<br>`t: float` - Interpolation factor (0..1) | Linear interpolation |
-| `log` | `x: float` - Value > 0 | Natural logarithm (base e) |
-| `log10` | `x: float` - Value > 0 | Base-10 logarithm |
-| `log2` | `x: float` - Value > 0 | Base-2 logarithm |
-| `max` | `values: float...` - One or more numbers | Maximum of values |
-| `min` | `values: float...` - One or more numbers | Minimum of values |
+| `abs` | `value: float` | Absolute value |
+| `acos` | `x: float` | Inverse cosine (arccos) |
+| `asin` | `x: float` | Inverse sine (arcsin) |
+| `atan` | `x: float` | Inverse tangent (arctan) |
+| `atan2` | `y: float`<br>`x: float` | Arctangent from y/x |
+| `cbrt` | `x: float` | Cube root |
+| `ceil` | `value: float` | Ceiling value |
+| `clamp` | `x: float`<br>`min: float`<br>`max: float` | Clamp between min/max |
+| `cos` | `x: float` | Cosine (radians) |
+| `exp` | `x: float` | Exponential (e^x) |
+| `floor` | `value: float` | Floor value |
+| `fract` | `x: float` | Fractional part |
+| `lerp` | `a: float`<br>`b: float`<br>`t: float` | Linear interpolation |
+| `log` | `x: float` | Natural logarithm |
+| `log10` | `x: float` | Base-10 logarithm |
+| `log2` | `x: float` | Base-2 logarithm |
+| `max` | `values: float...` | Maximum of values |
+| `min` | `values: float...` | Minimum of values |
 | `pow` | `base: float`<br>`exp: float` | Power function |
-| `rand` | | Random float in range [0,1] |
-| `round` | `value: float` - Floating point number to round | Return the nearest integer value to the given number |
-| `sign` | `x: float` - Returns +1, 0, or -1 | Sign of number |
-| `sin` | `x: float` - Angle in radians | Sine of angle (radians) |
-| `smoothstep` | `edge0: float` - Lower boundary<br>`edge1: float` - Upper boundary<br>`x: float` - Value to evaluate | Smoothstep interpolation |
-| `sqrt` | `x: float` - Value to square-root | Square root |
-| `tan` | `x: float` - Angle in radians | Tangent of angle (radians) |
+| `rand` | | Random float [0,1] |
+| `round` | `value: float` | Nearest integer |
+| `sign` | `x: float` | Sign (+1, 0, -1) |
+| `sin` | `x: float` | Sine (radians) |
+| `smoothstep` | `edge0: float`<br>`edge1: float`<br>`x: float` | Smoothstep interpolation |
+| `sqrt` | `x: float` | Square root |
+| `tan` | `x: float` | Tangent (radians) |
 
-## Shizonet
+---
 
-The `shizonet` namespace provides network functionality.
-
-### Functions
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `client` | `node_name: string` - Node name<br>`port: int` - Client listening port (default: SHZNET_CLIENT_PORT) | `shizonet.client` | Create a new network client with the specified node name and optional port |
-| `server` | `node_name: string` - Node name<br>`port: int` - Server listening port (default: SHZNET_SERVER_PORT) | `shizonet.server` | Create a new network server with the specified node name and optional port |
-
-## Shzdocs
-
-The `shzdocs` namespace provides documentation-related functions.
-
-### Functions
-
-| Function | Parameters | Description |
-|----------|------------|-------------|
-| `find_all` | `Keyword: string` - Returns all matches that include the keyword | Get documentation about all function, classes, etc. |
-| `get_all` | | Get documentation about all function, classes, etc. |
-
-## Shztests
-
-The `shztests` namespace provides testing functionality.
-
-### Functions
+## ShizoNet Namespace
+Networking components for client-server communication.
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `check_object` | | | |
-| `test_object` | | `test_object` | |
+| `client` | `node_name: string`<br>`port: int (default: SHZNET_CLIENT_PORT)` | `shizonet.client` | Create network client |
+| `server` | `node_name: string`<br>`port: int (default: SHZNET_SERVER_PORT)` | `shizonet.server` | Create network server |
 
-## Standard Library
+---
 
-The `std` namespace contains standard library functions and constants.
+## ShzDocs Namespace
+Documentation introspection utilities.
 
-### Constants
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| `find_all` | `Keyword: string` | Get all documentation containing keyword |
+| `get_all` | | Get all function/class documentation |
 
-| Constant | Value |
-|----------|-------|
-| `MB_ICONERROR` | 16 |
-| `MB_ICONINFORMATION` | 64 |
-| `MB_ICONWARNING` | 48 |
-| `MB_OK` | 0 |
-| `MB_OKCANCEL` | 1 |
-| `MB_RETRYCANCEL` | 5 |
-| `MB_YESNO` | 4 |
-| `MB_YESNOCANCEL` | 3 |
+---
+
+## ShizTests Namespace
+Testing framework utilities.
+
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `check_object` | | Object checking utility |
+| `test_object` | `test_object` | Object testing utility |
+
+---
+
+## Standard Library Namespace
+Core system functions and UI constants.
+
+### Message Box Constants
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `MB_ICONERROR` | 16 | Error icon |
+| `MB_ICONINFORMATION` | 64 | Information icon |
+| `MB_ICONWARNING` | 48 | Warning icon |
+| `MB_OK` | 0 | OK button |
+| `MB_OKCANCEL` | 1 | OK/Cancel buttons |
+| `MB_RETRYCANCEL` | 5 | Retry/Cancel buttons |
+| `MB_YESNO` | 4 | Yes/No buttons |
+| `MB_YESNOCANCEL` | 3 | Yes/No/Cancel buttons |
 
 ### Functions
-
 | Function | Parameters | Description |
 |----------|------------|-------------|
-| `argc` | | Return argc |
-| `argv` | `index: int` | Return argv |
-| `buffer` | | `std.buffer` - Instantiate a new shz_std_buffer object |
-| `cd` | `path: string` - New working directory path | Change current working directory |
-| `count` | `value: Container, string, or object` | Alias of len() - returns number of elements |
-| `cout` | | Print to terminal directly |
-| `error` | | Print to console output |
-| `float` | | Placeholder description |
-| `free` | | Delete an object |
-| `has_admin_privilege` | | Returns true if run as administrator. |
-| `hideconsole` | | Detach and hide the console window (Windows only) |
-| `import` | | Placeholder description |
-| `import_all` | | Placeholder description |
-| `indentation` | | Placeholder description |
-| `input` | `prompt: string` - Optional message displayed before reading input | Reads a line of text from standard input, optionally displaying a prompt message. |
-| `int` | | Placeholder description |
-| `is_function` | | Placeholder description |
-| `is_json` | | Placeholder description |
-| `is_list` | | Placeholder description |
-| `is_string` | | Placeholder description |
-| `json` | `json: string` - Optional JSON string to parse into the new object | `std.json` - Create a new JSON object, optionally initialized from a JSON string |
-| `len` | `value: Container, string, or object` | Return size/length of a list, map, array, string, or object container |
-| `messagebox` | `text: string` - Message text<br>`caption: string` - message box caption<br>`buttons: btns` | Display a message box with specified text and optional caption |
-| `millis` | | Placeholder description |
-| `print` | | Print to console output |
-
-**Examples:**
-```shz
-print("Hello World");
-```
-
-```shz
-print("test_var = ", test_var, ".");
-```
-
-```shz
-combined_str = print(var1, var2, var3);
-```
-
-| Function | Parameters | Description |
-|----------|------------|-------------|
-| `runtime_error` | | Print to console output |
-| `sleep` | `milliseconds: Duration to pause execution` | Suspend script execution for a duration (async) |
-| `string` | `value: string` - Initial string value | `std.string` - Create a new string, optionally initialized with a given value |
-| `system` | `command: string` - Command string to be passed to the system shell | Execute a shell command and return its exit code. |
-| `system_path` | `path: string` - Path with environment variables | Expand environment variables and normalize a filesystem path |
-| `thread` | `callback: function` - attach to a function | `std.thread` - threading |
-| `timestamp` | | Placeholder description |
-| `vaddress` | `value: Variable to inspect` | Get the type of a variable |
-| `vtype` | `value: Variable to inspect` | Get the type of a variable |
-| `warn` | | Print to console output |
-| `wd` | | Placeholder |
-| `web_get` | `url: string` - HTTP or HTTPS URL | Perform a simple HTTP GET request and return the response body |
+| `argc` | | Return argument count |
+| `argv` | `index: int` | Return argument value |
+| `buffer` | | Create new buffer object |
+| `cd` | `path: string` | Change working directory |
+| `count` | `value: Container, string, or object` | Alias of len() |
+| `cout` | | Print to terminal |
+| `error` | | Print error to console |
+| `float` | `value: any` | Convert to float |
+| `free` | | Delete object |
+| `has_admin_privilege` | | Check admin privileges |
+| `hideconsole` | | Hide console (Windows) |
+| `import` | `module: string` | Import external module |
+| `import_all` | | Initialize all modules |
+| `indentation` | `text: string` | Calculate indentation level |
+| `input` | `prompt: string` | Read user input |
+| `int` | `value: any` | Convert to integer |
+| `is_function` | `value: any` | Check if function |
+| `is_json` | `value: any` | Check if JSON object |
+| `is_list` | `value: any` | Check if list |
+| `is_string` | `value: any` | Check if string |
+| `json` | `json: string` | Create JSON object |
+| `len` | `value: Container, string, or object` | Return size/length |
+| `messagebox` | `text: string`<br>`caption: string`<br>`buttons: btns` | Display message box |
+| `millis` | | Current time in ms |
+| `print` | | Print to console |
+| `runtime_error` | | Print runtime error |
+| `sleep` | `milliseconds: Duration` | Pause execution |
+| `string` | `value: string` | Create string object |
+| `system` | `command: string` | Execute shell command |
+| `system_path` | `path: string` | Expand environment variables |
+| `thread` | `callback: function` | Create thread |
+| `timestamp` | | Current date/time |
+| `vaddress` | `value: Variable` | Get variable address |
+| `vtype` | `value: Variable` | Get variable type |
+| `warn` | | Print warning to console |
+| `wd` | | Get working directory |
+| `web_get` | `url: string` | HTTP GET request |

@@ -15,19 +15,30 @@ fileio.copy (
 
   - Copy file or directory
 ------------------------------------------------------------
+fileio.dirs (
+    path: string - Directory to list,
+    recursive: bool (default: true) - true = include subfolders; false = top-level only
+)
+
+  - List directories inside a directory
+------------------------------------------------------------
 fileio.exists (
     path: string - Path to test
 )
 
   - Check if path is a directory
 ------------------------------------------------------------
-fileio.file_dir()
+fileio.file_dir (
+    path: string - The file path to extract directory from
+)
 
-  - placholder_desc
+  - Extracts the directory from a given file path
 ------------------------------------------------------------
-fileio.file_name()
+fileio.file_name (
+    path: string - File path to extract filename from
+)
 
-  - placholder_desc
+  - Extracts the filename from a given path string
 ------------------------------------------------------------
 fileio.files (
     path: string - Directory to list,
@@ -59,9 +70,11 @@ fileio.move (
 
   - Move file or directory (uses rename or copy/delete fallback)
 ------------------------------------------------------------
-fileio.pure_name()
+fileio.pure_name (
+    path: string - File path to extract filename from
+)
 
-  - placholder_desc
+  - Extracts the filename from a given path string (without extension)
 ------------------------------------------------------------
 fileio.read_file (
     path: string - Path to the file
@@ -415,9 +428,11 @@ std.error()
 
   - Print to console output
 ------------------------------------------------------------
-std.float()
+std.float (
+    value: any - Value to convert to float
+)
 
-  - placholder_desc
+  - Convert input value to float
 ------------------------------------------------------------
 std.free()
 
@@ -431,17 +446,21 @@ std.hideconsole()
 
   - Detach and hide the console window (Windows only)
 ------------------------------------------------------------
-std.import()
+std.import (
+    module: string - Name or path of the module to import
+)
 
-  - placeholder_desc
+  - Import an external module by name or path
 ------------------------------------------------------------
 std.import_all()
 
-  - placeholder_desc
+  - Import and initialize all function modules
 ------------------------------------------------------------
-std.indentation()
+std.indentation (
+    text: string - Text to analyze for indentation
+)
 
-  - placholder_desc
+  - Calculate indentation level of text, counting spaces and tabs (1 space = 1 unit, 1 tab = 4 units)
 ------------------------------------------------------------
 std.input (
     prompt: string - Optional message displayed before reading input
@@ -449,25 +468,35 @@ std.input (
 
   - Reads a line of text from standard input, optionally displaying a prompt message.
 ------------------------------------------------------------
-std.int()
+std.int (
+    value: any - Value to convert to integer
+)
 
-  - placholder_desc
+  - Convert value to integer
 ------------------------------------------------------------
-std.is_function()
+std.is_function (
+    value: any - Value to check if it is a function
+)
 
-  - placholder_desc
+  - Check if the provided value is a function
 ------------------------------------------------------------
-std.is_json()
+std.is_json (
+    value: any - Value to check if it's a JSON object
+)
 
-  - placholder_desc
+  - Check if the value is a JSON object
 ------------------------------------------------------------
-std.is_list()
+std.is_list (
+    value: any - Value to check if it is a list
+)
 
-  - placholder_desc
+  - Check if value is a list
 ------------------------------------------------------------
-std.is_string()
+std.is_string (
+    value: any - Value to check if it's a string
+)
 
-  - placholder_desc
+  - Check if value is a string type
 ------------------------------------------------------------
 std.json (
     json: string - Optional JSON string to parse into the new object
@@ -491,7 +520,7 @@ std.messagebox (
 ------------------------------------------------------------
 std.millis()
 
-  - placholder_desc
+  - Get current time in milliseconds since epoch
 ------------------------------------------------------------
 std.print()
 
@@ -546,7 +575,7 @@ std.thread (
 ------------------------------------------------------------
 std.timestamp()
 
-  - placholder_desc
+  - Get current date and time in DD-MM-YYYY HH:MM:SS format
 ------------------------------------------------------------
 std.vaddress (
     value: Variable to inspect
@@ -566,7 +595,7 @@ std.warn()
 ------------------------------------------------------------
 std.wd()
 
-  - placeholder
+  - Get current working directory path
 ------------------------------------------------------------
 std.web_get (
     url: string - HTTP or HTTPS URL
