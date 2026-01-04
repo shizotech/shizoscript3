@@ -56,3 +56,5 @@ if(ver.version < remote_ver.version)
 else
 	std.print("\n********************\nUp-to-date.\n********************\n");
 
+std.print("Exiting in 5 seconds...");
+std.sleep(5000);

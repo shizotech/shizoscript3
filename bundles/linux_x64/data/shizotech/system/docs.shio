@@ -1,0 +1,118 @@
+
+using std;
+
+std.import_all();
+
+docs = argv().size() >= 2 ? shzdocs.find_all(argv(1)).sort() : shzdocs.get_all().sort();
+
+repeat_char(c,x)
+{
+    res = "";
+    for(i = 0; i < x; i++)
+        res += c;
+    return res;
+}
+
+handle_namespace(name, &ns)
+{
+	if(ns.functions.size() == 0 &&
+		ns.vars.size() == 0 &&
+		ns.children.size() == 0)
+		return "";
+
+    result = "\n\n\n" + repeat_char("=", 40) + "\n";
+    result += "Namespace: " + name + "\n";
+    result += repeat_char("=", 40) + "\n\n";
+	
+	result += "using " + name + ";\n\n";
+
+    if(ns.vars ?? 0)
+    {
+		ns.vars.sort();
+		
+        for(i = 0; i < ns.vars.size(); i++)
+        {
+            result += repeat_char(" ", 4) + name + "." + ns.vars.key(i) + " -> " + ns.vars[i] + "\n";
+        }
+
+        result += "\n";
+    }
+
+    if(ns.functions ?? 0)
+    {
+		ns.functions.sort();
+		
+        for(i = 0; i < ns.functions.size(); i++)
+        {
+            fn = &ns.functions[i];
+            fnname = ns.functions.key(i);
+
+			result += repeat_char(" ", 8) + repeat_char("-", 30) + "\n";
+			
+			result += name + ".";
+			
+            // Function Signature
+            if(fn.params ?? 0)
+            {
+                result += fnname + " (\n";
+
+                for(j = 0; j < fn.params.size(); j++)
+                {
+                    result += repeat_char(" ", 4) + fn.params[j];
+                    if(j != fn.params.size() - 1)
+                        result += ",";
+                    result += "\n";
+                }
+
+                result += ")";
+            }
+            else
+                result += fnname + "()";
+
+            // Return Class
+            if(fn.class_name)
+                result += " -> " + fn.class_name;
+
+            result += "\n\n";
+
+            // Description Formatting
+            if(fn.description)
+            {
+                result += repeat_char(" ", 2) + "- " +fn.description + "\n";
+            }
+
+            // Examples
+            if(fn.examples)
+            {
+				result += "\n";
+				
+                for(j = 0; j < fn.examples.size(); j++)
+				{
+					ex = fn.examples[j];
+					border = repeat_char("-", ex.length() + 2); // dynamic width
+					result += "  +" + border + "+\n";
+					result += "  | " + ex + " |\n";
+					result += "  +" + border + "+\n\n";
+				}
+            }
+
+			//result += repeat_char(" ", 8) + repeat_char("-", 30) + "\n";
+        }
+    }
+
+	result += repeat_char(" ", 8) + repeat_char("-", 30) + "\n";
+
+    return result;
+}
+
+docs.namespaces.sort();
+
+docstr = "";
+
+for(i = 0; i < docs.namespaces.size(); i++)
+{
+    docstr += handle_namespace(docs.namespaces.key(i), docs.namespaces[i]);
+}
+
+print(docstr);
+

@@ -11,6 +11,9 @@ if(fileio.is_directory(app_path))
 
 	if(res == 6)
 	{
+		//Remove shortcut
+		std.system("powershell -ExecutionPolicy Bypass -File installer/shzupdate-remove-shortcut.ps1");
+		
 		std.system("call \"" + app_path + "/shz.exe\" uninstall");
 		if(fileio.remove(app_path))
 			messagebox("Successfully uninstalled shizoscript.\nRun this installer again if you wish to re-install it.", "Success", MB_OK);
@@ -37,6 +40,8 @@ run_install()
 	if(!fileio.copy("installer/shzupdate", app_path + "/shzupdate"))
 		return false;
 	
+	std.system("powershell -ExecutionPolicy Bypass -File installer/shzupdate-shortcut.ps1");
+
 	return true;
 }
 
