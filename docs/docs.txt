@@ -262,7 +262,7 @@ math.pow (
 ------------------------------------------------------------
 math.rand()
 
-  - Random float in range [0,1)
+  - Random float in range [0,1]
 ------------------------------------------------------------
 math.round (
     value: float - Floating point number to round
