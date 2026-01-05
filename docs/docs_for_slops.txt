@@ -1,606 +1,1419 @@
+=== TABLE OF CONTENTS ===
+  - Namespace: fileio
+  - Namespace: leveldb
+  - Namespace: math
+  - Namespace: shizonet
+  - Namespace: shzdocs
+  - Namespace: shztests
+  - Namespace: std
+  - Namespace: telegram
+  - Namespace: testmodule
+  - Namespace: zip
+  - Object Type: leveldb.iterator
+  - Object Type: leveldb.kvdb
+  - Object Type: shizonet.artnet_device
+  - Object Type: shizonet.client
+  - Object Type: shizonet.device
+  - Object Type: shizonet.server
+  - Object Type: std.json
+  - Object Type: std.string
+  - Object Type: std.thread
+  - Object Type: telegram.bot
+  - Object Type: test_object
+  - Object Type: zip.file
 
 
 
-========================================
+==================================================
 Namespace: fileio
-========================================
+==================================================
 
-using fileio;
-
-------------------------------------------------------------
-fileio.copy (
+----------------------------------------------------------------------------------------------------
+fileio.copy(
     src: string - Source path,
     dest: string - Destination path (folders will be created if required)
 )
 
   - Copy file or directory
-------------------------------------------------------------
-fileio.dirs (
+----------------------------------------------------------------------------------------------------
+fileio.dirs(
     path: string - Directory to list,
     recursive: bool (default: true) - true = include subfolders; false = top-level only
 )
 
   - List directories inside a directory
-------------------------------------------------------------
-fileio.exists (
+----------------------------------------------------------------------------------------------------
+fileio.exists(
     path: string - Path to test
 )
 
   - Check if path is a directory
-------------------------------------------------------------
-fileio.file_dir (
+----------------------------------------------------------------------------------------------------
+fileio.file_dir(
     path: string - The file path to extract directory from
 )
 
   - Extracts the directory from a given file path
-------------------------------------------------------------
-fileio.file_name (
+----------------------------------------------------------------------------------------------------
+fileio.file_name(
     path: string - File path to extract filename from
 )
 
   - Extracts the filename from a given path string
-------------------------------------------------------------
-fileio.files (
+----------------------------------------------------------------------------------------------------
+fileio.files(
     path: string - Directory to list,
     recursive: bool (default: true) - true = include subfolders; false = top-level only
 )
 
   - List files in directory
-------------------------------------------------------------
-fileio.is_directory (
+----------------------------------------------------------------------------------------------------
+fileio.is_directory(
     path: string - Path to test
 )
 
   - Check if path is a directory
-------------------------------------------------------------
-fileio.is_file (
+----------------------------------------------------------------------------------------------------
+fileio.is_file(
     path: string - Path to test
 )
 
   - Check if path is a file
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 fileio.mkdir()
 
   - placeholderdesc
-------------------------------------------------------------
-fileio.move (
+----------------------------------------------------------------------------------------------------
+fileio.move(
     src: string - Path to file or directory,
     dest: string - New location or name
 )
 
   - Move file or directory (uses rename or copy/delete fallback)
-------------------------------------------------------------
-fileio.pure_name (
+----------------------------------------------------------------------------------------------------
+fileio.pure_name(
     path: string - File path to extract filename from
 )
 
   - Extracts the filename from a given path string (without extension)
-------------------------------------------------------------
-fileio.read_file (
+----------------------------------------------------------------------------------------------------
+fileio.read_file(
     path: string - Path to the file
 )
 
   - Read file into binary buffer
-------------------------------------------------------------
-fileio.read_json (
+----------------------------------------------------------------------------------------------------
+fileio.read_json(
     path: string - Path to the JSON file
 )
 
   - Read JSON file and return parsed object
-------------------------------------------------------------
-fileio.read_string (
+----------------------------------------------------------------------------------------------------
+fileio.read_string(
     path: string - File path to read as text
 )
 
   - Read text file into string
-------------------------------------------------------------
-fileio.read_text (
+----------------------------------------------------------------------------------------------------
+fileio.read_text(
     path: string - File path to read as text
 )
 
   - Read text file into string
-------------------------------------------------------------
-fileio.remove (
+----------------------------------------------------------------------------------------------------
+fileio.remove(
     path: string|list - File(s) or directory to delete
 )
 
   - Remove files or directories (recursive)
-------------------------------------------------------------
-fileio.rename (
+----------------------------------------------------------------------------------------------------
+fileio.rename(
     src: string - Path of the existing file,
     dest: string - New name or destination path
 )
 
   - Rename file or directory
-------------------------------------------------------------
-fileio.write_file (
+----------------------------------------------------------------------------------------------------
+fileio.write_file(
     path: string - File path to write to,
     data: object - Object to serialize and write as binary
 )
 
   - Write binary data from a serializable object to a file, returning true if the write succeeds
-------------------------------------------------------------
-fileio.write_json (
+----------------------------------------------------------------------------------------------------
+fileio.write_json(
     path: string - Path to the destination file,
     data: string - JSON string to write
 )
 
   - Writes a JSON string to a file. IMPORTANT: Do NOT MODIFY the json that is passed, in another thread! Always pass unique non-mutable jsons (copy before if needed).
-------------------------------------------------------------
-fileio.write_string (
+----------------------------------------------------------------------------------------------------
+fileio.write_string(
     path: string - Destination file path,
     data: string - Text string to be written
 )
 
   - Write string to file
-------------------------------------------------------------
-fileio.write_text (
+----------------------------------------------------------------------------------------------------
+fileio.write_text(
     path: string - Destination file path,
     data: string - Text string to be written
 )
 
   - Write string to file
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
 
+==================================================
+Namespace: leveldb
+==================================================
 
-========================================
+----------------------------------------------------------------------------------------------------
+leveldb.kvdb(
+    path: string - File path where the LevelDB database is located
+) -> leveldb.kvdb
+
+  - Creates a new LevelDB database object that can optionally open a database at a specified path
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
 Namespace: math
-========================================
+==================================================
 
-using math;
+    PI -> 3.141593
 
-    math.PI -> 3.141593
-
-------------------------------------------------------------
-math.abs (
+----------------------------------------------------------------------------------------------------
+math.abs(
     value: float - Input number (integer or floating?point)
 )
 
   - Return the absolute value of a numeric input
-------------------------------------------------------------
-math.acos (
+----------------------------------------------------------------------------------------------------
+math.acos(
     x: float - Value in range [-1,1]
 )
 
   - Inverse cosine (arccos)
-------------------------------------------------------------
-math.asin (
+----------------------------------------------------------------------------------------------------
+math.asin(
     x: float - Value in range [-1,1]
 )
 
   - Inverse sine (arcsin)
-------------------------------------------------------------
-math.atan (
+----------------------------------------------------------------------------------------------------
+math.atan(
     x: float - Ratio y/x
 )
 
   - Inverse tangent (arctan)
-------------------------------------------------------------
-math.atan2 (
+----------------------------------------------------------------------------------------------------
+math.atan2(
     y: float,
     x: float
 )
 
   - Arctangent from y and x
-------------------------------------------------------------
-math.cbrt (
+----------------------------------------------------------------------------------------------------
+math.cbrt(
     x: float - Value
 )
 
   - Cube root
-------------------------------------------------------------
-math.ceil (
+----------------------------------------------------------------------------------------------------
+math.ceil(
     value: float - Input number
 )
 
   - Return the smallest integer greater than or equal to the given number
-------------------------------------------------------------
-math.clamp (
+----------------------------------------------------------------------------------------------------
+math.clamp(
     x: float - Value,
     min: float - Minimum value,
     max: float - Maximum value
 )
 
   - Clamp value between min and max
-------------------------------------------------------------
-math.cos (
+----------------------------------------------------------------------------------------------------
+math.cos(
     x: float - Angle in radians
 )
 
   - Cosine of angle (radians)
-------------------------------------------------------------
-math.exp (
+----------------------------------------------------------------------------------------------------
+math.exp(
     x: float - Exponent
 )
 
   - Exponential function (e^x)
-------------------------------------------------------------
-math.floor (
+----------------------------------------------------------------------------------------------------
+math.floor(
     value: float - Floating?point number to floor
 )
 
   - Return the largest integer less than or equal to the given number
-------------------------------------------------------------
-math.fract (
+----------------------------------------------------------------------------------------------------
+math.fract(
     x: float - Value
 )
 
   - Fractional part of value
-------------------------------------------------------------
-math.lerp (
+----------------------------------------------------------------------------------------------------
+math.lerp(
     a: float - Start value,
     b: float - End value,
     t: float - Interpolation factor (0..1)
 )
 
   - Linear interpolation
-------------------------------------------------------------
-math.log (
+----------------------------------------------------------------------------------------------------
+math.log(
     x: float - Value > 0
 )
 
   - Natural logarithm (base e)
-------------------------------------------------------------
-math.log10 (
+----------------------------------------------------------------------------------------------------
+math.log10(
     x: float - Value > 0
 )
 
   - Base-10 logarithm
-------------------------------------------------------------
-math.log2 (
+----------------------------------------------------------------------------------------------------
+math.log2(
     x: float - Value > 0
 )
 
   - Base-2 logarithm
-------------------------------------------------------------
-math.max (
+----------------------------------------------------------------------------------------------------
+math.max(
     values: float... - One or more numbers
 )
 
   - Maximum of values
-------------------------------------------------------------
-math.min (
+----------------------------------------------------------------------------------------------------
+math.min(
     values: float... - One or more numbers
 )
 
   - Minimum of values
-------------------------------------------------------------
-math.pow (
+----------------------------------------------------------------------------------------------------
+math.pow(
     base: float,
     exp: float
 )
 
   - Power function
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 math.rand()
 
   - Random float in range [0,1]
-------------------------------------------------------------
-math.round (
+----------------------------------------------------------------------------------------------------
+math.round(
     value: float - Floating point number to round
 )
 
   - Return the nearest integer value to the given number
-------------------------------------------------------------
-math.sign (
+----------------------------------------------------------------------------------------------------
+math.sign(
     x: float - Returns +1, 0, or -1
 )
 
   - Sign of number
-------------------------------------------------------------
-math.sin (
+----------------------------------------------------------------------------------------------------
+math.sin(
     x: float - Angle in radians
 )
 
   - Sine of angle (radians)
-------------------------------------------------------------
-math.smoothstep (
+----------------------------------------------------------------------------------------------------
+math.smoothstep(
     edge0: float - Lower boundary,
     edge1: float - Upper boundary,
     x: float - Value to evaluate
 )
 
   - Smoothstep interpolation
-------------------------------------------------------------
-math.sqrt (
+----------------------------------------------------------------------------------------------------
+math.sqrt(
     x: float - Value to square-root
 )
 
   - Square root
-------------------------------------------------------------
-math.tan (
+----------------------------------------------------------------------------------------------------
+math.tan(
     x: float - Angle in radians
 )
 
   - Tangent of angle (radians)
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
 
-
-========================================
+==================================================
 Namespace: shizonet
-========================================
+==================================================
 
-using shizonet;
-
-------------------------------------------------------------
-shizonet.client (
+----------------------------------------------------------------------------------------------------
+shizonet.client(
     node_name: string - Node name,
     port: int - Client listening port (default: SHZNET_CLIENT_PORT)
 ) -> shizonet.client
 
   - Create a new network client with the specified node name and optional port
-------------------------------------------------------------
-shizonet.server (
+----------------------------------------------------------------------------------------------------
+shizonet.server(
     node_name: string - Node name,
     port: int - Server listening port (default: SHZNET_SERVER_PORT)
 ) -> shizonet.server
 
   - Create a new network server with the specified node name and optional port
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
 
-
-========================================
+==================================================
 Namespace: shzdocs
-========================================
+==================================================
 
-using shzdocs;
-
-------------------------------------------------------------
-shzdocs.find_all (
+----------------------------------------------------------------------------------------------------
+shzdocs.find_all(
     Keyword: string - Returns all matches that include the keyword
 )
 
   - Get documentation about all function, classes, etc.
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 shzdocs.get_all()
 
   - Get documentation about all function, classes, etc.
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+shzdocs.load_all_modules()
+
+----------------------------------------------------------------------------------------------------
 
 
-
-========================================
+==================================================
 Namespace: shztests
-========================================
+==================================================
 
-using shztests;
-
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 shztests.check_object()
 
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 shztests.test_object() -> test_object
 
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
 
-
-========================================
+==================================================
 Namespace: std
-========================================
+==================================================
 
-using std;
+    MB_ICONERROR       -> 16
+    MB_ICONINFORMATION -> 64
+    MB_ICONWARNING     -> 48
+    MB_OK              -> 0
+    MB_OKCANCEL        -> 1
+    MB_RETRYCANCEL     -> 5
+    MB_YESNO           -> 4
+    MB_YESNOCANCEL     -> 3
 
-    std.MB_ICONERROR -> 16
-    std.MB_ICONINFORMATION -> 64
-    std.MB_ICONWARNING -> 48
-    std.MB_OK -> 0
-    std.MB_OKCANCEL -> 1
-    std.MB_RETRYCANCEL -> 5
-    std.MB_YESNO -> 4
-    std.MB_YESNOCANCEL -> 3
-
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.argc()
 
   - Return argc
-------------------------------------------------------------
-std.argv (
+----------------------------------------------------------------------------------------------------
+std.argv(
     index: int
 )
 
   - Return argv
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.buffer() -> std.buffer
 
   - Instantiate a new shz_std_buffer object
-------------------------------------------------------------
-std.cd (
+----------------------------------------------------------------------------------------------------
+std.cd(
     path: string - New working directory path
 )
 
   - Change current working directory
-------------------------------------------------------------
-std.count (
+----------------------------------------------------------------------------------------------------
+std.count(
     value: Container, string, or object
 )
 
   - Alias of len() - returns number of elements
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.cout()
 
   - Print to terminal directly
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.error()
 
   - Print to console output
-------------------------------------------------------------
-std.float (
+----------------------------------------------------------------------------------------------------
+std.float(
     value: any - Value to convert to float
 )
 
   - Convert input value to float
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.free()
 
   - Delete an object
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.has_admin_privilege()
 
   - Returns true if run as administrator.
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.hideconsole()
 
   - Detach and hide the console window (Windows only)
-------------------------------------------------------------
-std.import (
+----------------------------------------------------------------------------------------------------
+std.import(
     module: string - Name or path of the module to import
 )
 
   - Import an external module by name or path
-------------------------------------------------------------
-std.import_all()
-
-  - Import and initialize all function modules
-------------------------------------------------------------
-std.indentation (
+----------------------------------------------------------------------------------------------------
+std.indentation(
     text: string - Text to analyze for indentation
 )
 
   - Calculate indentation level of text, counting spaces and tabs (1 space = 1 unit, 1 tab = 4 units)
-------------------------------------------------------------
-std.input (
+----------------------------------------------------------------------------------------------------
+std.input(
     prompt: string - Optional message displayed before reading input
 )
 
   - Reads a line of text from standard input, optionally displaying a prompt message.
-------------------------------------------------------------
-std.int (
+----------------------------------------------------------------------------------------------------
+std.int(
     value: any - Value to convert to integer
 )
 
   - Convert value to integer
-------------------------------------------------------------
-std.is_function (
+----------------------------------------------------------------------------------------------------
+std.is_function(
     value: any - Value to check if it is a function
 )
 
   - Check if the provided value is a function
-------------------------------------------------------------
-std.is_json (
+----------------------------------------------------------------------------------------------------
+std.is_json(
     value: any - Value to check if it's a JSON object
 )
 
   - Check if the value is a JSON object
-------------------------------------------------------------
-std.is_list (
+----------------------------------------------------------------------------------------------------
+std.is_list(
     value: any - Value to check if it is a list
 )
 
   - Check if value is a list
-------------------------------------------------------------
-std.is_string (
+----------------------------------------------------------------------------------------------------
+std.is_string(
     value: any - Value to check if it's a string
 )
 
   - Check if value is a string type
-------------------------------------------------------------
-std.json (
+----------------------------------------------------------------------------------------------------
+std.json(
     json: string - Optional JSON string to parse into the new object
 ) -> std.json
 
   - Create a new JSON object, optionally initialized from a JSON string
-------------------------------------------------------------
-std.len (
+----------------------------------------------------------------------------------------------------
+std.len(
     value: Container, string, or object
 )
 
   - Return size/length of a list, map, array, string, or object container
-------------------------------------------------------------
-std.messagebox (
+----------------------------------------------------------------------------------------------------
+std.local_executable()
+
+  - placeholder
+----------------------------------------------------------------------------------------------------
+std.messagebox(
     text: string - Message text,
     caption: string - message box caption,
     buttons: btns
 )
 
   - Display a message box with specified text and optional caption
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.millis()
 
   - Get current time in milliseconds since epoch
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.print()
 
   - Print to console output
 
-  +-----------------------+
-  | print("Hello World"); |
-  +-----------------------+
+    +-------------------------+
+    | Example: print("Hello World"); |
+    +-------------------------+
 
-  +--------------------------------------+
-  | print("test_var = ", test_var, "."); |
-  +--------------------------------------+
+    +----------------------------------------+
+    | Example: print("test_var = ", test_var, "."); |
+    +----------------------------------------+
 
-  +-----------------------------------------+
-  | combined_str = print(var1, var2, var3); |
-  +-----------------------------------------+
+    +-------------------------------------------+
+    | Example: combined_str = print(var1, var2, var3); |
+    +-------------------------------------------+
 
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.runtime_error()
 
   - Print to console output
-------------------------------------------------------------
-std.sleep (
+----------------------------------------------------------------------------------------------------
+std.sleep(
     milliseconds: Duration to pause execution
 )
 
   - Suspend script execution for a duration (async)
-------------------------------------------------------------
-std.string (
+----------------------------------------------------------------------------------------------------
+std.string(
     value: string - Initial string value
 ) -> std.string
 
   - Create a new string, optionally initialized with a given value
-------------------------------------------------------------
-std.system (
+----------------------------------------------------------------------------------------------------
+std.system(
     command: string - Command string to be passed to the system shell
 )
 
   - Execute a shell command and return its exit code.
-------------------------------------------------------------
-std.system_path (
+----------------------------------------------------------------------------------------------------
+std.system_path(
     path: string - Path with environment variables
 )
 
   - Expand environment variables and normalize a filesystem path
-------------------------------------------------------------
-std.thread (
-    callback: function - attach to a function
+----------------------------------------------------------------------------------------------------
+std.thread(
+    placeholder
 ) -> std.thread
 
   - threading
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.timestamp()
 
   - Get current date and time in DD-MM-YYYY HH:MM:SS format
-------------------------------------------------------------
-std.vaddress (
+----------------------------------------------------------------------------------------------------
+std.vaddress(
     value: Variable to inspect
 )
 
   - Get the type of a variable
-------------------------------------------------------------
-std.vtype (
+----------------------------------------------------------------------------------------------------
+std.vtype(
     value: Variable to inspect
 )
 
   - Get the type of a variable
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.warn()
 
   - Print to console output
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 std.wd()
 
   - Get current working directory path
-------------------------------------------------------------
-std.web_get (
+----------------------------------------------------------------------------------------------------
+std.web_get(
     url: string - HTTP or HTTPS URL
 )
 
   - Perform a simple HTTP GET request and return the response body
-------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 
+
+==================================================
+Namespace: telegram
+==================================================
+
+----------------------------------------------------------------------------------------------------
+telegram.bot(
+    bot_token: string - Bot authentication token for Telegram API,
+    bot_token: string - Bot authentication token for Telegram API
+) -> telegram.bot
+
+  - Create a new Telegram API instance with a bot token
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Namespace: testmodule
+==================================================
+
+----------------------------------------------------------------------------------------------------
+testmodule.testfn()
+
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Namespace: zip
+==================================================
+
+----------------------------------------------------------------------------------------------------
+zip.file() -> zip.file
+
+  - Instantiate a new zip object
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: leveldb.iterator
+==================================================
+
+----------------------------------------------------------------------------------------------------
+key()
+
+----------------------------------------------------------------------------------------------------
+next()
+
+----------------------------------------------------------------------------------------------------
+reset()
+
+----------------------------------------------------------------------------------------------------
+seek()
+
+----------------------------------------------------------------------------------------------------
+valid()
+
+----------------------------------------------------------------------------------------------------
+value()
+
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: leveldb.kvdb
+==================================================
+
+----------------------------------------------------------------------------------------------------
+batch()
+
+  - batch([[op, key, value?], ...])
+----------------------------------------------------------------------------------------------------
+delete(
+    key: string - The key to delete from the database
+)
+
+  - Delete a key-value pair from the database
+----------------------------------------------------------------------------------------------------
+exists(
+    key: string - The key to check for existence in the database
+)
+
+  - Check if a key exists in the database
+----------------------------------------------------------------------------------------------------
+get(
+    key: string - The key to retrieve from the database
+)
+
+  - Get value from LevelDB by key with optional default return
+----------------------------------------------------------------------------------------------------
+iter() -> leveldb.iterator
+
+  - iter([mode, ...])
+----------------------------------------------------------------------------------------------------
+put()
+
+  - put(key, value)
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: shizonet.artnet_device
+==================================================
+
+    ip     -> variable
+    mac    -> variable
+    name   -> variable
+    online -> variable
+    type   -> variable
+
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: shizonet.client
+==================================================
+
+    artnet_sync -> variable
+    enabled     -> variable
+    ip          -> variable
+    mac         -> variable
+    name        -> variable
+
+----------------------------------------------------------------------------------------------------
+get(
+    command: string - Command name to send,
+    value: object - Optional payload to send (int, float, string, or JSON),
+    timeout: int - Optional timeout in milliseconds for the request
+)
+
+  - Send a GET command to a device, optionally with a payload and a timeout, and return the device's response.
+----------------------------------------------------------------------------------------------------
+get_all(
+    command: string - Command string to send.,
+    data: int/float/string/json/none - Optional payload for the get command.,
+    callback: function - Function called on each response, receives the device and the parsed response data.,
+    timeout: int - Optional timeout in milliseconds for the get operation.
+)
+
+  - Send a GET command to all connected devices, optionally with payload, callback, and timeout. Returns the number of devices that accepted the command.
+----------------------------------------------------------------------------------------------------
+on_command(
+    cmd: string - Name of the command to listen for,
+    func: function - User-provided function that receives (device, data) when the command arrives
+)
+
+  - Register a callback for the specified command. The callback is invoked with the sending device and the command data each time the command is received.
+----------------------------------------------------------------------------------------------------
+on_connect(
+    function: function - Callback to register for connection events
+)
+
+  - Register a function to be invoked for each new client connection
+----------------------------------------------------------------------------------------------------
+on_disconnect(
+    callback: function - Function to be called when disconnect occurs
+)
+
+  - Register a callback to be invoked when the server disconnects
+----------------------------------------------------------------------------------------------------
+on_get(
+    cmd: string - Name of the command to handle,
+    func: function - Function that processes the request and returns a response (device, data)
+)
+
+  - Register a handler for a request command; the callback receives the device and request data and returns a value to send as a reply.
+----------------------------------------------------------------------------------------------------
+on_stream(
+    cmd: string - Name of the command to stream,
+    func: function - Function called for each received packet (device, data)
+)
+
+  - Register a stream handler for a command; the callback is invoked with the sending device and the packet data whenever the command arrives.
+----------------------------------------------------------------------------------------------------
+send_osc(
+    ip: string - Destination IP address,
+    config: object - JSON describing OSC addresses and arguments,
+    port: int (default: 8000) - Target port for OSC messages
+)
+
+  - Send OSC message(s) described by a JSON object to the specified IP address and port
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: shizonet.device
+==================================================
+
+    ip     -> variable
+    mac    -> variable
+    name   -> variable
+    online -> variable
+    type   -> variable
+
+----------------------------------------------------------------------------------------------------
+fetch(
+    command: string - Command name to send,
+    value: object - Optional payload to send (int, float, string, or JSON),
+    timeout: int - Optional timeout in milliseconds for the request
+)
+
+  - Send a FETCH command to a device, optionally with a payload and a timeout, and return the device's response.
+----------------------------------------------------------------------------------------------------
+get(
+    command: string - Command name to send,
+    value: object - Optional payload to send (int, float, string, or JSON),
+    timeout: int - Optional timeout in milliseconds for the request
+)
+
+  - Send a GET command to a device, optionally with a payload and a timeout, and return the device's response.
+----------------------------------------------------------------------------------------------------
+get_static_buffer_count()
+
+  - Get the total number of static buffers in the device
+----------------------------------------------------------------------------------------------------
+get_static_buffer_desc(
+    identifier: int|string - Index (numeric) or name (string) of the static buffer
+)
+
+  - Retrieve description and setup of a static buffer by index or name
+----------------------------------------------------------------------------------------------------
+get_static_buffer_names()
+
+  - Retrieve names and details of static buffers in the device
+----------------------------------------------------------------------------------------------------
+send(
+    command: string - Name of the command to send,
+    data: object - Payload data to transmit (optional),
+    timeout: int - Timeout in milliseconds for the send operation (optional, default 0),
+    wait_finish: bool - If true, suspend the task until the send completes and resume with success status (optional)
+)
+
+  - Send a command with optional payload and timeout over a reliable connection, optionally waiting for the operation to finish before resuming the script task.
+----------------------------------------------------------------------------------------------------
+send_fast(
+    command: string - Name of the command to send,
+    data: object - Value to transmit (int, float, string, or JSON)
+)
+
+  - Send a command with accompanying data over an unreliable network connection. The data can be an integer, float, string, or JSON; the function selects the appropriate packet format automatically.
+----------------------------------------------------------------------------------------------------
+send_queue(
+    command: string - Name of the command to send,
+    data: object - Payload data to transmit (optional),
+    timeout: int - Timeout in milliseconds for the send operation (optional, default 0),
+    wait_finish: bool - If true, suspend execution until the send completes and resume with success status (optional, default false)
+)
+
+  - Send a command with optional data via a queued reliable connection, optionally waiting for the send to finish.
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: shizonet.server
+==================================================
+
+    artnet_sync -> variable
+    enabled     -> variable
+    ip          -> variable
+    mac         -> variable
+    name        -> variable
+
+----------------------------------------------------------------------------------------------------
+get(
+    command: string - Command name to send,
+    value: object - Optional payload to send (int, float, string, or JSON),
+    timeout: int - Optional timeout in milliseconds for the request
+)
+
+  - Send a GET command to a device, optionally with a payload and a timeout, and return the device's response.
+----------------------------------------------------------------------------------------------------
+get_all(
+    command: string - Command string to send.,
+    data: int/float/string/json/none - Optional payload for the get command.,
+    callback: function - Function called on each response, receives the device and the parsed response data.,
+    timeout: int - Optional timeout in milliseconds for the get operation.
+)
+
+  - Send a GET command to all connected devices, optionally with payload, callback, and timeout. Returns the number of devices that accepted the command.
+----------------------------------------------------------------------------------------------------
+on_command(
+    cmd: string - Name of the command to listen for,
+    func: function - User-provided function that receives (device, data) when the command arrives
+)
+
+  - Register a callback for the specified command. The callback is invoked with the sending device and the command data each time the command is received.
+----------------------------------------------------------------------------------------------------
+on_connect(
+    function: function - Callback to register for connection events
+)
+
+  - Register a function to be invoked for each new client connection
+----------------------------------------------------------------------------------------------------
+on_disconnect(
+    callback: function - Function to be called when disconnect occurs
+)
+
+  - Register a callback to be invoked when the server disconnects
+----------------------------------------------------------------------------------------------------
+on_get(
+    cmd: string - Name of the command to handle,
+    func: function - Function that processes the request and returns a response (device, data)
+)
+
+  - Register a handler for a request command; the callback receives the device and request data and returns a value to send as a reply.
+----------------------------------------------------------------------------------------------------
+on_stream(
+    cmd: string - Name of the command to stream,
+    func: function - Function called for each received packet (device, data)
+)
+
+  - Register a stream handler for a command; the callback is invoked with the sending device and the packet data whenever the command arrives.
+----------------------------------------------------------------------------------------------------
+send_osc(
+    ip: string - Destination IP address,
+    config: object - JSON describing OSC addresses and arguments,
+    port: int (default: 8000) - Target port for OSC messages
+)
+
+  - Send OSC message(s) described by a JSON object to the specified IP address and port
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: std.json
+==================================================
+
+----------------------------------------------------------------------------------------------------
+all(
+    filter: function|string
+)
+
+  - Returns true if all entries match substring or callback.
+----------------------------------------------------------------------------------------------------
+any(
+    filter: function|string
+)
+
+  - Returns true if any entry matches substring or callback.
+----------------------------------------------------------------------------------------------------
+combine_string(
+    separator: string - Separator appended after each string value during concatenation
+)
+
+  - Combine string values of the JSON object with an optional separator
+----------------------------------------------------------------------------------------------------
+compact_string()
+
+  - Convert JSON object to its compact string representation.
+----------------------------------------------------------------------------------------------------
+copy()
+
+  - Creates a deep copy of the JSON object.
+----------------------------------------------------------------------------------------------------
+erase(
+    key: string - Key or numeric index to delete from the JSON object
+)
+
+  - Removes a key or index from a JSON object and returns whether the removal succeeded.
+----------------------------------------------------------------------------------------------------
+filter(
+    filter: function|string - Callback that receives a key and value and returns true to keep the entry; if a string, only entries whose keys contain the string are included
+)
+
+  - Filter JSON object entries by callback or key substring
+----------------------------------------------------------------------------------------------------
+filter_key(
+    filter: string - Substring or list of substrings used to match keys.
+)
+
+  - Filter JSON object's keys by matching substrings and return the filtered JSON.
+----------------------------------------------------------------------------------------------------
+filter_value(
+    filter: string - Substring to search for within JSON string values
+)
+
+  - Return a new JSON object containing only string members whose values include a specific substring
+----------------------------------------------------------------------------------------------------
+foreach(
+    callback: function - Callback function invoked with the entry key and value and should return bool (true to include the entry in a new JSON)
+)
+
+  - Iterates over each key/value pair in a JSON object and runs a callback for each entry
+----------------------------------------------------------------------------------------------------
+from_string(
+    json: string - JSON string to parse into the object
+)
+
+  - Parse JSON from string and populate object
+----------------------------------------------------------------------------------------------------
+has(
+    key: string - Key to check in the JSON object
+)
+
+  - Checks if the JSON object contains a given key.
+----------------------------------------------------------------------------------------------------
+key(
+    index: int - Zero-based index of the key; negative values count from the end
+)
+
+  - Return the key at a specified index from a JSON object
+----------------------------------------------------------------------------------------------------
+map(
+    callback: function - Called with (key, value); return becomes new value
+)
+
+  - Return a new JSON where each value is replaced by the result of the callback.
+----------------------------------------------------------------------------------------------------
+merge(
+    other: json - Object to merge
+overwrite: bool - Replace existing keys (default true)
+)
+
+  - Merge another JSON object into this one. If overwrite is true, existing keys will be replaced.
+----------------------------------------------------------------------------------------------------
+push(
+    value: object - Value to insert into the JSON container
+)
+
+  - Adds the supplied value to the given JSON container and returns the modified object
+----------------------------------------------------------------------------------------------------
+push_back(
+    value: object - Value to insert into the JSON container
+)
+
+  - Adds the supplied value to the given JSON container and returns the modified object
+----------------------------------------------------------------------------------------------------
+reduce(
+    callback: function
+initial: any - Starting accumulator value
+)
+
+  - Reduce object entries into a single value by repeatedly applying callback(acc, key, value).
+----------------------------------------------------------------------------------------------------
+remove(
+    key: string - Key or numeric index to delete from the JSON object
+)
+
+  - Removes a key or index from a JSON object and returns whether the removal succeeded.
+----------------------------------------------------------------------------------------------------
+rsort()
+
+  - Sorts a JSON object’s entries by key in descending order, keeping keyless entries at the end
+----------------------------------------------------------------------------------------------------
+size()
+
+  - Returns the number of elements in a JSON array or the number of keys in a JSON object.
+----------------------------------------------------------------------------------------------------
+sort()
+
+  - Sorts JSON entries by their keys in a case-insensitive manner, keeping only keyed entries in the sorted portion.
+----------------------------------------------------------------------------------------------------
+sort_reverse()
+
+  - Sorts a JSON object’s entries by key in descending order, keeping keyless entries at the end
+----------------------------------------------------------------------------------------------------
+string(
+    compact: int - flag to produce compact string (0) or pretty-printed (non‑zero)
+)
+
+  - Convert JSON object to its string representation, optionally using compact output.
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: std.string
+==================================================
+
+----------------------------------------------------------------------------------------------------
+center(
+    width: int - Target width for the centered string
+)
+
+  - Center the string within specified width using padding characters
+----------------------------------------------------------------------------------------------------
+contains(
+    sub: string - Substring to search for
+)
+
+  - Check if string contains substring
+----------------------------------------------------------------------------------------------------
+empty()
+
+  - Check if string is empty and return 1 if true, 0 otherwise
+----------------------------------------------------------------------------------------------------
+ends(
+    suffix: string - The suffix to check if the string ends with
+)
+
+  - Check if string ends with specified suffix
+----------------------------------------------------------------------------------------------------
+extract(
+    left: string - Left delimiter to search for
+)
+
+  - Extract substring between specified left and right delimiters
+----------------------------------------------------------------------------------------------------
+find(
+    substring: string - Substring to search for
+)
+
+  - Find the position of a substring within the string
+----------------------------------------------------------------------------------------------------
+find_first_not_of(
+    chars: string - Set of characters to exclude from search
+)
+
+  - Find first character not in specified set
+----------------------------------------------------------------------------------------------------
+find_first_of(
+    chars: string - Set of characters to search for
+)
+
+  - Find first occurrence of any character from the given set within the string
+----------------------------------------------------------------------------------------------------
+find_last_not_of(
+    chars: string - Set of characters to exclude from search
+)
+
+  - Find the last character in the string that is not in the specified set of characters
+----------------------------------------------------------------------------------------------------
+find_last_of(
+    chars: string - Set of characters to search for
+)
+
+  - Finds the last occurrence of any character from the given set in the string
+----------------------------------------------------------------------------------------------------
+length()
+
+  - Retrieve the length of the string
+----------------------------------------------------------------------------------------------------
+ljust(
+    width: int - Target width for the string
+)
+
+  - Left-justify the string by padding it with the specified fill character to reach the given width
+----------------------------------------------------------------------------------------------------
+lowercase()
+
+  - Convert string to lowercase
+----------------------------------------------------------------------------------------------------
+lowercase_inplace()
+
+  - Convert string to lowercase
+----------------------------------------------------------------------------------------------------
+ltrim()
+
+  - Remove leading whitespace
+----------------------------------------------------------------------------------------------------
+ltrim_inplace()
+
+  - Remove leading whitespace
+----------------------------------------------------------------------------------------------------
+regex_escape()
+
+  - Escape regex metacharacters in string
+----------------------------------------------------------------------------------------------------
+regex_findall(
+    pattern: string - Regular expression pattern to search for
+)
+
+  - Find all matches of a regex pattern in the string
+----------------------------------------------------------------------------------------------------
+regex_match(
+    pattern: string - Regular expression pattern to match against
+)
+
+  - Check if the string matches a regular expression pattern
+----------------------------------------------------------------------------------------------------
+regex_replace(
+    pat: string - Regular expression pattern to search for
+)
+
+  - Replace all occurrences of a regular expression pattern in the string
+----------------------------------------------------------------------------------------------------
+regex_replace_inplace(
+    pattern: string - Regular expression pattern to search for
+)
+
+  - Replace all occurrences of a regular expression pattern in the string with a replacement text
+----------------------------------------------------------------------------------------------------
+regex_search(
+    pattern: string - Regular expression pattern to search for
+)
+
+  - Search for a regular expression pattern in the string and return the starting position of the match
+----------------------------------------------------------------------------------------------------
+regex_split(
+    pattern: string - Regular expression pattern to split the string
+)
+
+  - Split string using regular expression pattern and return results as JSON array
+----------------------------------------------------------------------------------------------------
+removechars(
+    chars: string - Characters to remove from the string
+)
+
+  - Remove all occurrences of specified characters from the string
+----------------------------------------------------------------------------------------------------
+removecharsexcept(
+    chars: string - Characters to keep in the string
+)
+
+  - Remove all characters from the string except those specified in the parameter
+----------------------------------------------------------------------------------------------------
+removeprefix(
+    prefix: string - The prefix to remove from the string
+)
+
+  - Remove a prefix from the string if it starts with that prefix
+----------------------------------------------------------------------------------------------------
+removesuffix(
+    suffix: string - Suffix to remove from the end of the string
+)
+
+  - Remove specified suffix from string if it exists at the end
+----------------------------------------------------------------------------------------------------
+replace(
+    search: string - Substring to search for
+)
+
+  - Replace all occurrences of a substring with another substring
+----------------------------------------------------------------------------------------------------
+replace_first(
+    search: string - Substring to search for and replace
+)
+
+  - Replaces the first occurrence of a substring with another substring
+----------------------------------------------------------------------------------------------------
+replace_inplace(
+    search: string - Substring to search for and replace
+)
+
+  - Replace all occurrences of a substring within the string in-place
+----------------------------------------------------------------------------------------------------
+reverse()
+
+  - Return a reversed copy of the string
+----------------------------------------------------------------------------------------------------
+reverse_inplace()
+
+  - Reverse the string in-place
+----------------------------------------------------------------------------------------------------
+rfind(
+    sub: string - Substring to search for
+)
+
+  - Find last occurrence of substring in string, searching backwards
+----------------------------------------------------------------------------------------------------
+rjust(
+    width: int - Target width for the right-justified string
+)
+
+  - Right-justify string by padding with specified character
+----------------------------------------------------------------------------------------------------
+rtrim()
+
+  - Remove trailing whitespace
+----------------------------------------------------------------------------------------------------
+rtrim_inplace()
+
+  - Remove trailing whitespace
+----------------------------------------------------------------------------------------------------
+size()
+
+  - Retrieve the size of the string
+----------------------------------------------------------------------------------------------------
+split(
+    delim: string - Delimiter to split the string by
+)
+
+  - Split string into parts using specified delimiter
+----------------------------------------------------------------------------------------------------
+starts(
+    prefix: string - Prefix to check if the string starts with
+)
+
+  - Check if string starts with specified prefix
+----------------------------------------------------------------------------------------------------
+substr(
+    start: int - Starting index for the substring (supports negative indices)
+)
+
+  - Extracts a substring from the original string with support for Python-style negative indices
+----------------------------------------------------------------------------------------------------
+substr_inplace(
+    start: int - Starting index of the substring (supports negative indices for Python-style slicing)
+)
+
+  - Extracts a substring from the string and modifies the original string in-place
+----------------------------------------------------------------------------------------------------
+trim()
+
+  - Remove leading and trailing whitespace
+----------------------------------------------------------------------------------------------------
+trim_inplace()
+
+  - Remove leading and trailing whitespace
+----------------------------------------------------------------------------------------------------
+uppercase()
+
+  - Convert string to uppercase
+----------------------------------------------------------------------------------------------------
+uppercase_inplace()
+
+  - Convert string to uppercase
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: std.thread
+==================================================
+
+----------------------------------------------------------------------------------------------------
+join()
+
+  - placeholder
+----------------------------------------------------------------------------------------------------
+run()
+
+  - placeholder
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: telegram.bot
+==================================================
+
+    on_any_message -> variable
+
+----------------------------------------------------------------------------------------------------
+send()
+
+  - placeholder
+----------------------------------------------------------------------------------------------------
+send_choice()
+
+  - placeholder
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: test_object
+==================================================
+
+    test_member -> variable
+    testint     -> variable
+
+----------------------------------------------------------------------------------------------------
+call_cb()
+
+  - test fn
+----------------------------------------------------------------------------------------------------
+test_cb()
+
+  - test fn
+----------------------------------------------------------------------------------------------------
+test_fn()
+
+  - test fn
+----------------------------------------------------------------------------------------------------
+test_thread()
+
+  - test fn
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: zip.file
+==================================================
+
+----------------------------------------------------------------------------------------------------
+add(
+    path: string - The path (name) of the file within the zip archive
+)
+
+  - Add a file to the zip archive with specified path and content
+----------------------------------------------------------------------------------------------------
+add_file(
+    path: string - Path within the zip archive for the new file
+)
+
+  - Adds a file to the zip archive with specified content
+----------------------------------------------------------------------------------------------------
+save(
+    path: string - File path to save the zip file
+)
+
+  - Save zip file to specified path
+----------------------------------------------------------------------------------------------------
+
+internal type already exists: telegram.bot
+internal type already exists: zip.file
