@@ -20,6 +20,18 @@ SOURCE_SUPPORT_DIR="$SOURCE_DATA/shizotech"
 TARGET_BIN="$INSTALL_DIR/$APP_NAME"
 TARGET_SUPPORT_DIR="$INSTALL_DIR/shizotech"
 
+# Determine system architecture
+ARCH="$(uname -m)"
+
+# Supported architectures
+SUPPORTED_ARCH="x86_64"
+
+if [ "$ARCH" != "$SUPPORTED_ARCH" ]; then
+    echo "Error: Unsupported architecture '$ARCH'."
+    echo "This installer only supports $SUPPORTED_ARCH."
+    exit 1
+fi
+
 install_app() {
     echo "Installing $APP_NAME for user: $USER"
 
