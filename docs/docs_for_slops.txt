@@ -36,6 +36,13 @@ fileio.copy(
 
   - Copy file or directory
 ----------------------------------------------------------------------------------------------------
+fileio.copy_if_changed(
+    src: string - Source path,
+    dest: string - Destination path
+)
+
+  - Copy file or directory if source is newer than destination
+----------------------------------------------------------------------------------------------------
 fileio.dirs(
     path: string - Directory to list,
     recursive: bool (default: true) - true = include subfolders; false = top-level only
@@ -590,7 +597,8 @@ std.system_path(
   - Expand environment variables and normalize a filesystem path
 ----------------------------------------------------------------------------------------------------
 std.thread(
-    placeholder
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread
 ) -> std.thread
 
   - threading
@@ -1340,11 +1348,13 @@ Object: std.thread
 ----------------------------------------------------------------------------------------------------
 join()
 
-  - placeholder
+  - Join active tasks and wait for their completion
 ----------------------------------------------------------------------------------------------------
-run()
+run(
+    ...: any - Variable arguments to pass to the callback function
+)
 
-  - placeholder
+  - Execute callback function asynchronously as a task
 ----------------------------------------------------------------------------------------------------
 
 
@@ -1355,13 +1365,19 @@ Object: telegram.bot
     on_any_message -> variable
 
 ----------------------------------------------------------------------------------------------------
-send()
+send(
+    chatdata: object - Chat information containing chatid and threadid,
+    options: object (optional) - Additional message options like disable_notification and protect_content
+)
 
-  - placeholder
+  - Send a message through Telegram with optional buttons and options
 ----------------------------------------------------------------------------------------------------
-send_choice()
+send_choice(
+    chatdata: object - Contains chat ID and thread ID for the message destination,
+    options: object (optional) - Message options like disable_notification and protect_content
+)
 
-  - placeholder
+  - Send a message with inline keyboard buttons to a Telegram chat
 ----------------------------------------------------------------------------------------------------
 
 
