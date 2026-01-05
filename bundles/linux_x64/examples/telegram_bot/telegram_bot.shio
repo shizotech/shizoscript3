@@ -1,0 +1,14 @@
+
+import tgbot;
+
+bot = telegram.bot(""); //Enter your bot-token
+
+bot.on_any_message = [bot](chatdata)
+{
+	std.print(chatdata);
+	bot.send(chatdata, "Echo: " + chatdata.text); 
+};
+
+std.print("Bot running...");
+
+std.input();
