@@ -2,6 +2,8 @@
 
 ShizoScript is designed to be both beginner-friendly and capable of handling production-ready, complex workflows. It combines simplicity for small scripts with advanced features like classes, objects, and namespaces for larger projects.
 
+**To view / edit the .shio example files, Notepad++ with C++ syntax highlighting enabled or any other code editor with C++ syntax highlighting are recommended.**
+
 ---
 
 ## Table of Contents
@@ -256,6 +258,28 @@ else {
     std.print("Keep trying");
 }
 ```
+
+If you dont like curly brackets, or find them cumbersome you can also use indentation:
+
+```javascript
+if(score > 10)
+    std.print("Winner");
+	std.print("With a score of:");
+	std.print(score);
+else(score > 5) 
+    std.print("Almost there");
+	if(fails < 5)
+		std.print("Just a few more...");
+	else
+		std.print("Maybe give up?");
+else
+    std.print("Keep trying");
+
+std.print("This is executed after the conditionals");
+```
+
+Everything that is indented below an "if" or "else" will belong to that statement.
+In the future, this concept will be adapted to everything else that uses curly brackets.
 
 ### Loops
 
