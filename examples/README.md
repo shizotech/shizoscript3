@@ -73,7 +73,7 @@ alias = &main_counter; // 'alias' references 'main_counter'
 *alias = 10;           // Updates 'main_counter' through 'alias'
 ```
 
-- Only single-level references are allowed; references to references are forbidden.  
+- Only single-level references are allowed; references to references are not strictly forbidden, but you will have a hard time managing those and are therefore discouraged.  
 - JSON and objects are auto-dereferenced:
 
 ```javascript
@@ -200,8 +200,10 @@ class Player {
 	// if you dont write 'this.member' 
 	// shizoscript will append 'this' automatically internally.
 	
-	print_name() {
+	print() {
 		std.print(this.name); 
+		std.print(score); //Also works -> becomes this.score
+		//std.print(this.non_exist); //This would raise a syntax compile error.
 	}
 	
     add_score(points) {
@@ -219,6 +221,7 @@ std.print(alice.score); // Prints 15
 ```
 
 > **Note:** Classes, like objects, are reference-counted and passed by reference.
+> **Note:** Operator overloading is not yet implemented but will be soon, after that inheritance, function overrides and all object oriented goodies.
 
 ---
 
@@ -267,7 +270,7 @@ for(i = 0; i < 10; i++) { // Loop 10 times
 But you can use 'for' instead of 'while' directly.
 
 ```javascript
-for(condition) { // Loop 10 times
+for(condition) { // Loop until condition becomes false
     std.print("Looping");
 	std.sleep(100);
 }
@@ -275,9 +278,60 @@ for(condition) { // Loop 10 times
 
 ## More Complex Concepts
 
-Shizoscript can run multiple tasks concurrently.
-Threading is supported via 'std.thread'
+ShizoScript supports more advanced runtime features intended for larger or long-running applications. These features are optional and do not complicate simple scripts unless explicitly used.
 
-More documentation is about to be added...
+### Concurrency and Threading
+
+ShizoScript provides explicit threading via `std.thread`. Threads are created by binding a function to a thread object and started manually.
+
+```javascript
+task(name, delay) {
+    for(i = 0; i < 5; i++) {
+        std.print(name, i);
+        std.sleep(delay);
+    }
+}
+
+t1 = std.thread(task);
+t2 = std.thread(task);
+
+t1.run("Task A", 100);
+t2.run("Task B", 200);
+
+t1.join();
+t2.join();
+```
+
+Key properties of the threading model:
+
+- Threads do **not** start automatically upon creation  
+- Arguments are passed to the thread function via `run(...)`  
+- `join()` blocks until the thread finishes execution  
+- Threads share memory; synchronization is the programmer’s responsibility.
+
+Not so important but technical insight:
+
+- There is no "CPU" concurrency since a shizoscript program with multiple tasks is still only a single thread, but you still have to take care of synchronization.
+- Shizoscript uses "real" threading internally where it makes sense, to speed up execution, this process might temporarily stall a 'task'.
+
+
+### Progressive Code Strictness (Conceptual)
+
+One of ShizoScript’s core design goals is to allow code to evolve naturally:
+
+- Quick, loosely written scripts for experimentation  
+- Gradual refinement into stricter, production-ready code  
+- Optional enforcement of typing, structure, and error handling  
+
+While not all of these features are fully implemented yet, the language is designed to support incremental tightening of constraints rather than forcing a single programming style.
+
+### Status
+
+Many advanced features are still evolving. This documentation reflects both current behavior and intended direction. As ShizoScript matures, this section will expand with additional details on:
+
+- Error handling strategies  
+- Type enforcement modes  
+- Tooling and code transformation support  
+- C++ interoperability guarantees  
 
 ---

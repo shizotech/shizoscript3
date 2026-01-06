@@ -1,0 +1,13 @@
+main_counter = 5;
+alias = &main_counter;
+
+*alias = 10;
+std.print(main_counter); // 10
+
+profile = ["name"="Bob", "level"=1];
+ref_profile = &profile;
+
+ref_profile.level = 2;
+std.print(profile.level); // 2
+
+std.input(); //Wait for user input
