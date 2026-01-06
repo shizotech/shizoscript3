@@ -239,6 +239,23 @@ result = score > 10 ? "Winner" : "Keep trying";
 level = player.level ?? 1; // If 'player.level' is undefined, defaults to 1
 ```
 
+Strings can be defined in the classical way like:
+
+```javascript
+str = "text";
+```
+
+or over multiple lines in a python like manner:
+
+```javascript
+multiline_str = 
+\'''
+This is a string
+over multiple lines
+and beyond
+\'''
+```
+
 ---
 
 ## Control Flow
