@@ -102,9 +102,11 @@ class llmclient
 	}
 }
 
-llm_single_task(sys_prompt, prompt)
+llm_single_task(sys_prompt, prompt, options = [])
 {
 	tmp_client = llmclient(sys_prompt);
+	if(options.has("model"))
+		tmp_client.model = options.model;
 	tmp_client.max_tokens_stream = 128000;
 	return tmp_client.text(prompt);
 }
