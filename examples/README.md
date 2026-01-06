@@ -53,12 +53,12 @@ std.print(user);      // Prints the JSON object
 Variables can also hold external objects:
 
 ```javascript
-bot = std.telegram_bot(); // Assuming telegram_bot() exists
-bot.send_message("Hello, world!"); // Call a function of the object
+test = std.test_object(); // Assuming test_object() exists
+test.some_function("Hello, world!"); // Call a function of the object
 ```
 
 > **Note:**  
-> - JSON ans string variables are copied by value.  
+> - JSON and string variables are copied by value.  
 > - External objects are passed by reference and are reference-counted.
 
 ---
