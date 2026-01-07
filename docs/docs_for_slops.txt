@@ -21,6 +21,8 @@
   - Object Type: std.thread
   - Object Type: telegram.bot
   - Object Type: test_object
+  - Object Type: webserver.http_server
+  - Object Type: webserver.https_server
   - Object Type: zip.file
 
 
@@ -665,8 +667,13 @@ Namespace: webserver
 ==================================================
 
 ----------------------------------------------------------------------------------------------------
-webserver.testfn()
+webserver.http_server() -> webserver.http_server
 
+  - Class representing an HTTP server
+----------------------------------------------------------------------------------------------------
+webserver.https_server() -> webserver.https_server
+
+  - Class representing an HTTPS server
 ----------------------------------------------------------------------------------------------------
 
 
@@ -1419,6 +1426,86 @@ test_thread()
 
 
 ==================================================
+Object: webserver.http_server
+==================================================
+
+    port    -> variable
+    running -> variable
+
+----------------------------------------------------------------------------------------------------
+init(
+    port: int - Server port number
+)
+
+  - Initialize HTTP server with port
+----------------------------------------------------------------------------------------------------
+route(
+    method: string - HTTP method (GET, POST, PUT, DELETE, *),
+    path: string - URL path pattern (regex),
+    callback: function - Handler function that receives request object
+)
+
+  - Register a route handler for HTTP requests
+----------------------------------------------------------------------------------------------------
+route_static(
+    url_pattern: string - URL pattern (e.g. '/static' or '/files'),
+    file_or_directory: string - Path to file or directory to serve (will be protected against directory traversal)
+)
+
+  - Register a static file route
+----------------------------------------------------------------------------------------------------
+start()
+
+  - Start the HTTP server
+----------------------------------------------------------------------------------------------------
+stop()
+
+  - Stop the HTTP server
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
+Object: webserver.https_server
+==================================================
+
+    port    -> variable
+    running -> variable
+
+----------------------------------------------------------------------------------------------------
+init(
+    port: int - Server port number,
+    cert_file: string - Path to certificate file,
+    key_file: string - Path to private key file
+)
+
+  - Initialize HTTPS server with port and certificate files
+----------------------------------------------------------------------------------------------------
+route(
+    method: string - HTTP method (GET, POST, PUT, DELETE, *),
+    path: string - URL path pattern (regex),
+    callback: function - Handler function that receives request object
+)
+
+  - Register a route handler for HTTP requests
+----------------------------------------------------------------------------------------------------
+route_static(
+    url_pattern: string - URL pattern (e.g. '/static' or '/files'),
+    file_or_directory: string - Path to file or directory to serve (will be protected against directory traversal)
+)
+
+  - Register a static file route
+----------------------------------------------------------------------------------------------------
+start()
+
+  - Start the HTTPS server
+----------------------------------------------------------------------------------------------------
+stop()
+
+  - Stop the HTTPS server
+----------------------------------------------------------------------------------------------------
+
+
+==================================================
 Object: zip.file
 ==================================================
 
@@ -1444,3 +1531,5 @@ save(
 
 internal type already exists: telegram.bot
 internal type already exists: zip.file
+internal type already exists: webserver.http_server
+internal type already exists: webserver.https_server
