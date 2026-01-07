@@ -1,0 +1,26 @@
+
+import webserver;
+
+svr = webserver.http_server(8080);
+
+svr.route("GET", "^/$", [](request){
+
+	std.print(request);
+
+    return 
+	[
+        status_code = 200,
+        body = "Hello and welcome to my page!",
+		//Optional: headers
+        headers = [
+            "Content-Type" = "text/plain"
+		]
+    ];
+});
+
+svr.route_static("/static", "./static");
+
+svr.start();
+
+std.print("Server running...");
+std.input();
