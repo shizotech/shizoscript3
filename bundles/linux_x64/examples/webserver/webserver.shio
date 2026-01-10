@@ -2,6 +2,8 @@
 import webserver;
 
 svr = webserver.http_server(8080);
+//or
+//svr = webserver.https_server(8080, fileio.read_string("cert"), fileio.read_string("cert"));
 
 svr.route("GET", "^/$", [](request){
 
@@ -18,6 +20,7 @@ svr.route("GET", "^/$", [](request){
     ];
 });
 
+//This can serve single files or directories
 svr.route_static("/static", "./static");
 
 svr.start();
