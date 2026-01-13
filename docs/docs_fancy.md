@@ -1,516 +1,527 @@
-# ShizoScript Documentation
 
-> **ShizoScript** is a lightweight, embeddable scripting language designed for rapid prototyping and automation.  
-> - **No explicit typing** – the language infers types at runtime.  
-> - **Source files** have the `.shio` extension; compiled binaries are `.shx`.  
-> - The `using` keyword imports all names from a namespace into the global scope, allowing you to write `print()` instead of `std.print()`.  
-> - The syntax is a hybrid of C‑style braces and Python‑style indentation for blocks.  
-> - Functions, classes, and namespaces are defined with the `namespace`, `class`, and `function` keywords.  
-> - Comments are `//` for single line and `/* … */` for block comments.
+Shizoscript is a lightweight, dynamically‑typed scripting language designed for rapid development of system‑level utilities, network services, and automation scripts.  
+Key features:
 
-> **Example**  
-> ```sh
-> using std;
-> 
-> std.print("Hello, world!");
-> 
-> class Greeter {
->     greet(name) {
->         std.print("Hello, " + name + "!");
->     }
-> }
-> 
-> g = Greeter();
-> g.greet("ShizoScript");
-> ```
+| Feature | Description |
+|---------|-------------|
+| **No explicit typing** | Variables are inferred at runtime; type hints are optional. |
+| **File extensions** | `.shio` – source files, `.shx` – compiled binaries. |
+| **Namespace imports** | `using std;` brings all identifiers from `std` into the global scope. |
+| **Rich standard library** | Built‑in support for file I/O, networking, math, JSON, threading, and more. |
+| **Extensible modules** | Third‑party modules can be imported via `std.import`. |
+| **Cross‑platform** | Works on Windows, Linux; some Windows‑only APIs are guarded by runtime checks. |
+
+> **Tip** – Use `std.print` (or just `print` after `using std;`) for console output.  
+> Use `std.cout` for raw terminal output that bypasses buffering.
+
+---
+
+## Quick Start
+
+```shio
+# hello.shio
+
+std.print("Hello, Shizoscript!");
+```
 
 ---
 
 ## Table of Contents
 
-- [Namespaces](#namespaces)
-  - [fileio](#fileio)
-  - [leveldb](#leveldb)
-  - [math](#math)
-  - [shizonet](#shizonet)
-  - [shzdocs](#shzdocs)
-  - [shztests](#shztests)
-  - [std](#std)
-  - [telegram](#telegram)
-  - [testmodule](#testmodule)
-  - [zip](#zip)
-- [Object Types](#object-types)
-  - [leveldb.iterator](#leveldbiterator)
-  - [leveldb.kvdb](#leveldbkvdb)
-  - [shizonet.artnet_device](#shizonetartnet_device)
-  - [shizonet.client](#shizonetclient)
-  - [shizonet.device](#shizonetdevice)
-  - [shizonet.server](#shizonetserver)
-  - [std.json](#stdjson)
-  - [std.string](#stdstring)
-  - [std.thread](#stdthread)
-  - [telegram.bot](#telegrambot)
-  - [test_object](#test_object)
-  - [zip.file](#zipfile)
+1. [Namespace: fileio](#namespace-fileio)
+2. [Namespace: leveldb](#namespace-leveldb)
+3. [Namespace: math](#namespace-math)
+4. [Namespace: shizonet](#namespace-shizonet)
+5. [Namespace: shzdocs](#namespace-shzdocs)
+6. [Namespace: shztests](#namespace-shztests)
+7. [Namespace: std](#namespace-std)
+8. [Namespace: telegram](#namespace-telegram)
+9. [Namespace: testmodule](#namespace-testmodule)
+10. [Namespace: webserver](#namespace-webserver)
+11. [Namespace: zip](#namespace-zip)
+12. [Object: leveldb.iterator](#object-leveldbiterator)
+13. [Object: leveldb.kvdb](#object-leveldbkvdb)
+14. [Object: shizonet.artnet_device](#object-shizonetartnet_device)
+15. [Object: shizonet.client](#object-shizonetclient)
+16. [Object: shizonet.device](#object-shizonetdevice)
+17. [Object: shizonet.server](#object-shizonetserver)
+18. [Object: std.json](#object-stdjson)
+19. [Object: std.string](#object-stdstring)
+20. [Object: std.thread](#object-stdthread)
+21. [Object: telegram.bot](#object-telegrambot)
+22. [Object: test_object](#object-test_object)
+23. [Object: webserver.http_server](#object-webserverhttp_server)
+24. [Object: webserver.https_server](#object-webserverhttps_server)
+25. [Object: zip.file](#object-zipfile)
 
 ---
 
-## Namespaces
+## Namespace: fileio
 
-### fileio
-
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `fileio.copy` | `copy(src: string, dest: string)` | Copy a file or directory. Creates destination folders if needed. |
-| `fileio.copy_if_changed` | `copy_if_changed(src: string, dest: string)` | Copy only if the source is newer than the destination. |
-| `fileio.dirs` | `dirs(path: string, recursive: bool = true)` | List directories inside `path`. `recursive` includes subfolders. |
-| `fileio.exists` | `exists(path: string)` | Check if a path exists (file or directory). |
-| `fileio.file_dir` | `file_dir(path: string)` | Return the directory component of a file path. |
-| `fileio.file_name` | `file_name(path: string)` | Return the filename (with extension) from a path. |
-| `fileio.files` | `files(path: string, recursive: bool = true)` | List files inside `path`. `recursive` includes subfolders. |
-| `fileio.is_directory` | `is_directory(path: string)` | Return `true` if `path` is a directory. |
-| `fileio.is_file` | `is_file(path: string)` | Return `true` if `path` is a regular file. |
-| `fileio.mkdir` | `mkdir(path: string)` | Create a directory (including parents). |
-| `fileio.move` | `move(src: string, dest: string)` | Move a file or directory. Uses rename or copy/delete fallback. |
-| `fileio.pure_name` | `pure_name(path: string)` | Return the filename without extension. |
-| `fileio.read_file` | `read_file(path: string)` | Read a file into a binary buffer. |
-| `fileio.read_json` | `read_json(path: string)` | Read a JSON file and return the parsed object. |
-| `fileio.read_string` | `read_string(path: string)` | Read a text file into a string. |
-| `fileio.read_text` | `read_text(path: string)` | Alias for `read_string`. |
-| `fileio.remove` | `remove(path: string | list)` | Delete files or directories recursively. |
-| `fileio.rename` | `rename(src: string, dest: string)` | Rename or move a file/directory. |
-| `fileio.write_file` | `write_file(path: string, data: object)` | Write binary data to a file. Returns `true` on success. |
-| `fileio.write_json` | `write_json(path: string, data: string)` | Write a JSON string to a file. Do not modify the JSON in another thread. |
-| `fileio.write_string` | `write_string(path: string, data: string)` | Write a text string to a file. |
-| `fileio.write_text` | `write_text(path: string, data: string)` | Alias for `write_string`. |
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **copy(src, dest)** | `src: string`, `dest: string` | Copies a file or directory. Creates destination folders if missing. |
+| **copy_if_changed(src, dest)** | `src: string`, `dest: string` | Copies only if `src` is newer than `dest`. |
+| **dirs(path, recursive = true)** | `path: string`, `recursive: bool` | Returns a list of sub‑directories. |
+| **exists(path)** | `path: string` | Checks whether a path exists. |
+| **file_dir(path)** | `path: string` | Extracts the directory component of a file path. |
+| **file_name(path)** | `path: string` | Extracts the file name with extension. |
+| **files(path, recursive = true)** | `path: string`, `recursive: bool` | Returns a list of files. |
+| **is_directory(path)** | `path: string` | Alias for `exists(path)` + type check. |
+| **is_file(path)** | `path: string` | Alias for `exists(path)` + type check. |
+| **mkdir()** | – | *Placeholder – create directory (not yet implemented).* |
+| **move(src, dest)** | `src: string`, `dest: string` | Moves a file or directory, using rename or copy/delete fallback. |
+| **pure_name(path)** | `path: string` | File name without extension. |
+| **read_file(path)** | `path: string` | Reads binary data into a buffer. |
+| **read_json(path)** | `path: string` | Parses JSON file into a `std.json` object. |
+| **read_string(path)** | `path: string` | Reads text file into a string. |
+| **read_text(path)** | `path: string` | Alias for `read_string`. |
+| **remove(path|list)** | `path: string | list` | Recursively deletes files or directories. |
+| **rename(src, dest)** | `src: string`, `dest: string` | Renames a file or directory. |
+| **write_file(path, data)** | `path: string`, `data: object` | Serialises an object to binary and writes it. |
+| **write_json(path, data)** | `path: string`, `data: string` | Writes a JSON string to a file (must be immutable). |
+| **write_string(path, data)** | `path: string`, `data: string` | Writes a text string to a file. |
+| **write_text(path, data)** | `path: string`, `data: string` | Alias for `write_string`. |
 
 ---
 
-### leveldb
+## Namespace: leveldb
 
-| Constant / Variable | Value | Description |
-|---------------------|-------|-------------|
+### Class: `leveldb.kvdb`
 
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `leveldb.kvdb` | `kvdb(path: string)` | Create a LevelDB database object. If `path` is provided, it opens that database. |
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **batch(ops)** | `ops: list of [op, key, value?]` | Performs a batch of `put`/`delete` operations atomically. |
+| **delete(key)** | `key: string` | Removes a key‑value pair. |
+| **exists(key)** | `key: string` | Returns `true` if the key exists. |
+| **get(key)** | `key: string` | Retrieves the value for a key. |
+| **iter(mode, ...)** | `mode: string`, `...` | Returns a `leveldb.iterator`. |
+| **put(key, value)** | `key: string`, `value: object` | Stores a key‑value pair. |
 
 ---
 
-### math
+## Namespace: math
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `math.PI` | `3.141593` | Pi constant. |
+| PI | 3.141593 | Value of π |
 
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `math.abs` | `abs(value: float)` | Return the absolute value. |
-| `math.acos` | `acos(x: float)` | Inverse cosine. |
-| `math.asin` | `asin(x: float)` | Inverse sine. |
-| `math.atan` | `atan(x: float)` | Inverse tangent. |
-| `math.atan2` | `atan2(y: float, x: float)` | Arctangent of `y/x`. |
-| `math.cbrt` | `cbrt(x: float)` | Cube root. |
-| `math.ceil` | `ceil(value: float)` | Smallest integer ≥ value. |
-| `math.clamp` | `clamp(x: float, min: float, max: float)` | Clamp `x` between `min` and `max`. |
-| `math.cos` | `cos(x: float)` | Cosine. |
-| `math.exp` | `exp(x: float)` | Exponential e^x. |
-| `math.floor` | `floor(value: float)` | Largest integer ≤ value. |
-| `math.fract` | `fract(x: float)` | Fractional part of `x`. |
-| `math.lerp` | `lerp(a: float, b: float, t: float)` | Linear interpolation. |
-| `math.log` | `log(x: float)` | Natural logarithm. |
-| `math.log10` | `log10(x: float)` | Base‑10 logarithm. |
-| `math.log2` | `log2(x: float)` | Base‑2 logarithm. |
-| `math.max` | `max(values: float...)` | Maximum of values. |
-| `math.min` | `min(values: float...)` | Minimum of values. |
-| `math.pow` | `pow(base: float, exp: float)` | Power function. |
-| `math.rand` | `rand()` | Random float in [0, 1]. |
-| `math.round` | `round(value: float)` | Nearest integer. |
-| `math.sign` | `sign(x: float)` | Returns +1, 0, or –1. |
-| `math.sin` | `sin(x: float)` | Sine. |
-| `math.smoothstep` | `smoothstep(edge0: float, edge1: float, x: float)` | Smoothstep interpolation. |
-| `math.sqrt` | `sqrt(x: float)` | Square root. |
-| `math.tan` | `tan(x: float)` | Tangent. |
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **abs(value)** | `value: float` | Absolute value. |
+| **acos(x)** | `x: float` | Inverse cosine. |
+| **asin(x)** | `x: float` | Inverse sine. |
+| **atan(x)** | `x: float` | Inverse tangent. |
+| **atan2(y, x)** | `y: float`, `x: float` | Arctangent with quadrant. |
+| **cbrt(x)** | `x: float` | Cube root. |
+| **ceil(value)** | `value: float` | Smallest integer ≥ value. |
+| **clamp(x, min, max)** | `x: float`, `min: float`, `max: float` | Clamp between bounds. |
+| **cos(x)** | `x: float` | Cosine. |
+| **exp(x)** | `x: float` | e^x. |
+| **floor(value)** | `value: float` | Largest integer ≤ value. |
+| **fract(x)** | `x: float` | Fractional part. |
+| **lerp(a, b, t)** | `a: float`, `b: float`, `t: float` | Linear interpolation. |
+| **log(x)** | `x: float` | Natural log. |
+| **log10(x)** | `x: float` | Base‑10 log. |
+| **log2(x)** | `x: float` | Base‑2 log. |
+| **max(values...)** | `values: float...` | Maximum of arguments. |
+| **min(values...)** | `values: float...` | Minimum of arguments. |
+| **pow(base, exp)** | `base: float`, `exp: float` | Power function. |
+| **rand()** | – | Random float in [0, 1]. |
+| **round(value)** | `value: float` | Nearest integer. |
+| **sign(x)** | `x: float` | +1, 0, or –1. |
+| **sin(x)** | `x: float` | Sine. |
+| **smoothstep(edge0, edge1, x)** | `edge0: float`, `edge1: float`, `x: float` | Smooth interpolation. |
+| **sqrt(x)** | `x: float` | Square root. |
+| **tan(x)** | `x: float` | Tangent. |
 
 ---
 
-### shizonet
+## Namespace: shizonet
 
-| Constant / Variable | Value | Description |
-|---------------------|-------|-------------|
+| Class | Description |
+|-------|-------------|
+| **client(node_name, port = SHZNET_CLIENT_PORT)** | Network client. |
+| **server(node_name, port = SHZNET_SERVER_PORT)** | Network server. |
 
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `shizonet.client` | `client(node_name: string, port: int = SHZNET_CLIENT_PORT)` | Create a new network client. |
-| `shizonet.server` | `server(node_name: string, port: int = SHZNET_SERVER_PORT)` | Create a new network server. |
+Both classes expose a rich set of networking callbacks and command helpers (see object sections below).
 
 ---
 
-### shzdocs
+## Namespace: shzdocs
 
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `shzdocs.find_all` | `find_all(Keyword: string)` | Return all documentation entries that include `Keyword`. |
-| `shzdocs.get_all` | `get_all()` | Return documentation for all functions, classes, etc. |
-| `shzdocs.load_all_modules` | `load_all_modules()` | Load documentation from all modules. |
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **find_all(Keyword)** | `Keyword: string` | Returns all documentation entries containing the keyword. |
+| **get_all()** | – | Returns full documentation for all symbols. |
+| **load_all_modules()** | – | Loads documentation from all installed modules. |
 
 ---
 
-### shztests
+## Namespace: shztests
 
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `shztests.check_object` | `check_object()` | Run internal checks on test objects. |
-| `shztests.test_object` | `test_object() -> test_object` | Create a new test object. |
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **check_object()** | – | Runs internal consistency checks. |
+| **test_object()** | – | Returns a `test_object` instance for unit‑testing. |
 
 ---
 
-### std
+## Namespace: std
 
-> ! Note these are for windows only!
+### Constants
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `std.MB_ICONERROR` | `16` | MessageBox icon error. |
-| `std.MB_ICONINFORMATION` | `64` | MessageBox icon information. |
-| `std.MB_ICONWARNING` | `48` | MessageBox icon warning. |
-| `std.MB_OK` | `0` | MessageBox button OK. |
-| `std.MB_OKCANCEL` | `1` | MessageBox buttons OK/Cancel. |
-| `std.MB_RETRYCANCEL` | `5` | MessageBox buttons Retry/Cancel. |
-| `std.MB_YESNO` | `4` | MessageBox buttons Yes/No. |
-| `std.MB_YESNOCANCEL` | `3` | MessageBox buttons Yes/No/Cancel. |
+| MB_ICONERROR | 16 | Message‑box icon. |
+| MB_ICONINFORMATION | 64 | Message‑box icon. |
+| MB_ICONWARNING | 48 | Message‑box icon. |
+| MB_OK | 0 | Button set. |
+| MB_OKCANCEL | 1 | Button set. |
+| MB_RETRYCANCEL | 5 | Button set. |
+| MB_YESNO | 4 | Button set. |
+| MB_YESNOCANCEL | 3 | Button set. |
 
-#### Functions
+### Functions
 
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `std.argc` | `argc()` | Return the number of command‑line arguments. |
-| `std.argv` | `argv(index: int)` | Return the argument at `index`. |
-| `std.buffer` | `buffer() -> std.buffer` | Create a new buffer object. |
-| `std.cd` | `cd(path: string)` | Change current working directory. |
-| `std.count` | `count(value: Container | string | object)` | Alias of `len()`. |
-| `std.cout` | `cout(...: any)` | Print to terminal directly. |
-| `std.error` | `error(...: any)` | Print an error message. |
-| `std.float` | `float(value: any)` | Convert to float. |
-| `std.free` | `free()` | Delete an object. |
-| `std.has_admin_privilege` | `has_admin_privilege()` | Return `true` if running as administrator. |
-| `std.hideconsole` | `hideconsole()` | Detach and hide the console window (Windows only). |
-| `std.import` | `import(module: string)` | Import an external module. |
-| `std.indentation` | `indentation(text: string)` | Calculate indentation level. |
-| `std.input` | `input(prompt: string)` | Read a line from stdin. |
-| `std.int` | `int(value: any)` | Convert to integer. |
-| `std.is_function` | `is_function(value: any)` | Check if value is a function. |
-| `std.is_json` | `is_json(value: any)` | Check if value is a JSON object. |
-| `std.is_list` | `is_list(value: any)` | Check if value is a list. |
-| `std.is_string` | `is_string(value: any)` | Check if value is a string. |
-| `std.json` | `json(json: string = "") -> std.json` | Create a new JSON object. |
-| `std.len` | `len(value: Container | string | object)` | Return size/length. |
-| `std.local_executable` | `local_executable()` | Return path to the current executable. |
-| `std.messagebox` | `messagebox(text: string, caption: string, buttons: btns)` | Display a message box. |
-| `std.millis` | `millis()` | Current time in milliseconds since epoch. |
-| `std.print` | `print(...: any)` | Print to console. |
-| `std.runtime_error` | `runtime_error()` | Throw a runtime error. |
-| `std.sleep` | `sleep(milliseconds: int)` | Pause execution asynchronously. |
-| `std.string` | `string(value: string = "") -> std.string` | Create a new string object. |
-| `std.system` | `system(command: string)` | Execute a shell command. |
-| `std.system_path` | `system_path(path: string)` | Expand env vars and normalize path. |
-| `std.thread` | `thread(callback: function)` | Create a new thread. |
-| `std.timestamp` | `timestamp()` | Current date/time in `DD-MM-YYYY HH:MM:SS`. |
-| `std.vaddress` | `vaddress(value: any)` | Inspect variable type. |
-| `std.vtype` | `vtype(value: any)` | Inspect variable type. |
-| `std.warn` | `warn(...: any)` | Print a warning. |
-| `std.wd` | `wd()` | Current working directory. |
-| `std.web_get` | `web_get(url: string)` | HTTP GET request. |
-
----
-
-### telegram
-
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `telegram.bot` | `bot(bot_token: string) -> telegram.bot` | Create a new Telegram API instance. |
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **argc()** | – | Number of command‑line arguments. |
+| **argv(index)** | `index: int` | Returns the argument at `index`. |
+| **buffer()** | – | Creates a `std.buffer` object (binary buffer). |
+| **cd(path)** | `path: string` | Change working directory. |
+| **count(value)** | `value: Container|string|object` | Alias for `len`. |
+| **cout(...args)** | – | Raw terminal output (no buffering). |
+| **error(...args)** | – | Prints to stderr. |
+| **float(value)** | `value: any` | Converts to float. |
+| **free(obj)** | `obj: object` | Deletes an object. |
+| **has_admin_privilege()** | – | `true` if running as administrator. |
+| **hideconsole()** | – | Detaches console on Windows. |
+| **import(module)** | `module: string` | Loads a module by name or path. |
+| **indentation(text)** | `text: string` | Calculates indentation level. |
+| **input(prompt)** | `prompt: string` | Reads a line from stdin. |
+| **int(value)** | `value: any` | Converts to integer. |
+| **is_function(value)** | `value: any` | Checks if value is a function. |
+| **is_json(value)** | `value: any` | Checks if value is a JSON object. |
+| **is_list(value)** | `value: any` | Checks if value is a list. |
+| **is_string(value)** | `value: any` | Checks if value is a string. |
+| **json(json)** | `json: string?` | Creates a `std.json` object. |
+| **len(value)** | `value: Container|string|object` | Returns size. |
+| **local_executable()** | – | *Placeholder – returns path of current executable.* |
+| **messagebox(text, caption, buttons)** | `text: string`, `caption: string`, `buttons: btns` | Shows a Windows message box. |
+| **millis()** | – | Milliseconds since epoch. |
+| **print(...args)** | – | Console output; returns concatenated string. |
+| **runtime_error()** | – | Prints an error message. |
+| **sleep(milliseconds)** | `milliseconds: int` | Asynchronous pause. |
+| **string(value)** | `value: string` | Creates a `std.string` object. |
+| **system(command)** | `command: string` | Executes shell command; returns exit code. |
+| **system_path(path)** | `path: string` | Expands env vars and normalises path. |
+| **thread(callback)** | `callback: function` | Creates a `std.thread` object. |
+| **timestamp()** | – | Current date/time `DD‑MM‑YYYY HH:MM:SS`. |
+| **vaddress(value)** | `value: Variable` | Inspect variable address. |
+| **vtype(value)** | `value: Variable` | Inspect variable type. |
+| **warn(...args)** | – | Prints a warning. |
+| **wd()** | – | Current working directory. |
+| **web_get(url)** | `url: string` | HTTP GET; returns response body. |
 
 ---
 
-### testmodule
+## Namespace: telegram
 
-#### Functions
+### Class: `telegram.bot`
 
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `testmodule.testfn` | `testfn()` | Test function. |
-
----
-
-### zip
-
-#### Functions
-
-| Name | Signature | Description |
-|------|-----------|-------------|
-| `zip.file` | `file() -> zip.file` | Instantiate a new zip object. |
-
----
-
-## Object Types
-
-### leveldb.iterator
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `key` | `key()` | Return the current key. |
-| `next` | `next()` | Advance to the next entry. |
-| `reset` | `reset()` | Reset iterator to the beginning. |
-| `seek` | `seek()` | Seek to a specific key. |
-| `valid` | `valid()` | Return `true` if iterator is positioned on a valid entry. |
-| `value` | `value()` | Return the current value. |
-
----
-
-### leveldb.kvdb
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `batch` | `batch([[op, key, value?], ...])` | Perform a batch of operations. |
-| `delete` | `delete(key: string)` | Delete a key-value pair. |
-| `exists` | `exists(key: string)` | Check if a key exists. |
-| `get` | `get(key: string)` | Retrieve a value by key. |
-| `iter` | `iter(mode: string, ...) -> leveldb.iterator` | Create an iterator. |
-| `put` | `put(key: string, value: any)` | Insert or update a key-value pair. |
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **ban_chat_member(chatid, userid, until_date?, revoke_messages?)** | `chatid: int`, `userid: int`, `until_date: int?`, `revoke_messages: int?` | Bans a user. |
+| **copy_message(to_chatid, from_chatid, msgid)** | – | Copies a message without forwarding. |
+| **delete_message(chatid, msgid)** | – | Deletes a message. |
+| **edit_caption(chatdata, caption)** | – | Edits a message caption. |
+| **edit_message(chatdata, text)** | – | Edits message text. |
+| **edit_reply_markup(chatdata, buttons?)** | – | Edits inline keyboard. |
+| **forward_message(to_chatid, from_chatid, msgid)** | – | Forwards a message. |
+| **get_chat(chatid)** | – | Retrieves chat info. |
+| **get_chat_administrators(chatid)** | – | List of admins. |
+| **get_chat_member(chatid, userid)** | – | Member info. |
+| **get_chat_member_count(chatid)** | – | Number of members. |
+| **leave_chat(chatid)** | – | Bot leaves chat. |
+| **promote_chat_member(chatid, userid, rights?)** | – | Grants admin rights. |
+| **restrict_chat_member(chatid, userid, permissions, until_date?)** | – | Restricts a member. |
+| **send(chatdata, options?)** | – | Sends a plain text message. |
+| **send_animation(chatdata, animation, options?)** | – | Sends an animation. |
+| **send_audio(chatdata, audio, options?)** | – | Sends an audio file. |
+| **send_chat_action(chatid, action, threadid?)** | – | Sends a chat action. |
+| **send_choice(chatdata, options?)** | – | Sends a message with inline keyboard. |
+| **send_document(chatdata, document, options?)** | – | Sends a document. |
+| **send_location(chatdata, latitude, longitude, options?)** | – | Sends a location. |
+| **send_photo(chatdata, photo, options?)** | – | Sends a photo. |
+| **send_sticker(chatdata, sticker, options?)** | – | Sends a sticker. |
+| **send_video(chatdata, video, options?)** | – | Sends a video. |
+| **send_video_note(chatdata, video_note, options?)** | – | Sends a video note. |
+| **send_voice(chatdata, voice, options?)** | – | Sends a voice message. |
+| **set_chat_administrator_custom_title(chatid, userid, title)** | – | Sets custom admin title. |
+| **unban_chat_member(chatid, userid, only_if_banned?)** | – | Unbans a user. |
 
 ---
 
-### shizonet.artnet_device
+## Namespace: testmodule
+
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| **testfn()** | – | Example test function. |
+
+---
+
+## Namespace: webserver
+
+### Class: `webserver.http_server`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **init(port)** | `port: int` | Initialise HTTP server. |
+| **route(method, path, callback)** | `method: string`, `path: string`, `callback: function` | Register a route. |
+| **route_static(url_pattern, file_or_directory)** | – | Serve static files. |
+| **start()** | – | Start listening. |
+| **stop()** | – | Stop server. |
+
+### Class: `webserver.https_server`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **init(port, cert_file, key_file)** | `port: int`, `cert_file: string`, `key_file: string` | Initialise HTTPS server. |
+| **route(method, path, callback)** | – | Register a route. |
+| **route_static(url_pattern, file_or_directory)** | – | Serve static files. |
+| **start()** | – | Start listening. |
+| **stop()** | – | Stop server. |
+
+---
+
+## Namespace: zip
+
+### Class: `zip.file`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **add(path)** | `path: string` | Adds a file to the archive. |
+| **add_file(path)** | `path: string` | Adds a file with content. |
+| **save(path)** | `path: string` | Writes the ZIP to disk. |
+
+---
+
+## Object: `leveldb.iterator`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **key()** | – | Current key. |
+| **next()** | – | Advance to next entry. |
+| **reset()** | – | Reset iterator to start. |
+| **seek(key)** | `key: string` | Seek to a specific key. |
+| **valid()** | – | `true` if iterator is positioned on a valid entry. |
+| **value()** | – | Current value. |
+
+---
+
+## Object: `leveldb.kvdb`
+
+(see **Namespace: leveldb** above)
+
+---
+
+## Object: `shizonet.artnet_device`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `ip` | `string` | Device IP address. |
-| `mac` | `string` | Device MAC address. |
-| `name` | `string` | Device name. |
-| `online` | `bool` | Online status. |
-| `type` | `string` | Device type. |
+| **ip** | string | Device IP address. |
+| **mac** | string | MAC address. |
+| **name** | string | Device name. |
+| **online** | bool | Online status. |
+| **type** | string | Device type. |
 
 ---
 
-### shizonet.client
+## Object: `shizonet.client`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `artnet_sync` | `bool` | Art-Net sync flag. |
-| `enabled` | `bool` | Client enabled flag. |
-| `ip` | `string` | Client IP. |
-| `mac` | `string` | Client MAC. |
-| `name` | `string` | Client name. |
+| **artnet_sync** | bool | Whether Art-Net sync is enabled. |
+| **enabled** | bool | Client enabled flag. |
+| **ip** | string | Client IP. |
+| **mac** | string | Client MAC. |
+| **name** | string | Client name. |
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `get` | `get(command: string, value: object = null, timeout: int = 0)` | Send a GET command to a device. |
-| `get_all` | `get_all(command: string, data: any = null, callback: function = null, timeout: int = 0)` | Broadcast GET to all devices. |
-| `on_command` | `on_command(cmd: string, func: function)` | Register a command callback. |
-| `on_connect` | `on_connect(func: function)` | Register a connection callback. |
-| `on_disconnect` | `on_disconnect(callback: function)` | Register a disconnect callback. |
-| `on_get` | `on_get(cmd: string, func: function)` | Register a GET handler. |
-| `on_stream` | `on_stream(cmd: string, func: function)` | Register a stream handler. |
-| `send_osc` | `send_osc(ip: string, config: object, port: int = 8000)` | Send OSC messages to an IP. |
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **get(command, value?, timeout?)** | `command: string`, `value: object?`, `timeout: int?` | Sends a GET command. |
+| **get_all(command, data?, callback?, timeout?)** | – | Broadcast GET to all devices. |
+| **on_command(cmd, func)** | – | Register command listener. |
+| **on_connect(func)** | – | Register connect callback. |
+| **on_disconnect(callback)** | – | Register disconnect callback. |
+| **on_get(cmd, func)** | – | Register GET handler. |
+| **on_stream(cmd, func)** | – | Register stream handler. |
+| **send_osc(ip, config, port?)** | – | Send OSC messages. |
 
 ---
 
-### shizonet.device
+## Object: `shizonet.device`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `ip` | `string` | Device IP. |
-| `mac` | `string` | Device MAC. |
-| `name` | `string` | Device name. |
-| `online` | `bool` | Online status. |
-| `type` | `string` | Device type. |
+| **ip** | string | Device IP. |
+| **mac** | string | MAC address. |
+| **name** | string | Device name. |
+| **online** | bool | Online status. |
+| **type** | string | Device type. |
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `fetch` | `fetch(command: string, value: object = null, timeout: int = 0)` | Send a FETCH command. |
-| `get` | `get(command: string, value: object = null, timeout: int = 0)` | Send a GET command. |
-| `get_static_buffer_count` | `get_static_buffer_count()` | Total static buffers. |
-| `get_static_buffer_desc` | `get_static_buffer_desc(identifier: int | string)` | Get buffer description. |
-| `get_static_buffer_names` | `get_static_buffer_names()` | List buffer names. |
-| `send` | `send(command: string, data: object = null, timeout: int = 0, wait_finish: bool = false)` | Reliable send. |
-| `send_fast` | `send_fast(command: string, data: object)` | Unreliable send. |
-| `send_queue` | `send_queue(command: string, data: object = null, timeout: int = 0, wait_finish: bool = false)` | Queued reliable send. |
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **fetch(command, value?, timeout?)** | – | Sends a FETCH command. |
+| **get(command, value?, timeout?)** | – | Sends a GET command. |
+| **get_static_buffer_count()** | – | Number of static buffers. |
+| **get_static_buffer_desc(identifier)** | – | Description of a static buffer. |
+| **get_static_buffer_names()** | – | Names of static buffers. |
+| **send(command, data?, timeout?, wait_finish?)** | – | Reliable send. |
+| **send_fast(command, data)** | – | Unreliable send. |
+| **send_queue(command, data?, timeout?, wait_finish?)** | – | Queued reliable send. |
 
 ---
 
-### shizonet.server
+## Object: `shizonet.server`
+
+(identical API to `shizonet.client` – see above)
+
+---
+
+## Object: `std.json`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **all(filter)** | `filter: function|string` | True if all entries match. |
+| **any(filter)** | – | True if any entry matches. |
+| **combine_string(separator)** | `separator: string` | Concatenate string values. |
+| **compact_string()** | – | Compact JSON string. |
+| **copy()** | – | Deep copy. |
+| **erase(key)** | `key: string` | Delete key. |
+| **filter(filter)** | – | Filter entries. |
+| **filter_key(filter)** | – | Filter by key substring. |
+| **filter_value(filter)** | – | Filter string values. |
+| **foreach(callback)** | – | Iterate with callback. |
+| **from_string(json)** | – | Parse JSON. |
+| **has(key)** | – | Check key existence. |
+| **key(index)** | – | Get key by index. |
+| **map(callback)** | – | Transform values. |
+| **merge(other, overwrite?)** | – | Merge another JSON. |
+| **push(value)** | – | Append value. |
+| **push_back(value)** | – | Alias for `push`. |
+| **reduce(callback, initial)** | – | Reduce entries. |
+| **remove(key)** | – | Alias for `erase`. |
+| **rsort()** | – | Reverse sort by key. |
+| **size()** | – | Number of elements. |
+| **sort()** | – | Sort by key. |
+| **sort_reverse()** | – | Descending sort. |
+| **string(compact?)** | – | JSON string representation. |
+
+---
+
+## Object: `std.string`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **center(width)** | – | Centered string. |
+| **contains(sub)** | – | Substring check. |
+| **empty()** | – | Is empty? |
+| **ends(suffix)** | – | Suffix check. |
+| **extract(left)** | – | Substring between delimiters. |
+| **find(substring)** | – | Position of substring. |
+| **find_first_not_of(chars)** | – | First char not in set. |
+| **find_first_of(chars)** | – | First char in set. |
+| **find_last_not_of(chars)** | – | Last char not in set. |
+| **find_last_of(chars)** | – | Last char in set. |
+| **length()** | – | Length. |
+| **ljust(width)** | – | Left‑justify. |
+| **lowercase()** | – | To lower. |
+| **lowercase_inplace()** | – | In‑place lower. |
+| **ltrim()** | – | Trim left. |
+| **ltrim_inplace()** | – | In‑place left trim. |
+| **regex_escape()** | – | Escape regex metacharacters. |
+| **regex_findall(pattern)** | – | All regex matches. |
+| **regex_match(pattern)** | – | Regex match. |
+| **regex_replace(pat, replace)** | – | Replace regex. |
+| **regex_replace_inplace(pattern, replace)** | – | In‑place replace. |
+| **regex_search(pattern)** | – | Regex search. |
+| **regex_split(pattern)** | – | Split by regex. |
+| **removechars(chars)** | – | Remove characters. |
+| **removecharsexcept(chars)** | – | Keep only specified chars. |
+| **removeprefix(prefix)** | – | Remove prefix. |
+| **removesuffix(suffix)** | – | Remove suffix. |
+| **replace(search, replace)** | – | Replace all. |
+| **replace_first(search, replace)** | – | Replace first. |
+| **replace_inplace(search, replace)** | – | In‑place replace. |
+| **reverse()** | – | Reverse copy. |
+| **reverse_inplace()** | – | In‑place reverse. |
+| **rfind(sub)** | – | Last occurrence. |
+| **rjust(width)** | – | Right‑justify. |
+| **rtrim()** | – | Trim right. |
+| **rtrim_inplace()** | – | In‑place right trim. |
+| **size()** | – | Size. |
+| **split(delim)** | – | Split by delimiter. |
+| **starts(prefix)** | – | Prefix check. |
+| **substr(start)** | – | Substring. |
+| **substr_inplace(start)** | – | In‑place substring. |
+| **trim()** | – | Trim both sides. |
+| **trim_inplace()** | – | In‑place trim. |
+| **uppercase()** | – | To upper. |
+| **uppercase_inplace()** | – | In‑place upper. |
+
+---
+
+## Object: `std.thread`
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **join()** | – | Wait for all tasks to finish. |
+| **run(...args)** | – | Execute callback asynchronously. |
+
+---
+
+## Object: `telegram.bot`
+
+(see **Namespace: telegram** above)
+
+---
+
+## Object: `test_object`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `artnet_sync` | `bool` | Art-Net sync flag. |
-| `enabled` | `bool` | Server enabled flag. |
-| `ip` | `string` | Server IP. |
-| `mac` | `string` | Server MAC. |
-| `name` | `string` | Server name. |
+| **test_member** | variable | Example member. |
+| **testint** | variable | Example integer. |
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `get` | `get(command: string, value: object = null, timeout: int = 0)` | Send a GET command. |
-| `get_all` | `get_all(command: string, data: any = null, callback: function = null, timeout: int = 0)` | Broadcast GET. |
-| `on_command` | `on_command(cmd: string, func: function)` | Register command callback. |
-| `on_connect` | `on_connect(func: function)` | Register connect callback. |
-| `on_disconnect` | `on_disconnect(callback: function)` | Register disconnect callback. |
-| `on_get` | `on_get(cmd: string, func: function)` | Register GET handler. |
-| `on_stream` | `on_stream(cmd: string, func: function)` | Register stream handler. |
-| `send_osc` | `send_osc(ip: string, config: object, port: int = 8000)` | Send OSC messages. |
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| **call_cb()** | – | Test callback. |
+| **test_cb()** | – | Test callback. |
+| **test_fn()** | – | Test function. |
+| **test_thread()** | – | Test thread. |
 
 ---
 
-### std.json
+## Object: `webserver.http_server`
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `all` | `all(filter: function | string)` | True if all entries match. |
-| `any` | `any(filter: function | string)` | True if any entry matches. |
-| `combine_string` | `combine_string(separator: string)` | Concatenate string values with separator. |
-| `compact_string` | `compact_string()` | Compact JSON string. |
-| `copy` | `copy()` | Deep copy of JSON object. |
-| `erase` | `erase(key: string)` | Remove key/index. |
-| `filter` | `filter(filter: function | string)` | Filter entries. |
-| `filter_key` | `filter_key(filter: string)` | Filter by key substring. |
-| `filter_value` | `filter_value(filter: string)` | Filter by value substring. |
-| `foreach` | `foreach(callback: function)` | Iterate over entries. |
-| `from_string` | `from_string(json: string)` | Parse JSON string. |
-| `has` | `has(key: string)` | Check key existence. |
-| `key` | `key(index: int)` | Get key at index. |
-| `map` | `map(callback: function)` | Map values. |
-| `merge` | `merge(other: json, overwrite: bool = true)` | Merge another JSON. |
-| `push` | `push(value: object)` | Append value. |
-| `push_back` | `push_back(value: object)` | Alias for `push`. |
-| `reduce` | `reduce(callback: function, initial: any)` | Reduce entries. |
-| `remove` | `remove(key: string)` | Remove key/index. |
-| `rsort` | `rsort()` | Sort descending. |
-| `size` | `size()` | Number of elements. |
-| `sort` | `sort()` | Sort ascending. |
-| `sort_reverse` | `sort_reverse()` | Sort descending. |
-| `string` | `string(compact: int = 0)` | Convert to string. |
+(see **Namespace: webserver** above)
 
 ---
 
-### std.string
+## Object: `webserver.https_server`
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `center` | `center(width: int)` | Center string. |
-| `contains` | `contains(sub: string)` | Check substring. |
-| `empty` | `empty()` | True if empty. |
-| `ends` | `ends(suffix: string)` | Ends with suffix. |
-| `extract` | `extract(left: string)` | Extract between delimiters. |
-| `find` | `find(substring: string)` | Find substring. |
-| `find_first_not_of` | `find_first_not_of(chars: string)` | First char not in set. |
-| `find_first_of` | `find_first_of(chars: string)` | First char in set. |
-| `find_last_not_of` | `find_last_not_of(chars: string)` | Last char not in set. |
-| `find_last_of` | `find_last_of(chars: string)` | Last char in set. |
-| `length` | `length()` | Length of string. |
-| `ljust` | `ljust(width: int)` | Left‑justify. |
-| `lowercase` | `lowercase()` | To lowercase. |
-| `lowercase_inplace` | `lowercase_inplace()` | In‑place lowercase. |
-| `ltrim` | `ltrim()` | Trim left. |
-| `ltrim_inplace` | `ltrim_inplace()` | In‑place trim left. |
-| `regex_escape` | `regex_escape()` | Escape regex metacharacters. |
-| `regex_findall` | `regex_findall(pattern: string)` | Find all regex matches. |
-| `regex_match` | `regex_match(pattern: string)` | Regex match. |
-| `regex_replace` | `regex_replace(pat: string)` | Replace regex matches. |
-| `regex_replace_inplace` | `regex_replace_inplace(pattern: string)` | In‑place replace. |
-| `regex_search` | `regex_search(pattern: string)` | Regex search. |
-| `regex_split` | `regex_split(pattern: string)` | Split by regex. |
-| `removechars` | `removechars(chars: string)` | Remove specified chars. |
-| `removecharsexcept` | `removecharsexcept(chars: string)` | Keep only specified chars. |
-| `removeprefix` | `removeprefix(prefix: string)` | Remove prefix. |
-| `removesuffix` | `removesuffix(suffix: string)` | Remove suffix. |
-| `replace` | `replace(search: string)` | Replace all occurrences. |
-| `replace_first` | `replace_first(search: string)` | Replace first occurrence. |
-| `replace_inplace` | `replace_inplace(search: string)` | In‑place replace. |
-| `reverse` | `reverse()` | Reverse string. |
-| `reverse_inplace` | `reverse_inplace()` | In‑place reverse. |
-| `rfind` | `rfind(sub: string)` | Find last occurrence. |
-| `rjust` | `rjust(width: int)` | Right‑justify. |
-| `rtrim` | `rtrim()` | Trim right. |
-| `rtrim_inplace` | `rtrim_inplace()` | In‑place trim right. |
-| `size` | `size()` | Size of string. |
-| `split` | `split(delim: string)` | Split string. |
-| `starts` | `starts(prefix: string)` | Starts with prefix. |
-| `substr` | `substr(start: int)` | Substring with Python‑style indices. |
-| `substr_inplace` | `substr_inplace(start: int)` | In‑place substring. |
-| `trim` | `trim()` | Trim both sides. |
-| `trim_inplace` | `trim_inplace()` | In‑place trim. |
-| `uppercase` | `uppercase()` | To uppercase. |
-| `uppercase_inplace` | `uppercase_inplace()` | In‑place uppercase. |
+(see **Namespace: webserver** above)
 
 ---
 
-### std.thread
+## Object: `zip.file`
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `join` | `join()` | Wait for all active tasks. |
-| `run` | `run(...: any)` | Execute callback asynchronously. |
+(see **Namespace: zip** above)
 
 ---
 
-### telegram.bot
+### End of Reference
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `on_any_message` | `function` | Callback for any incoming message. |
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `send` | `send(chatdata: object, options: object = null)` | Send a message with optional buttons. |
-| `send_choice` | `send_choice(chatdata: object, options: object = null)` | Send a message with inline keyboard. |
-
----
-
-### test_object
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `test_member` | `any` | Test member variable. |
-| `testint` | `int` | Test integer variable. |
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `call_cb` | `call_cb()` | Test function. |
-| `test_cb` | `test_cb()` | Test function. |
-| `test_fn` | `test_fn()` | Test function. |
-| `test_thread` | `test_thread()` | Test function. |
-
----
-
-### zip.file
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `add` | `add(path: string)` | Add a file to the archive with specified internal path. |
-| `add_file` | `add_file(path: string)` | Add a file from disk into the archive. |
-| `save` | `save(path: string)` | Write the archive to disk. |
-
---- 
-
-> **Note**  
-> All functions and methods are case‑sensitive.  
-> When passing objects to functions that expect a JSON object, use `std.json` to construct or parse the data.  
-> The `std.thread` API is cooperative; use `std.sleep` to yield control if needed.  
-
---- 
-
-**Happy scripting!**
+For further examples and advanced usage, refer to the official Shizoscript documentation website or the bundled `docs/` directory. Happy scripting!

@@ -1383,6 +1383,107 @@ Object: telegram.bot
     on_any_message -> variable
 
         --------------------------------------------------
+ban_chat_member(
+    chatid: int - Chat ID,
+    userid: int - User ID to ban,
+    until_date: int (optional) - Unix timestamp until ban expires,
+    revoke_messages: int (optional) - Delete all messages from user
+)
+
+  - Ban a user from a chat
+        --------------------------------------------------
+copy_message(
+    to_chatid: int - Destination chat ID,
+    from_chatid: int - Source chat ID,
+    msgid: int - Message ID to copy
+)
+
+  - Copy a message without forwarding tag
+        --------------------------------------------------
+delete_message(
+    chatid: int - Chat ID,
+    msgid: int - Message ID to delete
+)
+
+  - Delete a message
+        --------------------------------------------------
+edit_caption(
+    chatdata: object - Contains chatid and msgid,
+    caption: string - New caption text
+)
+
+  - Edit a message caption
+        --------------------------------------------------
+edit_message(
+    chatdata: object - Contains chatid and msgid,
+    text: string - New message text
+)
+
+  - Edit an existing message text
+        --------------------------------------------------
+edit_reply_markup(
+    chatdata: object - Contains chatid and msgid,
+    buttons: object (optional) - New inline keyboard buttons
+)
+
+  - Edit message reply markup (buttons)
+        --------------------------------------------------
+forward_message(
+    to_chatid: int - Destination chat ID,
+    from_chatid: int - Source chat ID,
+    msgid: int - Message ID to forward
+)
+
+  - Forward a message from one chat to another
+        --------------------------------------------------
+get_chat(
+    chatid: int - Chat ID
+)
+
+  - Get information about a chat
+        --------------------------------------------------
+get_chat_administrators(
+    chatid: int - Chat ID
+)
+
+  - Get a list of chat administrators
+        --------------------------------------------------
+get_chat_member(
+    chatid: int - Chat ID,
+    userid: int - User ID
+)
+
+  - Get information about a chat member
+        --------------------------------------------------
+get_chat_member_count(
+    chatid: int - Chat ID
+)
+
+  - Get the number of members in a chat
+        --------------------------------------------------
+leave_chat(
+    chatid: int - Chat ID to leave
+)
+
+  - Leave a chat
+        --------------------------------------------------
+promote_chat_member(
+    chatid: int - Chat ID,
+    userid: int - User ID to promote,
+    rights: object (optional) - Admin rights to grant
+)
+
+  - Promote a user to admin in a chat
+        --------------------------------------------------
+restrict_chat_member(
+    chatid: int - Chat ID,
+    userid: int - User ID to restrict,
+    permissions: object - Permission flags,
+    until_date: int (optional) - Unix timestamp until restriction expires
+)
+
+  - Restrict a chat member's permissions
+        --------------------------------------------------
 send(
     chatdata: object - Chat information containing chatid and threadid,
     options: object (optional) - Additional message options like disable_notification and protect_content
@@ -1390,12 +1491,109 @@ send(
 
   - Send a message through Telegram with optional buttons and options
         --------------------------------------------------
+send_animation(
+    chatdata: object - Contains chatid and threadid,
+    animation: string - File ID, URL or path to animation,
+    options: object (optional) - Caption, duration, width, height
+)
+
+  - Send an animation (GIF) to a chat
+        --------------------------------------------------
+send_audio(
+    chatdata: object - Contains chatid and threadid,
+    audio: string - File ID, URL or path to audio,
+    options: object (optional) - Caption, duration, performer, title
+)
+
+  - Send an audio file to a chat
+        --------------------------------------------------
+send_chat_action(
+    chatid: int - Chat ID,
+    action: string - Action type (typing, upload_photo, record_video, etc.),
+    threadid: int (optional) - Thread ID for forum topics
+)
+
+  - Send a chat action (typing, uploading, etc.)
+        --------------------------------------------------
 send_choice(
     chatdata: object - Contains chat ID and thread ID for the message destination,
     options: object (optional) - Message options like disable_notification and protect_content
 )
 
   - Send a message with inline keyboard buttons to a Telegram chat
+        --------------------------------------------------
+send_document(
+    chatdata: object - Contains chatid and threadid,
+    document: string - File ID, URL or path to document,
+    options: object (optional) - Caption, reply_to_msgid
+)
+
+  - Send a document to a chat
+        --------------------------------------------------
+send_location(
+    chatdata: object - Contains chatid and threadid,
+    latitude: float - Latitude coordinate,
+    longitude: float - Longitude coordinate,
+    options: object (optional) - Live period, accuracy
+)
+
+  - Send a location to a chat
+        --------------------------------------------------
+send_photo(
+    chatdata: object - Contains chatid and threadid,
+    photo: string - File ID, URL or path to photo,
+    options: object (optional) - Caption, reply_to_msgid, etc.
+)
+
+  - Send a photo to a chat
+        --------------------------------------------------
+send_sticker(
+    chatdata: object - Contains chatid and threadid,
+    sticker: string - File ID, URL or path to sticker,
+    options: object (optional) - Reply options
+)
+
+  - Send a sticker to a chat
+        --------------------------------------------------
+send_video(
+    chatdata: object - Contains chatid and threadid,
+    video: string - File ID, URL or path to video,
+    options: object (optional) - Caption, duration, width, height
+)
+
+  - Send a video to a chat
+        --------------------------------------------------
+send_video_note(
+    chatdata: object - Contains chatid and threadid,
+    video_note: string - File ID or path to video note,
+    options: object (optional) - Duration, length
+)
+
+  - Send a video note (circular video) to a chat
+        --------------------------------------------------
+send_voice(
+    chatdata: object - Contains chatid and threadid,
+    voice: string - File ID, URL or path to voice message,
+    options: object (optional) - Caption, duration
+)
+
+  - Send a voice message to a chat
+        --------------------------------------------------
+set_chat_administrator_custom_title(
+    chatid: int - Chat ID,
+    userid: int - Admin user ID,
+    title: string - Custom title
+)
+
+  - Set a custom title for an admin
+        --------------------------------------------------
+unban_chat_member(
+    chatid: int - Chat ID,
+    userid: int - User ID to unban,
+    only_if_banned: int (optional) - Only unban if currently banned
+)
+
+  - Unban a user from a chat
         --------------------------------------------------
 
 

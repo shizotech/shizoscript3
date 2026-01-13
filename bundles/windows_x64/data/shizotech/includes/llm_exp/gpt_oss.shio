@@ -189,11 +189,8 @@ class gpt_oss
 		hist = 0;
 		if(options.no_history == 1)
 			hist = harmony_context("");
-			std.print("TEST1");
 		else
 			hist = agt_copy_context(context);
-			std.print("TEST2");
-			std.print(std.vtype(context));
 		
 		if(options.has("reasoning"))
 			hist.reasoning_level = options.reasoning;
