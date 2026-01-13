@@ -1,0 +1,8 @@
+
+#include "gpt_oss"
+
+llm = gpt_oss();
+
+std.print(llm.text("Which day is today?"));
+
+std.input();
