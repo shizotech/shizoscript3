@@ -1,17 +1,24 @@
 === TABLE OF CONTENTS ===
+  - Namespace: curl
   - Namespace: fileio
   - Namespace: leveldb
   - Namespace: math
+  - Namespace: mqtt
+  - Namespace: nanogui
   - Namespace: shizonet
   - Namespace: shzdocs
   - Namespace: shztests
   - Namespace: std
+  - Namespace: subprocess
   - Namespace: telegram
   - Namespace: testmodule
   - Namespace: webserver
   - Namespace: zip
+  - Object Type: curl.curl
   - Object Type: leveldb.iterator
   - Object Type: leveldb.kvdb
+  - Object Type: mqtt.mqtt
+  - Object Type: nanogui.context
   - Object Type: shizonet.artnet_device
   - Object Type: shizonet.client
   - Object Type: shizonet.device
@@ -19,12 +26,23 @@
   - Object Type: std.json
   - Object Type: std.string
   - Object Type: std.thread
+  - Object Type: subprocess.process
   - Object Type: telegram.bot
   - Object Type: test_object
   - Object Type: webserver.http_server
   - Object Type: webserver.https_server
   - Object Type: zip.file
 
+
+
+==================================================
+Namespace: curl
+==================================================
+
+        --------------------------------------------------
+curl.curl() -> curl.curl
+
+        --------------------------------------------------
 
 
 ==================================================
@@ -359,6 +377,27 @@ math.tan(
 
 
 ==================================================
+Namespace: mqtt
+==================================================
+
+        --------------------------------------------------
+mqtt.mqtt() -> mqtt.mqtt
+
+  - Create a new MQTT client
+        --------------------------------------------------
+
+
+==================================================
+Namespace: nanogui
+==================================================
+
+        --------------------------------------------------
+nanogui.context() -> nanogui.context
+
+        --------------------------------------------------
+
+
+==================================================
 Namespace: shizonet
 ==================================================
 
@@ -639,6 +678,17 @@ std.web_get(
 
 
 ==================================================
+Namespace: subprocess
+==================================================
+
+        --------------------------------------------------
+subprocess.process() -> subprocess.process
+
+  - Instantiate a new subprocess.process object.
+        --------------------------------------------------
+
+
+==================================================
 Namespace: telegram
 ==================================================
 
@@ -685,6 +735,67 @@ Namespace: zip
 zip.file() -> zip.file
 
   - Instantiate a new zip object
+        --------------------------------------------------
+
+
+==================================================
+Object: curl.curl
+==================================================
+
+        --------------------------------------------------
+get(
+    url: string
+)
+
+  - HTTP GET. Returns json { ok, http_code, body, content_type }
+        --------------------------------------------------
+last_error()
+
+  - Get last error text set by the wrapper
+        --------------------------------------------------
+poll_stream()
+
+  - Drain pending stream chunks.
+        --------------------------------------------------
+post(
+    url: string,
+    payload: string
+)
+
+  - HTTP POST with raw string payload. Returns json { ok, http_code, body, content_type }
+        --------------------------------------------------
+request(
+    method: string,
+    url: string,
+    body: string,
+    headers: json,
+    timeout_ms: int,
+    binary: bool
+)
+
+  - Generic HTTP request. request(method,url,body?,headers_json?,timeout_ms?,binary?). Returns json { ok, http_code, body, content_type }
+        --------------------------------------------------
+reset()
+
+  - Reset the CURL easy handle and clear last_error
+        --------------------------------------------------
+start_stream(
+    method: string,
+    url: string,
+    body: string,
+    headers: json,
+    timeout_ms: int
+)
+
+  - Start streaming request. Use poll_stream(cb) to receive chunks, stop_stream() to abort.
+        --------------------------------------------------
+stop_stream()
+
+  - Abort the active streaming request (if any). Returns 1 if stop was signaled.
+        --------------------------------------------------
+version()
+
+  - Get the version of the libcurl library
         --------------------------------------------------
 
 
@@ -747,6 +858,76 @@ iter() -> leveldb.iterator
 put()
 
   - put(key, value)
+        --------------------------------------------------
+
+
+==================================================
+Object: mqtt.mqtt
+==================================================
+
+        --------------------------------------------------
+configure(
+    server_uri: string,
+    client_id: string
+)
+
+  - Create/replace the internal MQTT async client
+        --------------------------------------------------
+connect(
+    username: string,
+    password: string,
+    clean_session: bool,
+    keep_alive: int
+)
+
+  - Connect to broker (blocking; runs on worker thread)
+        --------------------------------------------------
+disconnect()
+
+  - Disconnect from broker (blocking; runs on worker thread)
+        --------------------------------------------------
+is_connected()
+
+  - Returns true if currently connected
+        --------------------------------------------------
+poll()
+
+  - Drain queued MQTT messages and invoke on_message callback. Returns number of delivered messages.
+        --------------------------------------------------
+publish(
+    topic: string,
+    payload: string,
+    qos: int,
+    retained: bool
+)
+
+  - Publish a message (blocking; runs on worker thread)
+        --------------------------------------------------
+set_callbacks(
+    on_message: function(topic, payload, qos, retained),
+    on_connect: function(),
+    on_disconnect: function(),
+    on_error: function(error_string)
+)
+
+  - Set script callbacks (invoked by poll())
+        --------------------------------------------------
+subscribe(
+    topic: string,
+    qos: int
+)
+
+  - Subscribe to a topic (blocking; runs on worker thread)
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.context
+==================================================
+
+        --------------------------------------------------
+screen()
+
         --------------------------------------------------
 
 
@@ -1377,6 +1558,53 @@ run(
 
 
 ==================================================
+Object: subprocess.process
+==================================================
+
+        --------------------------------------------------
+exited()
+
+  - Returns true if the process exited.
+        --------------------------------------------------
+kill()
+
+  - Force kill the process (SIGKILL / TerminateProcess).
+        --------------------------------------------------
+pid()
+
+  - Get process id.
+        --------------------------------------------------
+poll()
+
+  - Check process status. Returns return code or none if still running.
+        --------------------------------------------------
+returncode()
+
+  - Get cached return code (or none if not finished).
+        --------------------------------------------------
+start(
+    args: list - Argument list. If shell=true, use a single string in args[0].,
+    cwd: string - Working directory (optional).,
+    shell: bool - Run via shell (cmd.exe /C or /bin/sh -c).
+)
+
+  - Start a subprocess (similar to Python subprocess.Popen).
+        --------------------------------------------------
+stop()
+
+  - Send Ctrl+C / SIGINT to request graceful shutdown.
+        --------------------------------------------------
+terminate()
+
+  - Request process termination (SIGTERM / TerminateProcess).
+        --------------------------------------------------
+wait()
+
+  - Wait until process exits and return its exit code.
+        --------------------------------------------------
+
+
+==================================================
 Object: telegram.bot
 ==================================================
 
@@ -1609,6 +1837,10 @@ call_cb()
 
   - test fn
         --------------------------------------------------
+test_auto_fn()
+
+  - A test function registered via automatic binding.
+        --------------------------------------------------
 test_cb()
 
   - test fn
@@ -1727,7 +1959,13 @@ save(
   - Save zip file to specified path
         --------------------------------------------------
 
-internal type already exists: telegram.bot
 internal type already exists: zip.file
+warning: internal type 'nanogui.context' does not implement a 'create_new' function.nanogui.context
+warning: internal type 'nanogui.context' does not implement a 'create_new' function.nanogui.context
+internal type already exists: nanogui.context
+internal type already exists: curl.curl
+internal type already exists: mqtt.mqtt
+internal type already exists: subprocess.process
+internal type already exists: telegram.bot
 internal type already exists: webserver.http_server
 internal type already exists: webserver.https_server

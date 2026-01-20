@@ -5,6 +5,8 @@ hideconsole();
 
 app_path = std.system_path("%LOCALAPPDATA%/Shizoscript");
 
+user_documents = std.system_path("%USERPROFILE%/Documents/Shizoscript");
+
 if(fileio.is_directory(app_path))
 {
 	res = messagebox("It seems like shizoscript is already installed - uninstall ?", "Uninstall?", MB_YESNOCANCEL | MB_ICONERROR);
@@ -39,8 +41,21 @@ run_install()
 	
 	if(!fileio.copy("installer/shzupdate", app_path + "/shzupdate"))
 		return false;
+
+	fileio.mkdir(user_documents);
+	fileio.mkdir(user_documents + "/Examples");
+	fileio.mkdir(user_documents + "/Programs");
+	fileio.mkdir(user_documents + "/Sketches");
+	
+	if(!fileio.copy("examples", user_documents + "/Examples"))
+		return false;
+	
+	if(!fileio.copy("programs", user_documents + "/Programs"))
+		return false;
 	
 	std.system("powershell -ExecutionPolicy Bypass -File installer/shzupdate-shortcut.ps1");
+
+	std.system("explorer \"%USERPROFILE%\\Documents\\Shizoscript\"");
 
 	return true;
 }
