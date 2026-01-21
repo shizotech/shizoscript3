@@ -1,0 +1,50 @@
+
+import subprocess;
+
+std.print("Initializing nettask server.");
+std.print(std.wd());
+
+apps = [];
+
+app_list = fileio.dirs(".", false);
+
+app_list.foreach([](app)
+{
+	app_entry_path = "";
+	
+	if(fileio.exists(app + "/__init__.shio"))
+		app_entry_path = app + "/__init__.shio";
+	else(fileio.exists(app + "/__init__.shx"))
+		app_entry_path = app + "/__init__.shx";
+	
+	if(app_entry_path.empty())
+		return;
+	
+	std.print("--- starting: ", app_entry_path, "---");
+	proc = subprocess.process();
+	proc.start(["shz", app_entry_path], "", false);
+
+	apps.push_back([
+		proc = proc,
+		path = app_entry_path
+	]);
+});
+
+std.print(apps);
+
+for(1)
+{
+	std.sleep(5000);
+	
+	apps.foreach([](&entry)
+	{
+		if(entry.proc.exited())
+		{
+			std.print("Process exited! Restarting...");
+			entry.proc = subprocess.process();
+			entry.proc.start(["shz", entry.path], "", false);
+		}
+	});
+}
+
+std.input();
