@@ -15,9 +15,9 @@ app_list.foreach([](app)
 	app_entry_path = "";
 	
 	if(fileio.exists(app + "/__init__.shio"))
-		app_entry_path = "/__init__.shio";
+		app_entry_path = "__init__.shio";
 	else(fileio.exists(app + "/__init__.shx"))
-		app_entry_path = "/__init__.shx";
+		app_entry_path = "__init__.shx";
 	
 	if(app_entry_path.empty())
 		return;
@@ -49,5 +49,3 @@ for(1)
 		}
 	});
 }
-
-std.input();
