@@ -1171,6 +1171,13 @@ any(
 
   - Returns true if any entry matches substring or callback.
         --------------------------------------------------
+append(
+    other: json - Object to merge
+overwrite: bool - Replace existing keys (default true)
+)
+
+  - Appends another JSON object into this one. If overwrite is true, existing keys will be replaced.
+        --------------------------------------------------
 combine_string(
     separator: string - Separator appended after each string value during concatenation
 )
