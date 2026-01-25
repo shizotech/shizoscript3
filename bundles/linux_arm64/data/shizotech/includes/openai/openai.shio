@@ -8,6 +8,7 @@ class openai_stream
 	stream_reasoning = "";
 	stream_content = "";
 	stream_text = "";
+	stream_raw = "";
 	
 	__init__(
 		api_url
@@ -24,6 +25,7 @@ class openai_stream
 		stream_reasoning = "";
 		stream_content = "";
 		stream_text = "";
+		stream_raw = "";
 		stream_curl = curl.curl();
 		stream_curl.start_stream("POST", api_url + sub_url, body, headers, 0);
 	}
@@ -34,6 +36,8 @@ class openai_stream
 			return None;
 		
 		raw_chunk = stream_curl.poll_stream();
+
+		stream_raw += raw_chunk;
 
 		if(!raw_chunk)
 			return None;
