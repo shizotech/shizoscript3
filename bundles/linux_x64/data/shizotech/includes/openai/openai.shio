@@ -1,0 +1,159 @@
+
+import curl;
+
+class openai_stream
+{
+	api_url = "";
+	stream_curl = None;
+	stream_reasoning = "";
+	stream_content = "";
+	stream_text = "";
+	
+	__init__(
+		api_url
+	) {
+		this.api_url = api_url;
+	}
+	
+	start(sub_url, &body)
+	{
+		headers = [
+		  "Content-Type" = "application/json"
+		];
+		
+		stream_reasoning = "";
+		stream_content = "";
+		stream_text = "";
+		stream_curl = curl.curl();
+		stream_curl.start_stream("POST", api_url + sub_url, body, headers, 0);
+	}
+	
+	poll()
+	{
+		if(!stream_curl)
+			return None;
+		
+		raw_chunk = stream_curl.poll_stream();
+
+		if(!raw_chunk)
+			return None;
+		
+		raw_chunk = raw_chunk.removeprefix("data: ");
+		
+		if(raw_chunk.starts("[DONE]"))
+			return None;
+		
+		chunk = std.json(raw_chunk);
+
+		if(!chunk)
+			return None;
+		
+		if(chunk.error ?? false)
+		{
+			std.error(chunk.error.message);
+			return None;
+		}
+		
+		if(chunk.choices ?? false)
+		{		
+			if(chunk.choices[0].delta.reasoning_content)
+				stream_reasoning += chunk.choices[0].delta.reasoning_content;
+			if(chunk.choices[0].delta.content)
+				stream_content += chunk.choices[0].delta.content;
+			if(chunk.choices[0].text)
+				stream_text += chunk.choices[0].text;
+		}
+
+		return chunk;
+	}
+	
+	answer()
+	{
+		for(poll()) {}	
+		return [reasoning=stream_reasoning, content=stream_content, text=stream_text];
+	}
+}
+
+class openai_api
+{
+	body = [stream=true, reasoning_effort="medium"];
+	stream = None;
+
+	on_reason = none;
+	on_text = none;
+	
+	__init__(
+		api_url, 
+		model = "",
+	) {
+		stream = openai_stream(api_url);
+		if(model)
+			body.model = model;
+	}
+	
+	ask(prompt)
+	{
+		body.messages.push_back(
+			["role" = "user", "content" = prompt]
+		);
+		
+		//First, get token count
+		stream.start("/tokenize", body);
+		token_count_info = stream.poll();
+		stream.answer();
+		
+		max_total_tokens = token_count_info.max_model_len;
+		current_tokens = token_count_info.count;
+		
+		//Truncate history if necessary
+		for(current_tokens > max_total_tokens/2 &&
+			body.messages.size() > 1)
+		{
+			body.messages.remove(0);
+			for(body.messages[0].role != "user")
+				body.messages.remove(0);
+		}
+		
+		stream.start("/v1/chat/completions", body);
+		
+		for (chunk = stream.poll()) {
+			delta = &chunk.choices[0].delta;
+			if(delta.reasoning_content && std.is_function(on_reason))
+				on_reason(delta.reasoning_content);
+			if(delta.content && std.is_function(on_text))
+				on_text(delta.content);
+		}
+		
+		return stream.answer().content;
+	}
+
+	clear()
+	{
+		body.remove("messages");
+	}
+}
+
+openai_api_request(prompt, sys_prompt = "", llm_url = "http://localhost:8000", default_output = 0)
+{
+	opi = openai_api(llm_url);
+	
+	if(sys_prompt) {
+		opi.body.messages.push_back(
+			["role" = "developer", "content" = sys_prompt]
+		);
+	}
+	
+	if(default_output)
+	{
+		opi.on_reason = [](txt)
+		{
+			std.cout(txt);
+		};
+		opi.on_text = [](txt)
+		{
+			std.cout(txt);
+		};
+	}
+	
+	return opi.ask(prompt);
+}

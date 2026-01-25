@@ -566,6 +566,25 @@ std.is_string(
   - Check if value is a string type
         --------------------------------------------------
 std.json(
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
+    json: string - Optional JSON string to parse into the new object,
     json: string - Optional JSON string to parse into the new object
 ) -> std.json
 
@@ -621,6 +640,25 @@ std.sleep(
   - Suspend script execution for a duration (async)
         --------------------------------------------------
 std.string(
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
+    value: string - Initial string value,
     value: string - Initial string value
 ) -> std.string
 
@@ -639,6 +677,44 @@ std.system_path(
   - Expand environment variables and normalize a filesystem path
         --------------------------------------------------
 std.thread(
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
+    Create a new thread object with optional callback function,
+    callback: function - The function to be executed in the new thread,
     Create a new thread object with optional callback function,
     callback: function - The function to be executed in the new thread
 ) -> std.thread
@@ -1517,6 +1593,14 @@ starts(
 
   - Check if string starts with specified prefix
         --------------------------------------------------
+strip()
+
+  - Remove leading and trailing whitespace
+        --------------------------------------------------
+strip_inplace()
+
+  - Remove leading and trailing whitespace
+        --------------------------------------------------
 substr(
     start: int - Starting index for the substring (supports negative indices)
 )
@@ -1592,7 +1676,8 @@ returncode()
 start(
     args: list - Argument list. If shell=true, use a single string in args[0].,
     cwd: string - Working directory (optional).,
-    shell: bool - Run via shell (cmd.exe /C or /bin/sh -c).
+    shell: bool - Run via shell (cmd.exe /C or /bin/sh -c).,
+    env: list - Optional environment entries as "KEY=VALUE".
 )
 
   - Start a subprocess (similar to Python subprocess.Popen).
@@ -1966,13 +2051,5 @@ save(
   - Save zip file to specified path
         --------------------------------------------------
 
-internal type already exists: zip.file
 warning: internal type 'nanogui.context' does not implement a 'create_new' function.nanogui.context
 warning: internal type 'nanogui.context' does not implement a 'create_new' function.nanogui.context
-internal type already exists: nanogui.context
-internal type already exists: curl.curl
-internal type already exists: mqtt.mqtt
-internal type already exists: subprocess.process
-internal type already exists: telegram.bot
-internal type already exists: webserver.http_server
-internal type already exists: webserver.https_server
