@@ -47,7 +47,7 @@ class openai_stream
 		if(raw_chunk.starts("[DONE]"))
 			return None;
 		
-		chunk = std.json(raw_chunk);
+		chunk = std.json(raw_chunk, true);
 
 		if(!chunk)
 			return None;

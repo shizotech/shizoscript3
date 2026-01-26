@@ -197,7 +197,7 @@ class gpt_oss
 		
 		step_id = 0;
 		
-		force_next_channel = "";
+		force_next_channel = options.channel ?? "analysis";
 		
 		pre_answer = "";
 		if(options.has("pre_answer"))
@@ -219,7 +219,7 @@ class gpt_oss
 	
 	run_harmony_step(chat_template, force_channel = "", step_id = 0, pre_answer = "")
 	{
-		std.print("\n\nHARMONY STEP: ", force_channel, "\n");
+		//std.print("\n\nHARMONY STEP: ", force_channel, "\n");
 		
 		//Append system message
 		chat_template.role("assistant"); 
@@ -259,7 +259,7 @@ class gpt_oss
 			
 			local_api.answer();		
 		}
-		
+			
 		if(channel.empty())
 			return 0;
 		
@@ -310,7 +310,7 @@ class gpt_oss
 					
 					if(channel == "analysis" && std.is_function(on_analysis))
 						on_analysis(step_id, chunk_text);
-					else(std.is_function(on_answer))
+					else(channel == "final" && std.is_function(on_answer))
 						on_answer(step_id, chunk_text);				
 				}
 			}
@@ -510,7 +510,7 @@ class gpt_oss
 		
 		answer = local_api.answer();
 		
-		result_json = std.json(answer.text);
+		result_json = std.json(answer.text, true);
 		
 		invalid_json = 0;
 		//Check for correct json, if not, force structured
@@ -564,7 +564,7 @@ class gpt_oss
 			local_api.start("/v1/completions", model_params);
 			answer = local_api.answer();
 			
-			result_json = std.json(answer.text);
+			result_json = std.json(answer.text, true);
 		}
 
 		return result_json;
