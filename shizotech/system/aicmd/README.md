@@ -55,6 +55,12 @@ Example:
 >>> !how much disk space is left?
 ```
 
+or
+
+```text
+>>> !how much is the fish?
+```
+
 The tool will forward the prompt to the model and display the response directly in the terminal.
 
 ## Notes
