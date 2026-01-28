@@ -1,5 +1,6 @@
 === TABLE OF CONTENTS ===
   - Namespace: curl
+  - Namespace: eigen
   - Namespace: fileio
   - Namespace: leveldb
   - Namespace: math
@@ -15,10 +16,21 @@
   - Namespace: webserver
   - Namespace: zip
   - Object Type: curl.curl
+  - Object Type: eigen.vec2d
+  - Object Type: eigen.vec2f
+  - Object Type: eigen.vec2i
+  - Object Type: eigen.vec3d
+  - Object Type: eigen.vec3f
+  - Object Type: eigen.vec3i
+  - Object Type: eigen.vec4d
+  - Object Type: eigen.vec4f
+  - Object Type: eigen.vec4i
   - Object Type: leveldb.iterator
   - Object Type: leveldb.kvdb
   - Object Type: mqtt.mqtt
   - Object Type: nanogui.context
+  - Object Type: nanogui.screen
+  - Object Type: nanogui.widget
   - Object Type: shizonet.artnet_device
   - Object Type: shizonet.client
   - Object Type: shizonet.device
@@ -41,6 +53,40 @@ Namespace: curl
 
         --------------------------------------------------
 curl.curl() -> curl.curl
+
+        --------------------------------------------------
+
+
+==================================================
+Namespace: eigen
+==================================================
+
+        --------------------------------------------------
+eigen.vec2d() -> eigen.vec2d
+
+        --------------------------------------------------
+eigen.vec2f() -> eigen.vec2f
+
+        --------------------------------------------------
+eigen.vec2i() -> eigen.vec2i
+
+        --------------------------------------------------
+eigen.vec3d() -> eigen.vec3d
+
+        --------------------------------------------------
+eigen.vec3f() -> eigen.vec3f
+
+        --------------------------------------------------
+eigen.vec3i() -> eigen.vec3i
+
+        --------------------------------------------------
+eigen.vec4d() -> eigen.vec4d
+
+        --------------------------------------------------
+eigen.vec4f() -> eigen.vec4f
+
+        --------------------------------------------------
+eigen.vec4i() -> eigen.vec4i
 
         --------------------------------------------------
 
@@ -573,6 +619,7 @@ std.json(
     json: string - Optional JSON string to parse into the new object,
     suppress_errors: bool - Suppress any error messages.,
     json: string - Optional JSON string to parse into the new object,
+    suppress_errors: bool - Suppress any error messages.,
     json: string - Optional JSON string to parse into the new object,
     suppress_errors: bool - Suppress any error messages.,
     json: string - Optional JSON string to parse into the new object,
@@ -901,6 +948,960 @@ version()
 
 
 ==================================================
+Object: eigen.vec2d
+==================================================
+
+    x -> variable
+    y -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero()
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y
+)
+
+  - Set x and y.
+        --------------------------------------------------
+to_string(
+    epsilon
+)
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec2f
+==================================================
+
+    x -> variable
+    y -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero()
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y
+)
+
+  - Set x and y.
+        --------------------------------------------------
+to_string(
+    epsilon
+)
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec2i
+==================================================
+
+    x -> variable
+    y -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero()
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y
+)
+
+  - Set x and y.
+        --------------------------------------------------
+to_string(
+    epsilon
+)
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec3d
+==================================================
+
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z
+)
+
+  - Set x, y and z.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec3f
+==================================================
+
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z
+)
+
+  - Set x, y and z.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec3i
+==================================================
+
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z
+)
+
+  - Set x, y and z.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec4d
+==================================================
+
+    w -> variable
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z,
+    w
+)
+
+  - Set x, y, z and w.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec4f
+==================================================
+
+    w -> variable
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z,
+    w
+)
+
+  - Set x, y, z and w.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
+Object: eigen.vec4i
+==================================================
+
+    w -> variable
+    x -> variable
+    y -> variable
+    z -> variable
+
+        --------------------------------------------------
+abs()
+
+  - Component-wise absolute value.
+        --------------------------------------------------
+angle(
+    other
+)
+
+  - Angle between vectors in radians.
+        --------------------------------------------------
+clamp(
+    min,
+    max
+)
+
+  - Component-wise clamp.
+        --------------------------------------------------
+distance(
+    other
+)
+
+  - Distance to other vector.
+        --------------------------------------------------
+distance_sq(
+    other
+)
+
+  - Squared distance to other vector.
+        --------------------------------------------------
+dot(
+    other
+)
+
+  - Dot product.
+        --------------------------------------------------
+equals(
+    other,
+    epsilon
+)
+
+  - Compare with optional epsilon.
+        --------------------------------------------------
+is_zero(
+    epsilon
+)
+
+  - Check if vector is near zero.
+        --------------------------------------------------
+length()
+
+  - Vector length.
+        --------------------------------------------------
+length_sq()
+
+  - Squared vector length.
+        --------------------------------------------------
+lerp(
+    other,
+    t
+)
+
+  - Linear interpolation.
+        --------------------------------------------------
+max(
+    other
+)
+
+  - Component-wise max.
+        --------------------------------------------------
+min(
+    other
+)
+
+  - Component-wise min.
+        --------------------------------------------------
+normalize()
+
+  - Normalize in place.
+        --------------------------------------------------
+normalized()
+
+  - Return a normalized copy.
+        --------------------------------------------------
+set(
+    x,
+    y,
+    z,
+    w
+)
+
+  - Set x, y, z and w.
+        --------------------------------------------------
+to_string()
+
+  - String representation.
+        --------------------------------------------------
+
+
+==================================================
 Object: leveldb.iterator
 ==================================================
 
@@ -1027,8 +2028,982 @@ Object: nanogui.context
 ==================================================
 
         --------------------------------------------------
+fps()
+
+  - Get/set FPS for non-fullscreen windows
+        --------------------------------------------------
+nvgArc(
+    center - vec2f Center,
+    radius - float,
+    a0 - float,
+    a1 - float,
+    dir - int
+)
+
+  - Add an arc to the current path.
+        --------------------------------------------------
+nvgArcTo(
+    p1 - vec2f Position 1,
+    p2 - vec2f Position 2,
+    radius - float
+)
+
+  - Add an arc to the current path.
+        --------------------------------------------------
+nvgBeginPath()
+
+  - Begin a new NanoVG path on the current Screen.
+        --------------------------------------------------
+nvgBezierTo(
+    c1 - vec2f Control point 1,
+    c2 - vec2f Control point 2,
+    p - vec2f Position
+)
+
+  - Add a cubic Bezier curve to the current path.
+        --------------------------------------------------
+nvgCircle(
+    center - vec2f Center,
+    radius - float
+)
+
+  - Add a circle to the current path.
+        --------------------------------------------------
+nvgEllipse(
+    center - vec2f Center,
+    radius - vec2f Radius
+)
+
+  - Add an ellipse to the current path.
+        --------------------------------------------------
+nvgFill()
+
+  - Fill the current NanoVG path on the current Screen.
+        --------------------------------------------------
+nvgFillColor(
+    color - vec4f RGBA (0..1)
+)
+
+  - Set the fill color.
+        --------------------------------------------------
+nvgIntersectScissor(
+    pos - vec2f Position,
+    size - vec2f Size
+)
+
+  - Intersect the current scissor rectangle.
+        --------------------------------------------------
+nvgLineTo(
+    p - vec2f Position
+)
+
+  - Add a line to (x, y) on the current Screen.
+        --------------------------------------------------
+nvgMoveTo(
+    x - vec2f Position
+)
+
+  - Move the current NanoVG path to (x, y) on the current Screen.
+        --------------------------------------------------
+nvgQuadTo(
+    c - vec2f Control point,
+    p - vec2f Position
+)
+
+  - Add a quadratic Bezier curve to the current path.
+        --------------------------------------------------
+nvgRect(
+    pos - vec2f Position,
+    size - vec2f Size
+)
+
+  - Add a rectangle to the current path.
+        --------------------------------------------------
+nvgRoundedRect(
+    pos - vec2f Position,
+    size - vec2f Size,
+    radius - float
+)
+
+  - Add a rounded rectangle to the current path.
+        --------------------------------------------------
+nvgRoundedRectVarying(
+    pos - vec2f Position,
+    size - vec2f Size,
+    r0 - float,
+    r1 - float,
+    r2 - float,
+    r3 - float
+)
+
+  - Add a rounded rectangle with varying radii to the current path.
+        --------------------------------------------------
+nvgScale(
+    scale - vec2f Scale
+)
+
+  - Scale the current transform.
+        --------------------------------------------------
+nvgScissor(
+    pos - vec2f Position,
+    size - vec2f Size
+)
+
+  - Set the scissor rectangle.
+        --------------------------------------------------
+nvgStroke()
+
+  - Stroke the current NanoVG path on the current Screen.
+        --------------------------------------------------
+nvgStrokeColor(
+    color - vec4f RGBA (0..1)
+)
+
+  - Set the stroke color.
+        --------------------------------------------------
+nvgTranslate(
+    delta - vec2f Translation
+)
+
+  - Translate the current transform.
+        --------------------------------------------------
+screen(
+    width: Window width in pixels (default primary monitor width).,
+    height: Window height in pixels (default primary monitor height).,
+    caption: Window title (default "test").,
+    resizable: Allow window resizing (default true).,
+    maximized: Start maximized (default true).,
+    fullscreen: Create fullscreen window (default false).,
+    depth_buffer: Enable depth buffer (default false).,
+    stencil_buffer: Enable stencil buffer (default false).,
+    float_buffer: Enable float buffer (default true).,
+    gl_major: OpenGL major version (default 3).,
+    gl_minor: OpenGL minor version (default 2).
+) -> nanogui.screen
+
+  - Create a screen with optional parameters
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.screen
+==================================================
+
+    background         -> variable
+    bits_per_sample    -> variable
+    caption            -> variable
+    child_count        -> variable
+    cursor             -> variable
+    enabled            -> variable
+    focused            -> variable
+    font_size          -> variable
+    frame_index        -> variable
+    frame_time         -> variable
+    has_depth_buffer   -> variable
+    has_float_buffer   -> variable
+    has_font_size      -> variable
+    has_stencil_buffer -> variable
+    icon_extra_scale   -> variable
+    parent             -> variable
+    pixel_ratio        -> variable
+    shutdown_glfw      -> variable
+    tooltip            -> variable
+    visible            -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+add_child(
+    child - widget
+)
+
+  - Add a child widget.
+        --------------------------------------------------
+add_child_at(
+    index - int,
+    child - widget
+)
+
+  - Add a child widget at index.
+        --------------------------------------------------
+button(
+    caption - string,
+    icon - int
+)
+
+  - Create a child Button.
+        --------------------------------------------------
+canvas(
+    samples - int,
+    has_depth_buffer - bool,
+    has_stencil_buffer - bool,
+    clear - bool
+)
+
+  - Create a child Canvas.
+        --------------------------------------------------
+checkbox(
+    caption - string
+)
+
+  - Create a child CheckBox.
+        --------------------------------------------------
+child_at(
+    index - int
+)
+
+  - Get child at index.
+        --------------------------------------------------
+child_index(
+    child - widget
+)
+
+  - Get index of child widget.
+        --------------------------------------------------
+clear()
+
+  - Clear the framebuffer.
+        --------------------------------------------------
+colorpicker(
+    color - vec4f RGBA
+)
+
+  - Create a child ColorPicker.
+        --------------------------------------------------
+colorwheel(
+    color - vec4f RGBA
+)
+
+  - Create a child ColorWheel.
+        --------------------------------------------------
+combobox()
+
+  - Create a child ComboBox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+default_focus_event(
+    focused - bool
+)
+
+  - Invoke default focus handling.
+        --------------------------------------------------
+default_keyboard_character_event(
+    codepoint - int
+)
+
+  - Invoke default keyboard character handling.
+        --------------------------------------------------
+default_keyboard_event(
+    key - int,
+    scancode - int,
+    action - int,
+    modifiers - int
+)
+
+  - Invoke default keyboard handling.
+        --------------------------------------------------
+default_mouse_button_event(
+    p - vec2i,
+    button - int,
+    down - bool,
+    modifiers - int
+)
+
+  - Invoke default mouse button handling.
+        --------------------------------------------------
+default_mouse_drag_event(
+    p - vec2i,
+    rel - vec2i,
+    button - int,
+    modifiers - int
+)
+
+  - Invoke default mouse drag handling.
+        --------------------------------------------------
+default_mouse_enter_event(
+    p - vec2i,
+    enter - bool
+)
+
+  - Invoke default mouse enter/leave handling.
+        --------------------------------------------------
+default_mouse_motion_event(
+    p - vec2i,
+    rel - vec2i,
+    button - int,
+    modifiers - int
+)
+
+  - Invoke default mouse motion handling.
+        --------------------------------------------------
+default_scroll_event(
+    p - vec2i,
+    rel - vec2f
+)
+
+  - Invoke default scroll handling.
+        --------------------------------------------------
+draw_all()
+
+  - Render the screen and all widgets.
+        --------------------------------------------------
+draw_contents()
+
+  - Draw custom contents.
+        --------------------------------------------------
+draw_setup()
+
+  - Prepare rendering state.
+        --------------------------------------------------
+draw_teardown()
+
+  - Finalize rendering.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_size()
+
+  - Get the fixed size.
+        --------------------------------------------------
+framebuffer_size()
+
+  - Get framebuffer size in pixels.
+        --------------------------------------------------
+graph(
+    caption - string
+)
+
+  - Create a child Graph.
+        --------------------------------------------------
+height()
+
+  - Get widget height.
+        --------------------------------------------------
+imagepanel()
+
+  - Create a child ImagePanel.
+        --------------------------------------------------
+imageview()
+
+  - Create a child ImageView.
+        --------------------------------------------------
+label(
+    caption - string,
+    font - string,
+    font_size - int
+)
+
+  - Create a child Label.
+        --------------------------------------------------
+messagedialog(
+    type - int,
+    title - string,
+    message - string,
+    button_text - string,
+    alt_button_text - string,
+    alt_button - bool
+)
+
+  - Create a child MessageDialog.
+        --------------------------------------------------
+move_window(
+    delta - vec2i Delta
+)
+
+  - Move window relative to current position.
+        --------------------------------------------------
+new_window(
+    title - string
+)
+
+  - Create a child Window.
+        --------------------------------------------------
+nvg_flush()
+
+  - Flush pending NanoVG commands.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_render(
+    callback - function
+)
+
+  - Set or clear the render callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+perform_layout()
+
+  - Recompute widget layout.
+        --------------------------------------------------
+popup()
+
+  - Create a child Popup.
+        --------------------------------------------------
+popupbutton(
+    caption - string,
+    icon - int
+)
+
+  - Create a child PopupButton.
+        --------------------------------------------------
+position()
+
+  - Get the widget position.
+        --------------------------------------------------
+preferred_size()
+
+  - Get preferred size using the current screen.
+        --------------------------------------------------
+progressbar()
+
+  - Create a child ProgressBar.
+        --------------------------------------------------
+redraw()
+
+  - Request a redraw.
+        --------------------------------------------------
+remove_child(
+    child - widget
+)
+
+  - Remove a child widget.
+        --------------------------------------------------
+remove_child_at(
+    index - int
+)
+
+  - Remove child at index.
+        --------------------------------------------------
+request_focus()
+
+  - Request focus for this widget.
+        --------------------------------------------------
 screen()
 
+  - Get parent screen.
+        --------------------------------------------------
+set_fixed_size(
+    size - vec2i Size
+)
+
+  - Set the fixed size.
+        --------------------------------------------------
+set_height(
+    height - int
+)
+
+  - Set widget height.
+        --------------------------------------------------
+set_position(
+    pos - vec2i Position
+)
+
+  - Set the widget position.
+        --------------------------------------------------
+set_size(
+    size - vec2i Size
+)
+
+  - Set window size in pixels.
+        --------------------------------------------------
+set_width(
+    width - int
+)
+
+  - Set widget width.
+        --------------------------------------------------
+size()
+
+  - Get window size in pixels.
+        --------------------------------------------------
+slider()
+
+  - Create a child Slider.
+        --------------------------------------------------
+tabwidget(
+    font - string
+)
+
+  - Create a child TabWidget.
+        --------------------------------------------------
+textarea()
+
+  - Create a child TextArea.
+        --------------------------------------------------
+textbox(
+    value - string
+)
+
+  - Create a child TextBox.
+        --------------------------------------------------
+toolbutton(
+    icon - int,
+    caption - string
+)
+
+  - Create a child ToolButton.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscrollpanel()
+
+  - Create a child VScrollPanel.
+        --------------------------------------------------
+width()
+
+  - Get widget width.
+        --------------------------------------------------
+window()
+
+  - Get parent window.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.widget
+==================================================
+
+    child_count      -> variable
+    cursor           -> variable
+    enabled          -> variable
+    focused          -> variable
+    font_size        -> variable
+    has_font_size    -> variable
+    icon_extra_scale -> variable
+    parent           -> variable
+    tooltip          -> variable
+    visible          -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+add_child(
+    child - widget
+)
+
+  - Add a child widget.
+        --------------------------------------------------
+add_child_at(
+    index - int,
+    child - widget
+)
+
+  - Add a child widget at index.
+        --------------------------------------------------
+button(
+    caption - string,
+    icon - int
+)
+
+  - Create a child Button.
+        --------------------------------------------------
+canvas(
+    samples - int,
+    has_depth_buffer - bool,
+    has_stencil_buffer - bool,
+    clear - bool
+)
+
+  - Create a child Canvas.
+        --------------------------------------------------
+checkbox(
+    caption - string
+)
+
+  - Create a child CheckBox.
+        --------------------------------------------------
+child_at(
+    index - int
+)
+
+  - Get child at index.
+        --------------------------------------------------
+child_index(
+    child - widget
+)
+
+  - Get index of child widget.
+        --------------------------------------------------
+colorpicker(
+    color - vec4f RGBA
+)
+
+  - Create a child ColorPicker.
+        --------------------------------------------------
+colorwheel(
+    color - vec4f RGBA
+)
+
+  - Create a child ColorWheel.
+        --------------------------------------------------
+combobox()
+
+  - Create a child ComboBox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+default_focus_event(
+    focused - bool
+)
+
+  - Invoke default focus handling.
+        --------------------------------------------------
+default_keyboard_character_event(
+    codepoint - int
+)
+
+  - Invoke default keyboard character handling.
+        --------------------------------------------------
+default_keyboard_event(
+    key - int,
+    scancode - int,
+    action - int,
+    modifiers - int
+)
+
+  - Invoke default keyboard handling.
+        --------------------------------------------------
+default_mouse_button_event(
+    p - vec2i,
+    button - int,
+    down - bool,
+    modifiers - int
+)
+
+  - Invoke default mouse button handling.
+        --------------------------------------------------
+default_mouse_drag_event(
+    p - vec2i,
+    rel - vec2i,
+    button - int,
+    modifiers - int
+)
+
+  - Invoke default mouse drag handling.
+        --------------------------------------------------
+default_mouse_enter_event(
+    p - vec2i,
+    enter - bool
+)
+
+  - Invoke default mouse enter/leave handling.
+        --------------------------------------------------
+default_mouse_motion_event(
+    p - vec2i,
+    rel - vec2i,
+    button - int,
+    modifiers - int
+)
+
+  - Invoke default mouse motion handling.
+        --------------------------------------------------
+default_scroll_event(
+    p - vec2i,
+    rel - vec2f
+)
+
+  - Invoke default scroll handling.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_size()
+
+  - Get the fixed size.
+        --------------------------------------------------
+graph(
+    caption - string
+)
+
+  - Create a child Graph.
+        --------------------------------------------------
+height()
+
+  - Get widget height.
+        --------------------------------------------------
+imagepanel()
+
+  - Create a child ImagePanel.
+        --------------------------------------------------
+imageview()
+
+  - Create a child ImageView.
+        --------------------------------------------------
+label(
+    caption - string,
+    font - string,
+    font_size - int
+)
+
+  - Create a child Label.
+        --------------------------------------------------
+messagedialog(
+    type - int,
+    title - string,
+    message - string,
+    button_text - string,
+    alt_button_text - string,
+    alt_button - bool
+)
+
+  - Create a child MessageDialog.
+        --------------------------------------------------
+new_window(
+    title - string
+)
+
+  - Create a child Window.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+perform_layout()
+
+  - Perform layout using the current screen.
+        --------------------------------------------------
+popup()
+
+  - Create a child Popup.
+        --------------------------------------------------
+popupbutton(
+    caption - string,
+    icon - int
+)
+
+  - Create a child PopupButton.
+        --------------------------------------------------
+position()
+
+  - Get the widget position.
+        --------------------------------------------------
+preferred_size()
+
+  - Get preferred size using the current screen.
+        --------------------------------------------------
+progressbar()
+
+  - Create a child ProgressBar.
+        --------------------------------------------------
+remove_child(
+    child - widget
+)
+
+  - Remove a child widget.
+        --------------------------------------------------
+remove_child_at(
+    index - int
+)
+
+  - Remove child at index.
+        --------------------------------------------------
+request_focus()
+
+  - Request focus for this widget.
+        --------------------------------------------------
+screen()
+
+  - Get parent screen.
+        --------------------------------------------------
+set_fixed_size(
+    size - vec2i Size
+)
+
+  - Set the fixed size.
+        --------------------------------------------------
+set_height(
+    height - int
+)
+
+  - Set widget height.
+        --------------------------------------------------
+set_position(
+    pos - vec2i Position
+)
+
+  - Set the widget position.
+        --------------------------------------------------
+set_size(
+    size - vec2i Size
+)
+
+  - Set the widget size.
+        --------------------------------------------------
+set_width(
+    width - int
+)
+
+  - Set widget width.
+        --------------------------------------------------
+size()
+
+  - Get the widget size.
+        --------------------------------------------------
+slider()
+
+  - Create a child Slider.
+        --------------------------------------------------
+tabwidget(
+    font - string
+)
+
+  - Create a child TabWidget.
+        --------------------------------------------------
+textarea()
+
+  - Create a child TextArea.
+        --------------------------------------------------
+textbox(
+    value - string
+)
+
+  - Create a child TextBox.
+        --------------------------------------------------
+toolbutton(
+    icon - int,
+    caption - string
+)
+
+  - Create a child ToolButton.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscrollpanel()
+
+  - Create a child VScrollPanel.
+        --------------------------------------------------
+width()
+
+  - Get widget width.
+        --------------------------------------------------
+window()
+
+  - Get parent window.
         --------------------------------------------------
 
 
