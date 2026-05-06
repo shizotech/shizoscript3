@@ -409,17 +409,19 @@ class miniagent
 		action_history.push_back(entry);
 		
 		if(fileio.exists(AGENT_DIR)) {
+			base_path = fileio.exists(AGENT_DIR) ? AGENT_DIR : ".backup/";
+			base_path += "action_logs/";
 			for(1) {
 				ts = std.timestamp();
 				ts = ts.replace("-", "_");
 				ts = ts.replace(":", "_");
 				ts = ts.replace(" ", "__");
 				
-				if(fileio.exists(AGENT_DIR + "action_logs/" + ts + ".json"))
+				if(fileio.exists(base_path + ts + ".json"))
 					std.sleep(10);
 					continue;
-				
-				fileio.write_json(AGENT_DIR + "action_logs/" + ts + ".json", entry);
+					
+				fileio.write_json(base_path + ts + ".json", entry);
 				break;
 			}
 		}

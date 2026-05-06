@@ -630,6 +630,9 @@ Decision must be binary and final.
 				];
 			}
 			
+			if(!args.original_code)
+				args.original_code = "";
+			
 			if(!args.new_code)
 				args.new_code = ""; //Suppose the AI meant that?
 			

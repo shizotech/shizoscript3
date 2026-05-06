@@ -224,7 +224,6 @@ function loadConversationHTML(conv) {
 // ════════════════════════════════════════════
 const sidebar = document.getElementById('sidebar');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
-const btnSidebarClose = document.getElementById('btnSidebarClose');
 const conversationList = document.getElementById('conversationList');
 const btnNewChat = document.getElementById('btnNewChat');
 const btnToggleSidebar = document.getElementById('btnToggleSidebar');
@@ -1471,12 +1470,6 @@ btnToggleSidebar.addEventListener('click', () => {
   sidebarOverlay.classList.toggle('visible', !sidebar.classList.contains('collapsed'));
 });
 sidebarOverlay.addEventListener('click', () => {
-  sidebar.classList.add('collapsed');
-  sidebarOverlay.classList.remove('visible');
-});
-
-// Sidebar close button functionality
-btnSidebarClose.addEventListener('click', () => {
   sidebar.classList.add('collapsed');
   sidebarOverlay.classList.remove('visible');
 });

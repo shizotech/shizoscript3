@@ -233,7 +233,7 @@ server.route("POST", "^/api/adminagent/poll", [this](req, res) {
 				if(delta_queue.tool.args.has("path"))
 					delta_queue.text += " `" + delta_queue.tool.args.path + "`";
 				
-				delta_queue.text += "\n";	
+				delta_queue.text += "\n\n";	
 			}			
 		}
 
@@ -259,8 +259,10 @@ server.route("POST", "^/api/adminagent/stop", [this](req, res) {
 	];
 });
 			
-
 std.print("Webinterface: " + "http://localhost:13337\n");
+
+std.system("start http://localhost:13337");
+
 
 //Initialize agent
 planner = miniagent(cfg.api, None, "planner", cfg.token); //So that the local agent.space aswell as the global agent.space are visible
