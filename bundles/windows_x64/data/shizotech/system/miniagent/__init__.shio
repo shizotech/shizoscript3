@@ -1,0 +1,347 @@
+
+import webserver;
+import leveldb;
+
+#include "miniagent"
+
+agent_space = std.wd() + "/" + AGENT_DIR;
+agent_root = AGENT_ROOT_DIR;
+agent_space_exists = fileio.exists(agent_space);
+
+skip_first_command = false;
+
+if(!fileio.exists(agent_space)) {
+	create_new_space = std.input("Initialize persistant agent state (Y-create new agent space / N-run standalone) ? ");
+	create_new_space = create_new_space.lowercase();
+	
+	if(create_new_space.starts("y")) {
+		fileio.mkdir(agent_space);
+		fileio.mkdir(agent_space + "skills");
+		fileio.mkdir(agent_space + "roles");
+		fileio.mkdir(agent_space + "todos");
+	}
+}
+
+cfg_use_local = fileio.exists(agent_space + "config.json");
+cfg_path = cfg_use_local ? agent_space + "config.json" : std.config_path("miniagent", "llmconfig");
+cfg = fileio.read_json(cfg_path);
+
+if(!cfg)
+	std.print("No configuration found.");
+	std.print("In order to use this you have to connect to an openai compatible endpoint (only vLLM is tested).");
+
+if(cfg)
+{
+	//Always test
+	std.cout("\ntesting... ", cfg.api, "...");
+
+	try {
+		//Test the api once
+		gpt = generic_agent(cfg.api, None, None, cfg.token);
+		test_result = gpt.text("This is a system test.\nAnswer with 'hello world'.\nDo not write anything else.");
+		test_result = test_result.lowercase();
+		if(test_result.find("hello world") < 0)
+			std.cout("could not get an answer from the API!\n\n");
+			std.print(test_result);
+			cfg = None;
+		else
+			std.cout("online.\n\n");
+	}
+	catch(e) {
+		cfg = None;
+	}
+}
+	
+for(!cfg)
+{
+	std.print("Please enter the full URL to the endpoint you want to use ( e.g. http://localhost:8000 )");
+	api_url = std.input(">>> ");
+	std.print("Please enter your auth token (can be empty for local)");
+	auth_token = std.input(">>> ");
+	
+	api_url = api_url.removesuffix("/v1/");
+	api_url = api_url.removesuffix("/v1");
+	api_url = api_url.removesuffix("/");
+	
+	std.print("testing...");
+	
+	try {	
+		//Test the api once
+		gpt = generic_agent(api_url, None, None, auth_token);
+		test_result = gpt.text("Answer with 'hello world'. Do not write anything else.");
+		if(test_result.find("hello world") < 0)
+			std.print("could not get an answer from the API.");
+			continue;
+			
+		std.print("passed.");
+		
+		cfg.api = api_url;
+		cfg.token = auth_token;
+		
+		cfg_write_path = agent_space_exists ? agent_space + "config.json" : cfg_path;
+		fileio.write_json(cfg_write_path, cfg);
+		std.print(cfg_write_path);
+		break;
+	}
+	catch(e) {
+		
+	}
+}
+
+//Start webserver
+server = webserver.http_server(13337);
+server.static("", "web"); //TODO: add functions to only serve certain routes when AUTHED	
+server.start();
+
+running_agents = [];
+
+conversations = leveldb.db(std.config_path("miniagent", "convdb"));
+
+//PRIVATE ADMIN AGENT
+server.route("POST", "^/api/adminagent", [this](req, res) {
+	
+	body = std.json(req.body);
+	
+	prompt = body.prompt;
+	
+	new_agent = miniagent(cfg.api, None, "planner", cfg.token);
+	
+	new_token = body.session_id ?? std.random_hash();
+	
+	if(body.session_id && conversations.exists("admin:"+body.session_id))
+		new_agent.llm_api.context.body.messages = conversations.get("admin:"+body.session_id);
+	
+	client_agent_id = req.client_ip;
+	
+	try {
+		if(running_agents.has(client_agent_id))
+		{
+			running_agents[client_agent_id].agent.stop();
+		}
+	}
+	catch(e) {
+		
+	}
+	
+	new_agent.on_action = [client_agent_id](action) {
+		
+		if(action.agent) {
+			//Handle worker
+			//Weird transformation
+			agent = action.agent;
+			action = agent.action;
+			action.agent = "worker";
+			action.id = agent.id;
+		}
+		else
+			action.agent = "planner";
+		
+		if(action.start_agent ?? false) {
+			action.spawn = action.start_agent;
+			action.id = action.start_agent;
+		}
+		
+		if(!action.has("text") && !action.has("tool") && !action.has("spawn"))
+			return;
+		
+		running_agents[client_agent_id].queue.push_back(action);
+	};
+	
+	running_agents[client_agent_id] = [
+		agent=new_agent,
+		token=new_token,
+		queue=[],
+		status="generating",
+		last_poll = std.millis(),
+	];
+	
+	start_agent = [new_token](prompt, client_ip, agt)
+	{
+		agt.task(prompt);
+		
+		if(running_agents.has(client_ip))
+			running_agents[client_ip].status = "done";
+		
+		result = conversations.batch([
+			["put", "admin:"+new_token, agt.llm_api.context.body.messages],
+		]);
+	};
+	
+	std.thread(start_agent).run(prompt, req.client_ip, new_agent);
+	
+	return [
+		body=[ok=1, session_id=new_token],
+	];
+	
+});
+
+server.route("POST", "^/api/adminagent/poll", [this](req, res) {
+	
+	try {		
+		body = std.json(req.body);
+		
+		if(!running_agents.has(req.client_ip))
+			return [body=[ok=true,status="done"]];
+		if(running_agents[req.client_ip].token != body.session_id)
+			std.print("Invalid session: ", body.session_id, " : ", running_agents[req.client_ip].token);
+			return [body=[ok=false,status="error"]];
+		
+		running_agents[req.client_ip].last_poll = std.millis();
+		
+		queue = &running_agents[req.client_ip].queue;
+		
+		if(!queue.size()) {
+			if(running_agents[req.client_ip].status == "done")
+				running_agents.erase(req.client_ip);	
+				return [body=[ok=true, status="done"]];
+			return [body=[ok=true, status="waiting"]];
+		}
+		
+		delta_queue = queue[0];
+		
+		queue.erase(0);
+
+		if(delta_queue.has("spawn"))
+		{
+			return [body=[ok=true, status="spawn", delta=delta_queue]];
+		}
+		
+		if(delta_queue.has("text")) {
+			for(i = 0; i < queue.size(); i++) {
+				if(queue[i].has("spawn"))
+					break;
+				if(delta_queue.has("id") && queue[i].id != delta_queue.id)
+					break;
+				if(queue[i].has("tool"))
+					break;
+				
+				delta_queue.text += queue[i].text;
+				queue.erase(i);
+				i--;
+			}
+		}
+		
+		if(delta_queue.has("tool") && delta_queue.tool.name) {
+			if(delta_queue.tool.name == "finalize") {
+				if(delta_queue.tool.args.assistant_answer)
+					delta_queue.text = "\n\n" + delta_queue.tool.args.assistant_answer;
+			}
+			else {
+				//Transform tool call to text...
+				delta_queue.text = "\n> [TOOL] " + delta_queue.tool.name;
+				
+				if(delta_queue.tool.args.has("path"))
+					delta_queue.text += " `" + delta_queue.tool.args.path + "`";
+				
+				delta_queue.text += "\n";	
+			}			
+		}
+
+		return [body=[ok=true, status="generating", delta=delta_queue]];
+	}
+	catch(e) {
+		return [body=[ok=false,status="error", error="internal server error."]];
+	}
+});
+
+server.route("POST", "^/api/adminagent/stop", [this](req, res) {
+	try {
+		if(running_agents.has(req.client_ip))
+			running_agents[req.client_ip].agent.stop();
+			running_agents.erase(req.client_ip);
+	}
+	catch(e) {
+		
+	}
+	
+	return [
+		body=[ok=true],
+	];
+});
+			
+
+std.print("Webinterface: " + "http://localhost:13337\n");
+
+//Initialize agent
+planner = miniagent(cfg.api, None, "planner", cfg.token); //So that the local agent.space aswell as the global agent.space are visible
+
+last_state = "";
+
+planner.on_action = [&last_state](action) {
+	if(action.text) {
+		if(*last_state != "text")
+			*last_state = "text";
+			std.cout("\n");
+		
+		stdfcol("white");
+		std.cout(action.text);
+	}
+	
+	if(action.tool) {
+		if(*last_state != "tool")
+			*last_state = "tool";
+			std.cout("\n\n");
+			
+		stdfcol("yellow");
+		std.cout("[TOOL] ");
+		stdfcol("magenta");
+		std.cout(action.tool.name + "()", action.tool.args.has("path") ? "> " + action.tool.args.path : "", "\n");
+		stdfcol("white");
+	}
+};
+
+if(!skip_first_command)
+{
+	if(std.argc() == 2) {
+		//Run single prompt
+		planner.task(std.argv(1));
+		return;
+	}
+	else(std.argc() != 1) {
+		std.error("Invalid command!");
+		return;
+	}
+}
+
+
+
+check_command(planner, cmd) {
+	if(cmd == "/clear")
+		planner.llm_api.context.clear();
+		std.print("Cleared history.");
+	else
+		std.print("unknown command.");
+}
+
+for(1) {
+	std.color("green");
+	cmd = std.input(">>> (user) ").strip();
+
+	//One fixed command, /load for loading prompt text files
+	if(cmd.starts("/load")) {
+		cmd = cmd.removeprefix("/load").strip();
+	}
+	else if(cmd.starts("/"))
+		check_command(planner, cmd);
+		continue;
+	
+	if(cmd.empty())
+		continue;
+	
+	std.cout("\n");
+	
+	stdfcol("magenta");
+	std.cout("(miniagent) ");
+	
+	try {
+		result = planner.task(cmd);
+		if(result.ok && result.reports)
+			std.cout(result.reports[0].report);
+	}
+	catch(e) {
+		
+	}
+	
+	std.cout("\n");
+	std.cout("\n");
+}

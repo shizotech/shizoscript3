@@ -1,0 +1,39 @@
+// Run two tasks concurrently
+task1() {
+    for(i = 0; i < 5; i++) {
+        std.print("Task1:", i);
+        std.sleep(100);
+    }
+}
+
+task2() {
+    for(i = 0; i < 5; i++) {
+        std.print("Task2:", i);
+        std.sleep(150);
+    }
+}
+
+task3(sleep_time) {
+    for(i = 0; i < 5; i++) {
+        std.print("Task3:", i);
+        std.sleep(sleep_time);
+    }
+}
+
+// Start threads
+t1 = std.thread(task1);
+t2 = std.thread(task2);
+t3 = std.thread(task3);
+
+std.print("starting threads...");
+
+t1.run();
+t2.run();
+t3.run(200);
+
+t1.join();
+t2.join();
+t3.join();
+
+std.print("threads finished.");
+std.input(); //Wait for user input

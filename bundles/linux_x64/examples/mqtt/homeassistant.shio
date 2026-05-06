@@ -1,0 +1,59 @@
+
+using std;
+
+import mqtt;
+
+m = mqtt.mqtt();
+
+//Set to correct address
+m.configure("tcp://localhost:1883", "shizo_sensor_01");
+
+m.set_callbacks([](topic, payload, qos, retained) {
+    print("MQTT RX:", topic);
+    print(payload);
+});
+
+//Set user and password
+res = m.connect("homeassistant", "", true, 20);
+print(res);
+if (res.error) {
+    print("connect failed:", res);
+	std.input();
+    return;
+}
+
+node_id = "shizo_pc";
+object_id = "cpu_temp";
+unique_id = node_id + "_" + object_id;
+
+state_topic  = "homeassistant/sensor/" + node_id + "/" + object_id + "/state";
+config_topic = "homeassistant/sensor/" + node_id + "/" + object_id + "/config";
+
+cfg = [
+    "name"= "Shizo Test Temp",
+    "unique_id"= unique_id,
+    "state_topic"= state_topic,
+    "unit_of_measurement"= "°C",
+    "device_class"= "temperature",
+    "state_class"= "measurement",
+    "availability_topic"= "homeassistant/" + node_id + "/status",
+    "payload_available"= "online",
+    "payload_not_available"= "offline",
+    "device"= [
+        "identifiers"= [ node_id ],
+        "name"= "Shizo PC",
+        "manufacturer"= "Shizo",
+        "model"= "Custom Sensor"
+    ]
+];
+
+m.publish(config_topic, cfg, 1, true);
+
+m.publish("homeassistant/" + node_id + "/status", "online", 1, true);
+
+temp = 42.5;
+m.publish(state_topic, "" + temp, 0, false);
+
+print("Discovery + first state published.");
+
+std.input();

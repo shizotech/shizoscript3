@@ -1,0 +1,25 @@
+class Player {
+    name = "Unknown";
+    score = 0;
+
+    __init__(player_name, initial_score) {
+        name = player_name;
+        score = initial_score;
+    }
+
+    add_score(points) {
+        score += points;
+    }
+
+    print() {
+        std.print("Name:", name);
+        std.print("Score:", score);
+    }
+}
+
+// Creating and using instances
+alice = Player("Alice", 10);
+alice.add_score(5);
+alice.print();  // Name: Alice  Score: 15
+
+std.input(); //Wait for user input

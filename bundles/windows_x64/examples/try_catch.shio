@@ -1,0 +1,31 @@
+//try catch test
+
+std.print("TRY START!");
+
+try
+{
+	std.print("cause error now");
+	err = 0;
+	err.test();
+	std.print("After error");
+}
+catch(e)
+{
+	std.print("Caught exception: ", e);
+}
+
+//Noexcept function
+err_func() noexcept //This forces full execution of the function, even if errors occur (kinda dangerous), all failed actions are guaranteed to return "none"
+{
+	err = 0;
+	test = err.test();
+	std.print("Test is: ", test); //test should be None
+}
+
+//Warning: Noexcept functions are not fully implemented and will cause a crash (easy to fix, will do that someday)
+//err_func();
+
+std.print("END");
+
+std.input();
+

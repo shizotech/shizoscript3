@@ -1,0 +1,21 @@
+
+#include "openai/gpt_oss"
+
+test = gpt_oss("http://localhost:8000");
+
+test.on_analysis = [](stepid,txt)
+{
+	std.cout(txt);
+};
+test.on_answer = [](stepid,txt)
+{
+	std.cout(txt);
+};
+
+test.context.enable_builtin_tools();
+
+test.text("whats the weather in halle saale?", [effort="high"]);
+
+fileio.write_text("test_prompt.txt", test.context.build_prompt());
+
+std.input();

@@ -1,0 +1,1037 @@
+
+import tgbot;
+import leveldb;
+import curl;
+
+//Built in shizoscript library
+//See shizotech/includes
+#include "openai/openai"
+
+class AntiSpamBot
+{
+	bot = None;
+	llm_api_url = "";
+	db = None;
+	userdb = None;
+	queue = [];
+	
+	log_chat = 0; //Chatid for the main log chat where all actions from the bot will be logged
+	
+	__init__(bot_token, llm_v1_endpoint = "http://localhost:8000", master_log_chatid = 0)
+	{
+		bot = telegram.bot(bot_token);
+		llm_api_url = llm_v1_endpoint;
+		db = leveldb.db("botdb");
+		userdb = leveldb.db("userdb");
+		log_chat = master_log_chatid;
+		
+		bot.on_any_message = [this](chatdata)
+		{
+			//Special service messages
+			if(chatdata.migrate_to_chat_id) {
+				old_state = db.get("groupchat:" + chatdata.chatid);
+				db.put("groupchat:" + chatdata.migrate_to_chat_id);
+				db.delete("groupchat:" + chatdata.chatid);
+				
+				groups = db.get("groups") ?? [];
+				for(i = 0; i < groups.size(); i++) {
+					if(groups[i].chatid == chatdata.chatid) {
+						groups[i].chatid = chatdata.migrate_to_chat_id;
+					}
+				}
+				db.put("groups", groups);
+				return;
+			}
+			
+			if(chatdata.new_members) {
+				bot.delete_message(chatdata);
+				for(i = 0; i < chatdata.new_members.size(); i++) {
+					chatdata.new_members[i].join_time = std.millis();
+				}
+			}
+			else if(chatdata.left_member) {
+				bot.delete_message(chatdata);
+			}
+			
+			//Before queueing, apply flood protection and other pre-checks...
+			state = db.get("groupchat:" + chatdata.chatid) ?? [];
+			
+			if(!chatdata.text && chatdata.caption)
+				chatdata.text = chatdata.caption;
+			
+			if(!chatdata.text && chatdata.reply)
+				chatdata.text = chatdata.reply.text;
+			
+			if(!chatdata.text.empty())
+			{
+				if(chatdata.text.starts("/"))
+				{
+					if(state.check_spam)
+						bot.delete_message(chatdata);
+
+					if(!bot.is_admin(chatdata).is_admin)
+						return;
+					
+					if(chatdata.text.starts("/start"))
+						start_chat(chatdata);
+					
+					if(chatdata.text.starts("/unban") && chatdata.chatid == log_chat) {
+						unban_id = std.int(chatdata.text.removeprefix("/unban").strip());
+						if(unban_id)
+							unban([userid=unban_id]);
+					}
+					
+					//Debug a message to see how the AI treats it
+					if(chatdata.text.starts("/dbg"))
+						chatdata.debug = true;
+						chatdata.text = chatdata.text.removeprefix("/dbg");
+					else
+						return;
+				}
+				
+				if(chatdata.chat.type == "Private")
+					return;
+				
+				//Always check spam
+				//Since this is an anti spambot, we can assume ppl put it
+				//in groups on purpose...
+				
+				//if(!state.check_spam)
+				//	return;
+				
+				if(_last_msg.size() > 100)
+					_last_msg = [];
+				
+				userid = std.string(chatdata.from.userid);
+				
+				was_striked = false;
+				
+				fix_admin = chatdata.text.contains("@admin") || chatdata.text.contains("@Admin");
+				
+				if(_last_msg.has(userid) && !fix_admin) {
+					if(_last_msg[userid].last_text == chatdata.text && _last_msg[userid].last_chat == chatdata.chatid) {
+						time_delta = std.millis() - _last_msg[userid].last_time;
+						if(time_delta < 1000 * 60) {
+							_last_msg[userid].strikes = _last_msg[userid].strikes + 1;
+							was_striked = true;
+						}
+					}
+				}
+				
+				_last_msg[userid].last_text = chatdata.text;
+				_last_msg[userid].last_chat = chatdata.chatid;
+				_last_msg[userid].last_time = std.millis();
+				
+				if(was_striked) {
+					//A bit confusing, if its an admin then reset the strikes
+					//Maybe in the future, dont check for same group and delete general spammed flood messages (risk of deleting legit events?)
+					//idk just go safe for now
+					if(!bot.is_admin(chatdata).is_admin)
+						bot.delete_message(chatdata);
+					else
+						_last_msg[userid].last_text = "";
+						_last_msg[userid].last_chat = 0;
+					return;
+				}
+				else {
+					_last_msg[userid].strikes = 0;
+				}
+				
+			}
+			else if(chatdata.chat.type == "Private") {
+				return;
+			}
+
+			this.queue.push_back(chatdata);
+		};
+	
+		bot.on_added_to_group = [this](chatdata) {
+			state = db.get("groupchat:" + chatdata.chatid);
+			if(state.check_spam) {
+				std.print("Bot is already active.");
+				return;
+			}
+			start_chat(chatdata);
+		};
+	
+	}
+	
+	process_queue()
+	{
+		if(queue.size() == 0)
+			return;
+		
+		entry = queue[0];	
+		queue.erase(0);
+		
+		try {
+			
+			//Update groups
+			groups = db.get("groups") ?? [];
+			groups[std.string(entry.chatid)] = entry.chat;
+			db.put("groups", groups);
+			
+			if(entry.new_members) {
+				has_invited = true;
+				for(i = 0; i < entry.new_members.size(); i++) {
+					//Do not double process...
+					if(entry.from.userid == entry.new_members[i].userid)
+						has_invited = false;
+					process_user(entry.new_members[i]);
+				}
+				
+				if(has_invited)
+					process_user(entry);
+				
+				return;
+			}
+			else if(entry.left_member) {
+				//I think this check here is kinda useless...
+				if(entry.from.userid != entry.left_member.userid)
+					process_user(entry.left_member);
+				return;
+			}
+				
+			process_user(entry);
+			process_message(entry);
+		}
+		catch(e) {
+			std.print("ProcessQueue: " + e);
+		}
+	}
+	
+	//Handle namechanges and userinfos...
+	process_user(chatdata) {
+		
+		//Ignore telegram group anonymous bots
+		if(chatdata.from.userid == 1087968824)
+			return;
+		
+		userdata = chatdata.from ?? chatdata;
+		
+		if(!userdata)
+			return;
+		
+		user = userdb.get("user:" + userdata.userid) ?? [];
+	
+		if(user)
+		{
+			name_changed = false;
+			
+			if(userdata.firstname && userdata.firstname != user.current.firstname)
+				name_changed = true;
+			else if(userdata.lastname && userdata.lastname != user.current.lastname)
+				name_changed = true;
+			else if(userdata.username && userdata.username != user.current.username)
+				name_changed = true;
+			
+			if(name_changed && user.current) {
+				if(user.history)
+					user.history.push_back(user.current);
+				else
+					user.history = [user.current];
+			}
+			
+			user.name_changed = name_changed;
+			
+			if(user.join_time ?? false) {
+				if(userdata.join_time ?? false) {
+					delta = userdata.join_time - user.join_time;
+					if(delta < 1000 * 5) {
+						if(log_chat) {
+							bot.send([chatid=log_chat], "action: potential multi-join\n\nuser: " + "[link url='tg://user?id=" + userdata.userid + "']" + userdata.firstname + "[/link]\n\ndelta_time: " + delta);
+						}
+					}
+				}
+			}
+		}
+		
+		user.current = userdata;
+		
+		if(userdata.join_time ?? false)
+			user.join_time = userdata.join_time;
+		
+		if(chatdata.text) {
+			if(user.last_messages)
+				user.last_messages.push_back(chatdata.text);
+			else
+				user.last_messages = [chatdata.text];
+			
+			if(user.last_messages.size() > 20)
+				user.last_messages.erase(0);
+		}
+		
+		userdb.put("user:" + userdata.userid, user);
+		
+		//Now do basic user checks...
+		if(user.banned) {
+			process_ban(chatdata, userdata, "Banned account tried to join.", true);
+			return;
+		}
+		
+		//Check for bad names		
+		check_name = user.current.firstname;
+		if(user.current.lastname)
+			check_name += " " + user.current.lastname;
+		if(user.current.username)
+			check_name += " | @" + user.current.username;
+		
+		check_name_lower = check_name.lowercase();
+		
+		bad_words = ["Hggff", "MARKET","LEGIT DEALER", "DEALER G", "𝐃","𝐌","𝐖","💊", "🍑", "🍆", "viagra", "delivery", "plug", "❄️❄️", "🛒", "🔌", "📦", "🚚", "🚛", "💦", "🍫🍫🍫", "🥵"];
+		
+		found_word = 0;
+		for(i = 0; i < bad_words.size(); i++)
+		{
+			it = bad_words[i];
+			if(check_name.find(it) >= 0 || check_name_lower.find(it.lowercase()) >= 0)
+				found_word = 1;
+				break;
+		}
+		
+		if(user.current.firstname.find_first_not_of("0123456789") < 0 || found_word)
+		{
+			process_ban(chatdata, userdata, "Preventive ban, suspicious name.", true);
+		}
+	}
+	
+	process_message(chatdata)
+	{	
+
+		if(chatdata.from.is_bot) {
+			//This messes up anonymous accounts?
+			//Because when users post anonymous, a universal bot account is used by telegram...
+			
+			//if(!bot.is_admin(chatdata.chatid, chatdata.from.userid).is_admin)
+			//	bot.delete_message(chatdata);
+			//return;
+		}
+		
+		//We cannot get text from a story directly?
+		//Try getting info about the chat it links to
+		if(chatdata.story || chatdata.reply.story) {
+			chat_user_name = chatdata.story ? chatdata.story.chat.username : chatdata.reply.story.chat.username;
+			
+			if(chat_user_name) {
+				chatdata.text += "\n\nhttps://t.me/" + chat_user_name;
+			}
+		}
+	
+		if((chatdata.text.contains("@admin") || chatdata.text.contains("@Admin")) && chatdata.reply) {
+			
+			if(!bot.is_admin(chatdata.chatid, chatdata.reply.from.userid).is_admin &&
+				chatdata.reply.from.userid != bot.get_bot_user_id().userid)
+			{
+				bot.delete_message(chatdata);
+				
+				vote_id = std.random_hash();
+				
+				voteyes_fn = [this, vote_id](chatdata, userdata) {
+					return voteban_yes(chatdata, userdata, vote_id);
+				};
+				
+				voteno_fn = [this, vote_id](chatdata, userdata) {
+					return voteban_no(chatdata, userdata, vote_id);
+				};
+				
+				voteadmin_fn = [this, vote_id](chatdata, userdata) {
+					return voteban_admin(chatdata, userdata, vote_id);
+				};
+				
+				votecancel_fn = [this, vote_id](chatdata, userdata) {
+					return voteban_cancel(chatdata, userdata, vote_id);
+				};
+				
+				vote_callbacks = [
+					["VOTE YES"=voteyes_fn, "VOTE NO"=voteno_fn],
+					["BAN (ADMIN)"=voteadmin_fn, "CANCEL"=votecancel_fn],
+				];
+				
+				votemsg = bot.reply(chatdata.reply, "VOTEBAN: Do you think this message is spam? (1 yes, 0 no)", None, vote_callbacks);
+				
+				_votebans[vote_id] = [
+					msg=votemsg,
+					reply=chatdata.reply,
+					count_yes = 1, 
+					count_no = 0, 
+					voted=[chatdata.from.userid], 
+					callbacks=vote_callbacks, 
+					initiator=chatdata.from.userid,
+					offender = chatdata.reply.from,
+					chat=chatdata.reply,
+				];
+				
+				state = db.get("groupchat:" + chatdata.chatid);
+				
+				//Erase yes/no options
+				vote_callbacks.erase(0);
+				if(state.admingroups) {	
+					for(i = 0; i < state.admingroups.size(); i++) {
+						msg = bot.send(state.admingroups[i], "action: voteban\n\nchat: " + chatdata.chat.title + "\nuser: " + "[link url='tg://user?id=" + chatdata.reply.from.userid + "']" + chatdata.reply.from.firstname + "[/link]\nuserid: " + chatdata.reply.from.userid + "\n\n" + chatdata.reply.text
+							,None
+							,vote_callbacks
+						);
+						
+						//Check if admin chat still exists, bail out after 10 times error
+						if(!msg) {
+							if(!state.admin_fail_count)
+								state.admin_fail_count = 1;
+							else
+								state.admin_fail_count++;
+							
+							if(state.admin_fail_count >= 10) {
+								groups = db.get("admingroups") ?? [];
+								groups.erase(std.string(state.admingroups[i].chatid));
+								db.put("admingroups", groups);
+								state.admingroups.erase(i);
+								i--;
+							}
+						}
+						else {
+							state.admin_fail_count = 0;
+						}
+							
+					}
+				}
+				
+				db.put("groupchat:" + chatdata.chatid, state);
+				
+				if(log_chat) {
+					bot.send([chatid=log_chat], "action: voteban\n\nchat: " + chatdata.chat.title + "\nuser: " + "[link url='tg://user?id=" + chatdata.reply.from.userid + "']" + chatdata.reply.from.firstname + "[/link]" + "\n\n" + chatdata.reply.text
+							,None
+							,vote_callbacks
+						);
+				}
+				
+				return;
+			}
+		}
+
+		user = userdb.get("user:" + chatdata.from.userid) ?? [];
+		if(!user.check_count)
+			user.check_count = 1;
+		else
+			user.check_count++;
+		if(user.name_changed ?? false)
+			user.check_count = 0;
+			user.name_changed = false;
+		userdb.put("user:" + chatdata.from.userid, user);
+			
+		//When a user has more than 5 messages without being banned, the user becomes "immune", unless name changed
+		if(user.check_count > 5 && !chatdata.debug) {
+			return;
+		}
+
+		if(chatdata.text) {
+
+			check_prompt = fileio.read_string("prompts/maincheck.txt");
+	
+			res = process_prompt("prompts/maincheck.txt", [
+				"{{chatname}}" = chatdata.chat.title,
+				"{{text}}" = chatdata.text,
+				"{{username}}" = chatdata.from.firstname,
+			]);
+			
+			if(res) {		
+			
+				reason = res.reason;
+				has_prohibited_topics = res.has_prohibited_topics;
+				spam = res.spam;
+				urls = res.urls;
+							
+				if(spam) {
+					if(!bot.is_admin(chatdata.chatid, chatdata.from.userid).is_admin)
+						bot.delete_message(chatdata);
+					
+					if(chatdata.debug)
+						bot.send(chatdata, res);
+					else
+						process_ban(chatdata, chatdata.from, "(AI) " + reason, true);
+					return;
+				}
+				
+				//Now check urls...
+				for(urli = 0; urli < urls.size(); urli++) {
+					url = urls[urli].strip();
+					
+					c = curl.curl();
+					
+					webresult = c.get(url).body;
+					
+					if(webresult) {
+						
+						if(webresult.length() > 24000)
+							webresult = webresult.substr(0, 24000) + "\n...";
+						
+						webres = process_prompt("prompts/webcheck.txt", [
+							"{{website}}" = webresult,
+						]);
+						
+						reason = webres.reason;
+						has_prohibited_topics = webres.has_prohibited_topics;
+						spam = webres.spam;
+						
+						if(spam) {
+							if(!bot.is_admin(chatdata.chatid, chatdata.from.userid).is_admin)
+								bot.delete_message(chatdata);
+							
+							if(chatdata.debug)
+								bot.send(chatdata, webres);
+							else
+								process_ban(chatdata, chatdata.from, "(AI) " + reason, true);
+							return;
+						}
+					}
+				}
+			}
+		
+			if(chatdata.debug) {
+				bot.send(chatdata, res);
+			}
+		}	
+	
+		//Check profile if username
+		//Create user url...
+		if(chatdata.from.username) {
+			user_url = "https://t.me/" + chatdata.from.username;
+			c = curl.curl();			
+			webresult = c.get(user_url).body;
+			
+			webresult = "<div class=\"tgme_page_title\">" + webresult.extract("<div class=\"tgme_page_title\">", "<div class=\"tgme_page_action\">");
+			
+			if(webresult) {
+				
+				if(webresult.length() > 24000)
+					webresult = webresult.substr(0, 24000) + "\n...";
+										
+				webres = process_prompt("prompts/profilecheck.txt", [
+						"{{website}}" = webresult,
+				]);
+				
+				reason = webres.reason;
+				has_prohibited_topics = webres.has_prohibited_topics;
+				spam = webres.spam;
+				urls = webres.urls;
+				
+				if(spam) {
+					if(!bot.is_admin(chatdata.chatid, chatdata.from.userid).is_admin)
+						bot.delete_message(chatdata);
+					process_ban(chatdata, chatdata.from, "(AI) " + reason, true);
+					return;
+				}
+				
+				//Now check urls...
+				for(urli = 0; urli < urls.size(); urli++) {
+					url = urls[urli].strip();
+					
+					c = curl.curl();
+					
+					webresult = c.get(url).body;
+					
+					if(webresult) {
+						
+						if(webresult.length() > 24000)
+							webresult = webresult.substr(0, 24000) + "\n...";
+						
+						webres = process_prompt("prompts/webcheck.txt", [
+							"{{website}}" = webresult,
+						]);
+						
+						reason = webres.reason;
+						has_prohibited_topics = webres.has_prohibited_topics;
+						spam = webres.spam;
+								
+						if(spam) {
+							if(!bot.is_admin(chatdata.chatid, chatdata.from.userid).is_admin)
+								bot.delete_message(chatdata);
+							process_ban(chatdata, chatdata.from, "(AI) " + reason, true);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	process_ban(chatdata, userdata, reason, ban_in_group=false) {
+		
+		//Ignore telegram group anonymous bots
+		if(chatdata.from.userid == 1087968824)
+			return;
+		
+		std.print("PROCESSING BAN");
+		std.print(userdata);
+		
+		userdata = userdata.from ?? userdata;
+		
+		if(bot.is_admin(chatdata.chatid, userdata.userid).is_admin)
+			std.print("Not banning admin...");
+			std.print(reason);
+			return;
+		
+		if(userdata.userid == bot.get_bot_user_id().userid)
+			return;
+		
+		user = userdb.get("user:" + userdata.userid) ?? [];
+		if(user.banned) {
+			if(std.millis() - user.ban_time < 1000 * 60 * 5)
+				return;
+		}
+		else {
+			user.banned = true;
+			user.ban_reason = reason;
+			user.ban_time = std.millis();
+			userdb.put("user:" + userdata.userid, user);
+		}
+		
+		if(ban_in_group)
+			bot.ban_chat_member(chatdata.chatid, userdata.userid, 0, true);
+		
+		//Do the rest async
+		std.thread(process_ban_thread).run(chatdata, userdata, reason, ban_in_group);
+	}
+	
+	//Do not call this directly
+	process_ban_thread(chatdata, userdata, reason, ban_in_group) {
+		
+		for(_process_ban_lock) {
+			std.sleep(10);
+		}
+		
+		_process_ban_lock = true;
+		
+		groups = db.get("groups") ?? [];
+		
+		for(i = 0; i < groups.size(); i++) {
+			
+			if(ban_in_group && groups[i].chatid == chatdata.chatid)
+				continue;
+			
+			res = bot.ban_chat_member(groups[i].chatid, userdata.userid, 0, true);
+			if(res.failure_type == "insufficient_rights") {
+				
+				if(!groups[i].fail_counter)
+					groups[i].fail_counter = 1;
+				else
+					groups[i].fail_counter++;
+				
+				if(groups[i].fail_counter == 5) {
+					if(!groups[i].error_informed)
+						//bot.send(groups[i], "info: I was activated in this group, but it seems like I don't have permissions to ban in this chat.\nIf you wish to continue using this bot here, please check my rights thank you :)");
+						groups[i].error_informed = true;
+				}
+				if(groups[i].fail_counter > 10) {
+					bot_status = bot.get_chat_member(groups[i].chatid, bot.get_bot_user_id().userid);
+					if(!bot_status || bot_status.status == "left" || bot_status.status == "kicked")
+					{
+						std.print("Deleting group...");
+						std.print(groups[i]);
+						db.delete("groupchat:" + groups[i].chatid);
+						groups.erase(i);
+						i--;
+						continue;
+					}
+				}
+			}
+			else if(res.failure_type == "invalid_chat") {
+				std.print("Deleting group...");
+				std.print(groups[i]);
+				db.delete("groupchat:" + groups[i].chatid);
+				groups.erase(i);
+				i--;
+				continue;
+			}
+			else
+				groups[i].fail_counter = 0;
+			
+			std.sleep(2000);
+		}
+		
+		db.put("groups", groups);
+		
+		_process_ban_lock = false;
+		
+		ban_msg = "action: banned.\n\n";
+		ban_msg += "user: [link url='tg://user?id=" + userdata.userid + "']" + userdata.firstname + "[/link]" + "\n";
+		if(userdata.username)
+			ban_msg += "username: @" + userdata.username + "\n";
+		ban_msg += "userid: " + userdata.userid + "\n\n";
+		ban_msg += "chat: " + chatdata.chat.title + "\n";
+		ban_msg += "chatid: " + chatdata.chatid + "\n\n";
+		
+		if(chatdata.text) {
+			ban_msg += "msg: " + chatdata.text + "\n\n";
+		}
+		
+		ban_msg += "reason: " + reason;
+		
+		unban_user_fn = [this, userdata](_chatdata, _userdata) {
+			return unban(userdata);
+		};
+		
+		unban_callbacks = [
+			["UNBAN"=unban_user_fn],
+		];
+		
+		state = db.get("groupchat:" + chatdata.chatid);
+		if(state.admingroups ?? false) {	
+			for(i = 0; i < state.admingroups.size(); i++) {
+				msg = bot.send(state.admingroups[i], ban_msg
+					,None
+					,unban_callbacks
+				);
+				
+				//Check if admin chat still exists, bail out after 10 times error
+				if(!msg) {
+					if(!state.admin_fail_count)
+						state.admin_fail_count = 1;
+					else
+						state.admin_fail_count++;
+					
+					if(state.admin_fail_count >= 10) {
+						groups = db.get("admingroups") ?? [];
+						groups.erase(std.string(state.admingroups[i].chatid));
+						db.put("admingroups", groups);
+						state.admingroups.erase(i);
+						i--;
+					}
+				}
+				else {
+					state.admin_fail_count = 0;
+				}
+					
+			}
+		}
+		
+		db.put("groupchat:" + chatdata.chatid, state);
+		
+		if(log_chat) {
+			bot.send([chatid=log_chat], ban_msg
+					,None
+					,unban_callbacks
+				);
+		}
+	}
+	
+	unban(userdata) {
+		user = userdb.get("user:" + userdata.userid) ?? [];
+		user.banned = false;
+		userdb.put("user:" + userdata.userid, user);
+		
+		groups = db.get("groups") ?? [];
+		
+		for(i = 0; i < groups.size(); i++) {
+			res = bot.unban_chat_member(groups[i].chatid, userdata.userid);
+		}
+		
+		if(!user.current.firstname)
+			user.current.firstname = "<not registered>";
+		
+		ban_msg = "action: global unban.\n\n";
+		ban_msg += "user: [link url='tg://user?id=" + userdata.userid + "']" + user.current.firstname + "[/link]" + "\n";
+		if(user.current.username)
+			ban_msg += "username: @" + user.current.username + "\n";
+		ban_msg += "userid: " + userdata.userid + "\n\n";
+		if(user.ban_reason)
+			ban_msg += "initial_reason: " + user.ban_reason;
+		
+		groups = db.get("admingroups") ?? [];
+		for(i = 0; i < groups.size(); i++) {
+			msg = bot.send(groups[i], ban_msg);
+		}
+
+		if(log_chat) {
+			bot.send([chatid=log_chat], ban_msg);
+		}
+	}
+	
+	voteban_yes(chatdata, userdata, vote_id) {
+
+		if(!_votebans.has(vote_id))
+			bot.delete_message(chatdata);
+			return;
+
+		if(_votebans[vote_id].voted.has_value(userdata.userid))
+			return;
+
+		vote = _votebans[vote_id];
+		if(vote.count_yes == 10 || vote.count_no == 10)
+			return;
+		
+		vote.count_yes++;
+		vote.voted.push_back(userdata.userid);
+		_votebans[vote_id] = vote;
+		
+		bot.edit_message(vote.msg, "VOTEBAN: Do you think this message is spam? (" + vote.count_yes + " yes, " + vote.count_no + " no)", vote.callbacks);
+		
+		if(vote.count_yes == 10) {
+			//Handle voteban
+			msg = bot.send(chatdata, "Voteban accepted.");
+			
+			bot.delete_message(vote.msg);
+			bot.delete_message(vote.reply);
+			
+			process_ban(vote.chat, vote.offender, "votebanned", true);
+			std.sleep(1000 * 3);
+			bot.delete_message(msg);
+			
+			_votebans.erase(vote_id);
+		}
+	}
+	
+	voteban_no(chatdata, userdata, vote_id) {
+		if(!_votebans.has(vote_id))
+			bot.delete_message(chatdata);
+			return;
+
+		if(_votebans[vote_id].voted.has_value(userdata.userid))
+			return;
+
+		vote = _votebans[vote_id];
+		if(vote.count_yes == 10 || vote.count_no == 10)
+			return;
+		
+		vote.count_no++;
+		vote.voted.push_back(userdata.userid);
+		_votebans[vote_id] = vote;
+		
+		bot.edit_message(vote.msg, "VOTEBAN: Do you think this message is spam? (" + vote.count_yes + " yes, " + vote.count_no + " no)", vote.callbacks);
+		
+		if(vote.count_no == 10) {
+			//Handle voteban
+			msg = bot.send(chatdata, "Voteban not accepted.");
+			bot.delete_message(vote.msg);
+			std.sleep(1000 * 3);
+			bot.delete_message(msg);
+			_votebans.erase(vote_id);
+		}
+	}
+	
+	voteban_admin(chatdata, userdata, vote_id) {
+		if(!_votebans.has(vote_id))
+			bot.delete_message(chatdata);
+			return;
+		
+		vote = _votebans[vote_id];
+		//if(!bot.is_admin(vote.msg.chatid, userdata.userid)) //technically this is more correct, but there might be others in the admin groups...
+		if(!bot.is_admin(chatdata.chatid, userdata.userid).is_admin)
+			return;
+
+		bot.delete_message(vote.msg);
+		bot.delete_message(vote.reply);
+		
+		_votebans.erase(vote_id);
+		
+		process_ban(vote.chat, vote.offender, "votebanned (admin)");
+		
+		//In case this is triggered from an admin chat...
+		bot.delete_message(chatdata);
+	}
+	
+	voteban_cancel(chatdata, userdata, vote_id) {
+		if(!_votebans.has(vote_id))
+			bot.delete_message(chatdata);
+			return;
+		
+		vote = _votebans[vote_id];
+		if(bot.is_admin(chatdata.chatid, userdata.userid).is_admin || userdata.userid == _votebans[vote_id].initiator) {
+			bot.delete_message(vote.msg);
+			_votebans.erase(vote_id);
+		}
+		
+		//In case this is triggered from an admin chat...
+		bot.delete_message(chatdata);
+	}
+	
+	start_chat(chatdata) {
+
+		state = db.get("groupchat:" + chatdata.chatid);
+		
+		start_moderate_fn = [this, chatdata](old_chatdata, userdata) {
+			return start_moderating(chatdata, old_chatdata, userdata);
+		};
+		
+		start_admin_fn = [this, chatdata](old_chatdata, userdata) {
+			return start_admin(chatdata, old_chatdata, userdata);
+		};
+		
+		//Add a check if user is banned here, then display unban request options...
+		
+		if(chatdata.chat.type == "Private") {
+			bot.send(chatdata, "Hello!\nAdd the bot to your groups and enable moderation.\nAfter that click the button below to receive ban notifications in this chat here.", None, [
+				["START PRIVATE ADMIN CHAT HERE"=start_admin_fn]
+			]);
+		}
+		else {
+			bot.send(chatdata, "Hello! Choose an action...\n\nThe first option enables the bot in this group.\n\nUse the second option if you have already added the bot to your groups and want to receive ban notifications.", None, [
+				["START MODERATING THIS CHAT"=start_moderate_fn],
+				["START PRIVATE ADMIN CHAT HERE"=start_admin_fn]
+			]);
+		}
+	}
+	
+	start_moderating(chatdata, old_chatdata, userdata) {	
+		if(!bot.is_admin(userdata).is_admin)
+			return false;
+		
+		bot.delete_message(old_chatdata);
+		
+		state = db.get("groupchat:" + chatdata.chatid);
+		state.check_spam = true;
+		db.put("groupchat:" + chatdata.chatid, state);
+		
+		groups = db.get("groups") ?? [];
+		groups[std.string(chatdata.chatid)] = chatdata.chat;
+		db.put("groups", groups);
+		
+		bot.send(chatdata, "I'm active now.\n\nDon't forget to give me group permissions to:\n\n- Read Messages\n- Delete Messages\n- Restrict users\n\nThank you.");
+	
+		return true;
+	}
+	
+	start_admin(chatdata, old_chatdata, userdata) {
+		if(!bot.is_admin(userdata).is_admin)
+			return false;
+		
+		bot.delete_message(old_chatdata);
+		
+		bot.send(chatdata, "Please wait a second, collecting groups...");
+		
+		groups = db.get("groups") ?? [];
+		
+		has_groups = [];
+		
+		for(i = 0; i < groups.size(); i++) {
+			if(bot.is_admin(groups[i].chatid, userdata.userid).is_admin)
+				has_groups.push_back(groups[i]);
+			
+			std.sleep(500);
+		}
+		
+		if(has_groups) {
+			group_str = "";
+			for(i = 0; i < has_groups.size(); i++) {
+				group_str += "- " + has_groups[i].title + "\n";
+			}
+			
+			start_admin_fn = [this, has_groups](chatdata, userdata) {
+				return start_admin_notifications(has_groups, chatdata, userdata);
+			};
+		
+			bot.send(chatdata, "You are admin of the following groups:\n\n" + group_str + "\nReceive ban notifications here in this chat?", None, [
+				["ENABLE BAN NOTIFICATIONS" = start_admin_fn]
+			]);
+			
+		}
+		else {
+			bot.send(chatdata,"It seems like you haven't added the bot to any groups yet.\nAdd the bot to a group where you are admin, start it and then come here and run /start again.");
+		}
+		
+		return true;
+	}
+	
+	start_admin_notifications(has_groups, chatdata, userdata) {
+		
+		if(!bot.is_admin(userdata).is_admin)
+			return false;
+		
+		for(i = 0; i < has_groups.size(); i++) {
+			state = db.get("groupchat:" + has_groups[i].chatid);
+			
+			has_chat = false;
+			for(j = 0; j < state.admingroups.size(); j++) {
+				if(state.admingroups[j].chatid == chatdata.chat.chatid)
+					has_chat = true;
+					state.admingroups[j] = chatdata.chat; //update
+					break;
+			}
+			
+			if(!has_chat)
+				state.admingroups.push_back(chatdata.chat);
+			
+			db.put("groupchat:" + has_groups[i].chatid, state);
+		}
+		
+		groups = db.get("admingroups") ?? [];
+		groups[std.string(chatdata.chatid)] = chatdata.chat;
+		db.put("admingroups", groups);
+		
+		bot.delete_message(chatdata);
+		bot.send(chatdata, "Notifications for your groups are now enabled in this chat.");
+	}
+	
+	process_prompt_oneshot(prompt_path, prompt_replace) {
+		
+		check_prompt = fileio.read_string(prompt_path);
+	
+		api = openai_api(llm_api_url);
+
+		api.on_reason = [](txt)
+		{
+			std.cout(txt);
+		};
+		api.on_text = [](txt)
+		{
+			std.cout(txt);
+		};
+
+		check_prompt = check_prompt.replace(prompt_replace);
+
+		res = None;
+		cc = 3;
+		for(!res && cc >= 0)
+		{
+			res = api.ask(check_prompt);
+			cc--;
+		}
+			
+		reason = "";
+		has_prohibited_topics = 0;
+		spam = 0;
+		urls = [];
+	
+		lines = res.split("\n");	
+		for(i = 0; i < lines.size(); i++)
+		{
+			if(lines[i].starts("reason="))
+				reason = lines[i].removeprefix("reason=").strip();
+			else(lines[i].starts("has_prohibited_topics="))
+				has_prohibited_topics = std.int(lines[i].removeprefix("has_prohibited_topics=").strip());
+			else(lines[i].starts("answer=") && lines[i].contains("declined"))
+				spam = 1;
+			else(lines[i].starts("message_urls="))
+				urls = lines[i].removeprefix("message_urls=").strip();
+				urls = urls.split(" ");
+		}
+		
+		return [
+			reason=reason,
+			has_prohibited_topics=has_prohibited_topics,
+			spam=spam,
+			urls=urls,
+			result = res,
+		];
+	}
+	
+	//Since AI are statistical models, better do a 2/3 check for actual bans...
+	process_prompt(prompt_path, prompt_replace) {
+		res = process_prompt_oneshot(prompt_path, prompt_replace);
+		if(res.spam) {
+			res2 = process_prompt_oneshot(prompt_path, prompt_replace);
+			if(res2.spam) //2/3 vote for spam, return
+				return res;
+			//Third one decides...
+			res3 = process_prompt_oneshot(prompt_path, prompt_replace);
+			if(res3.spam) //2/3 vote for spam, return
+				return res;
+				
+			return res3; //Vote 2 & 3 decided its legit, return that...
+		}
+		//Maybe also double check approvals?
+		return res;
+	}
+	
+	_last_msg = [];
+	_votebans = [];
+	_process_ban_lock = 0;
+}

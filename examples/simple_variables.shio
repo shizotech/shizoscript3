@@ -1,0 +1,16 @@
+// Variables
+counter = 1;
+std.print(counter);  // 1
+
+counter = "one";     // Dynamic typing
+std.print(counter);  // "one"
+
+// JSON-like behavior
+user = 0;
+user.name = "Alice";
+user.age = 25;
+
+std.print(user.name); // Alice
+std.print(user);      // { "name": "Alice", "age": 25 }
+
+std.input(); //Wait for user input

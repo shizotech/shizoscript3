@@ -1,0 +1,20 @@
+
+#include "antispambot"
+
+//Your telegram bot token goes here...
+bot_token = "0000:0000";
+
+//A openai API compatible endpoint
+//ONLY TESTED WITH vLLM !!!
+//For example, if you run vLLM locally on this machine,
+//This default url should work already.
+llm_url = "http://localhost:8000";
+
+antispambot = AntiSpamBot(bot_token, llm_url);
+
+for(1) {
+	antispambot.process_queue();
+	std.sleep(10); //let background processes finish
+}
+
+std.print("ending bot...");

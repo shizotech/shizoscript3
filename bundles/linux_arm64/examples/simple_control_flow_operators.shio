@@ -1,0 +1,10 @@
+score = 12;
+level = 3;
+
+status = score > 10 ? "Winner" : "Try again";
+std.print(status);  // Winner
+
+bonus = level ?? 1;  // Defaults to 1 if undefined
+std.print(bonus);    // 3
+
+std.input(); //Wait for user input

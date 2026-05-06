@@ -1,0 +1,58 @@
+
+add_tools(agt)
+{
+	agt.add_tool(
+		"shizoscript_docs",
+		"Resolve docs for a namespaces, function, classes, objects or variable path.",
+		[
+			path = "&string(): A namespace like 'std' or a dotted path like 'math.sin' or 'math.sin()' or an object type like 'nanogui.widget'"
+		],
+		[](agt, args)
+		{		
+			res = shzdocs.get_namespace(args.path);
+			
+			if(res.found) {
+				std.print(res);
+				if(res.has("documentation"))
+					res.erase("documentation");
+				return res;
+			}
+			
+			res = shzdocs.get_class(args.path);
+			
+			if(res.found) {
+				//std.print(res);
+				if(res.has("documentation"))
+					res.erase("documentation");
+				return res;
+			}
+			
+			res = shzdocs.get_path(args.path);
+			
+			if(res.found) {
+				//std.print(res);
+				if(res.has("documentation"))
+					res.erase("documentation");
+				return res;
+			}
+		
+			return [
+				found = false,
+				status = "The requested path does not exist.",
+			];
+		}
+	);
+	
+	agt.add_tool(
+		"shizoscript_resolve_include",
+		"Resolve standard include files",
+		[
+			path = "&string(): Path of the included file"
+		],
+		[](agt, args)
+		{		
+			return std.resolve_source_file(args.path);
+		}
+	);
+}
+	

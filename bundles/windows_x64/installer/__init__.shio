@@ -1,0 +1,86 @@
+
+using std;
+
+hideconsole();
+
+app_path = std.system_path("%LOCALAPPDATA%/Shizoscript");
+
+user_documents = std.system_path("%USERPROFILE%/Documents/Shizoscript");
+
+if(fileio.is_directory(app_path))
+{
+	res = messagebox("It seems like shizoscript is already installed - uninstall ?", "Uninstall?", MB_YESNOCANCEL | MB_ICONERROR);
+
+	if(res == 6)
+	{
+		//Remove shortcut
+		std.system("powershell -ExecutionPolicy Bypass -File installer/shzupdate-remove-shortcut.ps1");
+		std.system("powershell -ExecutionPolicy Bypass -File installer/shzeditor-remove-shortcut.ps1");
+		
+		std.system("call \"" + app_path + "/shz.exe\" uninstall");
+		if(fileio.remove(app_path))
+			messagebox("Successfully uninstalled shizoscript.\nRun this installer again if you wish to re-install it.", "Success", MB_OK);
+		else
+			messagebox("Could not remove shizoscript. Maybe try to run the installer as administrator.", "Error", MB_OK | MB_ICONERROR);
+	}
+	
+	return;
+}
+
+run_install()
+{
+	fileio.mkdir(app_path);
+	
+	if(!fileio.copy("data/shizotech", app_path + "/shizotech"))
+		return false;
+
+	if(!fileio.copy("data/shz.exe", app_path + "/shz.exe"))
+		return false;
+		
+	if(!fileio.copy("data/shz_shell_ext.dll", app_path + "/shz_shell_ext.dll"))
+		return false;
+	
+	if(!fileio.copy("data/shz.exe", app_path + "/shzupdate.exe"))
+		return false;
+	
+	if(!fileio.copy("installer/shzupdate", app_path + "/shzupdate"))
+		return false;
+
+	fileio.mkdir(user_documents);
+	fileio.mkdir(user_documents + "/Examples");
+	fileio.mkdir(user_documents + "/Programs");
+	fileio.mkdir(user_documents + "/Sketches");
+	fileio.mkdir(user_documents + "/Configs");
+	
+	if(!fileio.copy("examples", user_documents + "/Examples"))
+		return false;
+	
+	if(!fileio.copy("programs", user_documents + "/Programs"))
+		return false;
+	
+	std.system("powershell -ExecutionPolicy Bypass -File installer/shzupdate-shortcut.ps1");
+	std.system("powershell -ExecutionPolicy Bypass -File installer/shzeditor-shortcut.ps1");
+
+	std.system("explorer \"%USERPROFILE%\\Documents\\Shizoscript\"");
+
+	return true;
+}
+
+res = 0;
+
+if(std.has_admin_privilege())
+	res = messagebox("Install shizoscript?", "Installer", MB_YESNO | MB_ICONINFORMATION);
+else
+	res = messagebox("Note: it is recommended to run this installer as administrator.\nThis is necessary to associate .shio and .shx files on this system.\nYou can still install it without admin rights, but you won't be able to open/run shizoscript files directly.\nDo you still want to proceed without admin rights?", "Installer", MB_YESNO | MB_ICONINFORMATION);
+
+if(res == 6)
+{
+	if(run_install())
+	{
+		if(std.has_admin_privilege())
+			std.system("call \"" + app_path + "/shz.exe\" install");
+		messagebox("Successfully installed shizoscript to:\n\n" + app_path + "\n\nTo check if everything is working, try one of the scripts inside the examples/ folder!", "Success", MB_OK | MB_ICONINFORMATION);
+	}
+	else
+		messagebox("Could not install shizoscript. Maybe try to run the installer as administrator.", "Error", MB_OK | MB_ICONERROR);
+}

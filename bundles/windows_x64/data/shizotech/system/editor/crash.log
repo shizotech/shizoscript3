@@ -1,0 +1,25 @@
+====================================================
+CRASH REPORT - 2026-04-26 01:17:29
+====================================================
+
+CRASH TYPE:  ACCESS_VIOLATION
+ADDRESS:     0x7ff645b444ce
+THREAD ID:   34252
+
+MODULE:      C:\Users\neu\AppData\Local\Shizoscript\shz.exe
+
+STACK TRACE:
+[0]  `anonymous namespace'::exception_handler (C:\Users\neu\source\repos\shizoscript3\core\crash_handler.cpp:54) [0x7ff645b444ce]
+[1]  raise (minkernel\crts\ucrt\src\appcrt\misc\signal.cpp:547) [0x7ff645d73dd9]
+[2]  abort (minkernel\crts\ucrt\src\appcrt\startup\abort.cpp:71) [0x7ff645d842c8]
+[3]  terminate (minkernel\crts\ucrt\src\appcrt\misc\terminate.cpp:58) [0x7ff645d79a76]
+[4]  shzscript::~shzscript (C:\Users\neu\source\repos\shizoscript3\core\shizoscript3_core\shz_script.cpp:74) [0x7ff645ce6f5b]
+[5]  shzscript::`scalar deleting destructor' [0x7ff645ce5ed4]
+[6]  std::filesystem::directory_iterator::~directory_iterator (C:\Program Files\Microsoft Visual Studio\18\Insiders\VC\Tools\MSVC\14.51.36231\include\memory:1713) [0x7ff645b4de6d]
+[7]  main (C:\Users\neu\source\repos\shizoscript3\core\main.cpp:778) [0x7ff645b57cd7]
+[8]  __scrt_common_main_seh (D:\a\_work\1\s\src\vctools\crt\vcstartup\src\startup\exe_common.inl:288) [0x7ff645d6854f]
+[9]  BaseThreadInitThunk [0x7ff8f3ec259d]
+[10]  RtlUserThreadStart [0x7ff8f572afb8]
+====================================================
+END OF CRASH REPORT
+====================================================

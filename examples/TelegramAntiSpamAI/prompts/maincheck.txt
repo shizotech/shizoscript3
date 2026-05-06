@@ -1,0 +1,111 @@
+Your task is to approve or decline a message for the group chat "{{chatname}}".
+
+The message can be written in any language. If it is not written in English, translate it to English internally before analyzing it.
+
+Analyze the topic of the message and decide whether it can be approved or not.
+
+Talking about investments and/or earning high amounts of money is explicitly prohibited.
+
+Questions are allowed.
+
+If you need more context (for example, a single Telegram link without explanation), do NOT make assumptions. In unclear cases, always choose the safe option and approve the message.
+
+Here is the message (written between the <start_message> and <end_message> tags):
+
+Username: {{username}}
+
+<start_message>
+{{text}}
+<end_message>
+
+Now decide whether the message can be approved or not.
+
+Single links / URLs without further context are allowed.
+Telegram stories in the form of "https://t.me/<user>/s/" are not prohibited.
+Do not assume the topic of an external link unless the message itself provides clear context.
+
+Try to determine the abstract topic of the message.
+
+A message must be declined if it is about any of the following prohibited topics (group chat guidelines):
+
+*** INVESTMENTS AND EARNING MONEY ***
+
+* anything related to investments, investing, or earning money
+* experiences with investments or returns
+* achieving financial freedom
+* getting help for a first investment
+* thanking someone else for helping to earn money (reviews & testimonials)
+* obvious investments & promised returns or gains scams
+
+*** BUSINESS OPPORTUNITIES ***
+
+* individual testimonials about other persons who helped them set up a business or make gains
+
+*** CRYPTOCURRENCY ***
+
+* any crypto related topics for trading, investing or earning
+* new cryptocurrencies
+* cryptocurrency mining
+
+*** PUBLIC FIGURES AND AIRDROPS ***
+
+* links or references to Trump or Elon Musk Telegram bots
+* free 'give aways' from public figures
+* airdrops
+
+*** EROTIC NUDES & PORN ***
+
+* free nudes or suspicious dating platforms
+* TINDER alternatives
+* Obvious sex-bait, using '🍆' or '💦' with seducing texts
+
+*** FAKE SERVICES & CLONE CARDS ***
+
+* Cheap fake services like "Billiger Urlaub", "Billiger Flüge", "Billig ***", "Cheap ***" and groups which sound like ominous service offerings (not like a general telegram group).
+* Cloned cards, fake cards
+* Generally offering any kind of government issued id cards (even if stated that they are legitimate)
+* obtaining forged or illegal documents (passports, cloned cards, driver’s licenses, etc.)
+
+All of these and similar topics must be declined.
+
+Additionally, these topics are also strictly PROHIBITED but with a catch:
+
+* selling/offering hard drugs such as LSD, cocaine, MDMA, etc.
+(!) only offering drugs is explicitly prohibited, discussions about drugs are allowed
+
+* Cannabis is not a prohibited topic!
+
+These topics are strictly ALLOWED:
+
+* Talking about Cannabis (Cannabis is perfectly legal)
+* General drug talk, safer use, help, drug culture etc.
+* Erotic public attainable events and discussions about sexuality are allowed (like workshops etc)
+
+Harmless communities that are not explicitly about money or investments are allowed.
+Party culture, raves, and party-related drug discussions are allowed.
+Cannabis is legal and messages about cannabis can be approved.
+
+If the topic is difficult to determine and none of the prohibited topics are explicitly present, always approve the message.
+
+Inappropriate language is NOT a reason to decline a message.
+Critical opinions are NOT a reason to decline a message.
+
+Warning users about ticket scammers is NOT spam. It is only spam if it actively advertises one or more of the prohibited topics.
+
+---
+
+Your response MUST follow this exact format (no JSON, no extra text):
+
+reason=short explanation in one sentence
+has_prohibited_topics=true|false
+answer=approved|declined
+needs_moderation=true|false
+message_urls=https://url1.com https://url2.com https://url3.com ...
+
+Rules for fields:
+- answer must be either "approved" or "declined"
+- has_prohibited_topics must be "true" only if prohibited topics are explicitly present
+- needs_moderation must be "true" only if the message is approved but may need moderation due to offensive language or heated discussion
+- message_urls should contain all external links from the message in a list, separated by a single whitespace character:
+  (!) This field is optional, only use if there are links present in the message.
+  (!) Links should always start with "http://" or "https://" in the final message_urls list, append those prefixes if necessary.

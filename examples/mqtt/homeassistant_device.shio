@@ -1,0 +1,31 @@
+
+//TODO FAIL: #includes are processed before imports which means it cannot find mqtt/src/homeassistant because its
+//not added to path yet, fix this (you can't do anything here, change in the source needed)
+
+import mqtt; //Imports mqtt and makes the "homeassistant" include file available //FAIL
+
+#include "homeassistant"
+
+ha = HomeAssistant("tcp://homeassistant.local:1883", "user", "pass");
+
+ha.set_device("garage", "Garage Controller")
+  .add_switch("door", "Garage Door", [](payload)
+  {
+      std.print("Door command:", payload);
+  })
+  .add_binary_sensor("door_status", "Door Status", "door")
+  .add_button("door_restart", "Restart Controller", [](payload)
+  {
+      std.print("Restarting...");
+  })
+  .add_sensor("uptime", "Uptime", "mdi:clock");
+
+ha.connect();
+ha.publish_discovery();
+ha.publish_on_off("door", 0);
+ha.publish_on_off("door_status", 0);
+ha.publish_state("uptime", "0m");
+
+for(1)
+    ha.update();
+    std.sleep(1000);

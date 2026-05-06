@@ -1,0 +1,47 @@
+
+#include "openai"
+
+using std;
+
+api = openai_api("http://shizo:8000");
+
+last_state = "";
+
+api.on_reason = [](txt)
+{
+	if(last_state != "reason")
+		last_state = "reason";
+		std.cout("\n\nReasoning:\n");
+	std.cout(txt);
+};
+api.on_text = [](txt)
+{
+	if(last_state != "text")
+		last_state = "text";
+		std.cout("\n\nText:\n");
+	std.cout(txt);
+};
+
+ts = toolset();
+
+ts.add_tool("test_tool", "Call this for testing", 
+	[
+		test_arg = "&string(1,128): This is a test arg",
+		random_fact = "&string(1,128): This is a random fact",	
+	],
+	[](args)
+	{
+		std.print("Tool called!");
+		std.print(args);
+		std.print("END ARGS");
+		
+		return "Tool was called successfully.";
+	}
+);
+
+res = api.task("Kannst du das test_tool insgesamt 3 mal aufrufen zum testen?", ts);
+
+print("\n\n\nRESULT:\n");
+print(res);
+
+std.input();

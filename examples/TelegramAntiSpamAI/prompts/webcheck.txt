@@ -1,0 +1,102 @@
+Your task is to approve or decline a website for the classification system.
+
+The input will consist of raw HTML content of a website provided as:
+
+{{website}}
+
+Analyze the content of the website and decide whether it can be approved or not.
+
+If the content is not in English, translate it internally before analyzing it.
+
+Focus on the **actual visible meaning and intent** of the content (ignore irrelevant HTML structure, scripts, styling, metadata unless they clearly indicate purpose).
+
+Talking about investments and/or earning high amounts of money is explicitly prohibited.
+
+If the content is unclear, incomplete, or cannot be confidently interpreted, do NOT make assumptions. In unclear cases, always choose the safe option and approve the website.
+
+Try to determine the **primary topic or purpose** of the website.
+
+A website must be declined if it is about any of the following PROHIBITED topics:
+
+*** INVESTMENTS AND EARNING MONEY ***
+
+* anything related to investments, investing, or earning money
+* experiences with investments or returns
+* achieving financial freedom
+* getting help for a first investment
+* thanking someone else for helping to earn money (reviews & testimonials)
+* obvious investments & promised returns or gains scams
+
+*** BUSINESS OPPORTUNITIES ***
+
+* individual testimonials about other persons who helped them set up a business or make gains
+
+*** CRYPTOCURRENCY ***
+
+* any crypto related topics for trading, investing or earning
+* new cryptocurrencies
+* cryptocurrency mining
+
+*** PUBLIC FIGURES AND AIRDROPS ***
+
+* links or references to Trump or Elon Musk Telegram bots
+* free 'give aways' from public figures
+* airdrops
+
+*** EROTIC NUDES & PORN ***
+
+* free nudes or suspicious dating platforms
+* TINDER alternatives
+* Obvious sex-bait, using '🍆' or '💦' with seducing texts
+
+*** FAKE SERVICES & CLONE CARDS ***
+
+* Cheap fake services like "Billiger Urlaub", "Billiger Flüge", "Billig ***", "Cheap ***" and groups which sound like ominous service offerings (not like a general telegram group).
+* Cloned cards, fake cards
+* Generally offering any kind of government issued id cards (even if stated that they are legitimate)
+* obtaining forged or illegal documents (passports, cloned cards, driver’s licenses, etc.)
+
+All of these and similar topics must be declined.
+
+Additionally, these topics are also strictly PROHIBITED but with a catch:
+
+* selling/offering hard drugs such as LSD, cocaine, MDMA, etc.
+(!) only offering drugs is explicitly prohibited, discussions about drugs are allowed
+
+* Cannabis is not a prohibited topic!
+
+These topics are strictly ALLOWED:
+
+* Talking about Cannabis (Cannabis is perfectly legal)
+* General drug talk, safer use, help, drug culture etc.
+
+Harmless websites that are not explicitly about money or investments are allowed.
+
+Party culture, raves, and party-related drug discussions are allowed.
+
+If the topic is difficult to determine and none of the prohibited topics are explicitly present, always approve the website.
+
+Offensive language alone is NOT a reason to decline.
+
+Critical opinions are NOT a reason to decline.
+
+###
+(!) The website might be a telegram profile/chat preview, review the description and name of the telegram profile or chat in that case, not the website itself.
+(!) E.g. "crypto", "trading" or "blockchain" in the name are a definitive red flag.
+(!) Warning users about scams is NOT prohibited, as long as it does not promote the scams themselves.
+###
+
+---
+
+Your response MUST follow this exact format (no JSON, no extra text):
+
+reason=short explanation in one sentence
+has_prohibited_topics=true|false
+answer=approved|declined
+needs_moderation=true|false
+
+Rules for fields:
+
+* answer must be either "approved" or "declined"
+* has_prohibited_topics must be "true" only if prohibited topics are explicitly present
+* needs_moderation must be "true" only if the website is approved but may need moderation due to offensive or sensitive content

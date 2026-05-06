@@ -1,0 +1,38 @@
+
+// Named function
+greet(name, greeting = "Hello") {
+    std.print(greeting, name);
+}
+
+// Anonymous function
+say_hello = [](name) {
+    std.print("Hi", name);
+};
+
+// Capturing local variable
+main() {
+    local_name = "Charlie";
+
+    greet_fn = [local_name]() {
+        std.print("Greetings,", local_name);
+    };
+    
+    greet_fn();
+}
+
+main();  // Prints: Greetings, Charlie
+
+// Forward declaration
+def add();
+
+a = 10;
+b = 5;
+
+add() {
+    return a + b;
+}
+
+std.print(add());  // 15
+
+
+std.input();

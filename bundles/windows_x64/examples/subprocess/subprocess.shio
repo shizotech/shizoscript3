@@ -1,0 +1,29 @@
+import subprocess;
+
+using std;
+
+// Create process object;
+p = subprocess.process();
+
+// Start a command (shell=false): args is a list;
+p.start(["shz", "proc"], "", false);
+
+// Non-blocking check;
+rc = p.poll();
+if (rc == none)
+{
+    print("Process still running, pid=" + p.pid());
+}
+else
+{
+    print("Process already finished, rc=" + rc);
+}
+
+// Block until done;
+rc = p.wait();
+print("Exit code: " + rc);
+
+// You can query the cached return code afterwards;
+print("Cached returncode(): " + p.returncode());
+
+std.input();

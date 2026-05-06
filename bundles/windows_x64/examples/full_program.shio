@@ -1,0 +1,139 @@
+// ==============================
+// Imports & Namespaces
+// ==============================
+
+using std;
+
+
+// ==============================
+// Global Variables & JSON
+// ==============================
+
+app_config = 0;
+app_config.name = "ShizoScript Demo";
+app_config.version = 1;
+app_config.debug = true;
+
+
+// ==============================
+// Utility Functions
+// ==============================
+
+// Forward declaration
+def calculate_bonus(score);
+
+calculate_bonus(score) {
+    return score > 10 ? 5 : 1;
+}
+
+
+// ==============================
+// Classes
+// ==============================
+
+class Player {
+    name = "Unknown";
+    score = 0;
+
+    __init__(player_name, initial_score) {
+        name = player_name;
+        score = initial_score;
+    }
+
+    add_score(points) {
+        score += points;
+    }
+
+    print_player() {
+        print("Player:", name, "| Score:", score);
+    }
+}
+
+
+// ==============================
+// References
+// ==============================
+
+increase_score(player_ref) {
+    // player_ref is auto-dereferenced
+    bonus = calculate_bonus(player_ref.score);
+    player_ref.score += bonus;
+}
+
+
+// ==============================
+// Threaded Tasks
+// ==============================
+
+log_task(label, sleep_time) {
+    for(i = 0; i < 5; i++) {
+        print(label, "iteration", i);
+        sleep(sleep_time);
+    }
+}
+
+
+// ==============================
+// Main Program
+// ==============================
+
+main() {
+    print("Starting", app_config.name, "v", app_config.version);
+
+    // Create player objects
+    alice = Player("Alice", 8);
+    bob   = Player("Bob", 12);
+
+    // Reference example
+    ref_alice = &alice;
+    increase_score(ref_alice);
+
+    alice.print_player();
+    bob.print_player();
+
+    // Anonymous function with capture
+    announce = [app_config]() {
+        if(app_config.debug) {
+            print("Debug mode enabled");
+        }
+    };
+
+    announce();
+
+    // Control flow
+    if(alice.score > bob.score)
+        print("Alice is winning");
+    else(alice.score < bob.score)
+        print("Bob is winning");
+    else
+        print("It's a tie");
+
+    // ==============================
+    // Threading
+    // ==============================
+
+    print("Starting threads...");
+
+    t1 = std.thread(log_task);
+    t2 = std.thread(log_task);
+    t3 = std.thread(log_task);
+
+    t1.run("Task1", 100);
+    t2.run("Task2", 150);
+    t3.run("Task3", 200);
+
+    t1.join();
+    t2.join();
+    t3.join();
+
+    print("Threads finished.");
+
+    input(); // Wait for user input
+}
+
+
+// ==============================
+// Entry Point
+// ==============================
+
+main();

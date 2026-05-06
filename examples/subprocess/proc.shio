@@ -1,0 +1,9 @@
+
+
+std.print(std.wd());
+std.print("PROC1");
+std.sleep(1000);
+std.print("PROC2");
+std.sleep(1000);
+std.print("PROC3");
+std.sleep(1000);

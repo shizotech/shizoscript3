@@ -1,0 +1,32 @@
+
+
+import nanogui;
+
+using eigen;
+
+ctx = nanogui.context();
+
+scr = ctx.screen();
+
+scr.on_draw([]()
+{
+	//Draw red rectangle
+	ctx.nvgBeginPath();
+	ctx.nvgFillColor(vec4f(1,0,0,1));
+	ctx.nvgRect(vec2f(20,20), vec2f(200,200));
+	ctx.nvgFill();
+});
+
+//Dump current theme
+fileio.write_json("theme.json", scr.theme().to_json());
+
+wnd = scr.new_window("test");
+wnd.center();
+wnd.resizable = 7;
+
+wnd.group_layout();
+
+wnd.label("testlabel");
+wnd.slider();
+
+std.input();

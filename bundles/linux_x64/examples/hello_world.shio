@@ -1,0 +1,6 @@
+
+using std;
+
+print("\n\n***Hello earth!***\n");
+
+input("Press enter to exit...");
