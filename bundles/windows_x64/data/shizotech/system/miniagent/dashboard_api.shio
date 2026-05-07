@@ -1,0 +1,714 @@
+// ════════════════════════════════════════════
+//  Dashboard API Backend
+// ════════════════════════════════════════════
+// This module provides RESTful API endpoints for:
+// - Features Module (feature tracker)
+// - Bugs Module (bug tracker)
+// - History Module (action history)
+// - Settings Module (dashboard settings)
+// - Work Mode Module (agent activity control)
+//
+// All endpoints follow a common response format:
+// {
+//   "ok": true/false,
+//   "data": {...},  // Optional: response data
+//   "error": "..."  // Optional: error message
+// }
+//
+// Polling Strategy:
+// - Initial load: Frontend fetches all entries once
+// - Regular updates: Frontend polls every 2 seconds for updates
+// - Backend manages all data (AI agents add/remove/update entries)
+// - No human controls except initial creation/direct examination
+
+// Initialize LevelDB for dashboard data persistence
+features_db = leveldb.db(agent_space + "dashboard/features.db");
+bugs_db = leveldb.db(agent_space + "dashboard/bugs.db");
+history_db = leveldb.db(agent_space + "dashboard/history.db");
+settings_db = leveldb.db(agent_space + "dashboard/settings.db");
+
+// Helper function to format API response
+format_api_response(ok, data = None, error = "") {
+    response = [ok = ok];
+    
+    if(ok && data)
+        response.data = data;
+    
+    if(!ok && error)
+        response.error = error;
+    
+    return std.string(response);
+}
+
+// Helper function to parse JSON from request body
+parse_request_body(body) {
+    try {
+        json = std.json(body);
+        // Check if JSON object is empty (size == 0)
+        if(json.size && json.size() == 0)
+            return None;
+        return json;
+    }
+    catch(e) {
+        return None;
+    }
+}
+
+// Helper function to get default settings
+get_default_settings() {
+    return [
+        maxActiveAgents = 5,
+        checkInterval = 5000
+    ];
+}
+
+// Helper function to get default work mode
+get_default_workmode() {
+    return [enabled = true];
+}
+
+// ════════════════════════════════════════════
+//  Settings API Endpoints
+// ════════════════════════════════════════════
+
+// GET /api/settings - Get current settings
+server.route("GET", "^/api/settings$", [this](req, res) {
+    
+    if(!settings_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    try {
+        // Get existing settings or return defaults
+        if(settings_db.exists("settings")) {
+            settings = settings_db.get("settings");
+            return [body = format_api_response(true, settings)];
+        }
+        
+        // Return default settings
+        default_settings = get_default_settings();
+        return [body = format_api_response(true, default_settings)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/settings - Update settings
+server.route("PUT", "^/api/settings$", [this](req, res) {
+    
+    if(!settings_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Get existing settings or create defaults
+		settings = None;
+        if(settings_db.exists("settings")) {
+            settings = settings_db.get("settings");
+        } else {
+            settings = get_default_settings();
+        }
+        
+        // Update provided fields
+        if(body.maxActiveAgents)
+            settings.maxActiveAgents = body.maxActiveAgents;
+        if(body.checkInterval)
+            settings.checkInterval = body.checkInterval;
+        
+        // Save to database
+        settings_db.put("settings", settings);
+        
+        return [body = format_api_response(true, settings)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// ════════════════════════════════════════════
+//  Work Mode API Endpoints
+// ════════════════════════════════════════════
+
+// GET /api/workmode - Get current work mode
+server.route("GET", "^/api/workmode$", [this](req, res) {
+    
+    if(!settings_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    try {
+        // Get existing settings
+        if(settings_db.exists("settings")) {
+            settings = settings_db.get("settings");
+            
+            // Get workmode from settings (nested structure)
+            if(settings.workmode != None) {
+                workmode = settings.workmode;
+                return [body = format_api_response(true, workmode)];
+            }
+            
+            // Return default work mode if not in settings
+            default_workmode = get_default_workmode();
+            return [body = format_api_response(true, default_workmode)];
+        }
+        
+        // Return default work mode if no settings exist
+        default_workmode = get_default_workmode();
+        return [body = format_api_response(true, default_workmode)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/workmode - Set work mode
+server.route("PUT", "^/api/workmode$", [this](req, res) {
+    
+    if(!settings_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Get existing settings or create defaults
+		settings = None;
+        if(settings_db.exists("settings")) {
+            settings = settings_db.get("settings");
+        } else {
+            settings = get_default_settings();
+        }
+        
+        // Initialize workmode if it doesn't exist in settings
+        if(settings.workmode == None)
+            settings.workmode = get_default_workmode();
+        
+        // Update enabled state
+        if(body.enabled != None)
+            settings.workmode.enabled = body.enabled;
+        
+        // Save settings to database
+        settings_db.put("settings", settings);
+        
+        return [body = format_api_response(true, settings.workmode)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// ════════════════════════════════════════════
+//  Features API Endpoints
+// ════════════════════════════════════════════
+
+// GET /api/features/list - Get all features
+server.route("GET", "^/api/features/list$", [this](req, res) {
+	
+	if(!features_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+    features = [];
+    
+    try {
+        iter = features_db.iter();
+        
+        for(iter.valid()) {
+			key = iter.key();
+            if(!key)
+                break;
+			
+            value = features_db.get(key);
+            feature = std.json(value);
+            
+            if(feature)
+                features.push_back(feature);
+			
+			//Does not return the key, but true/false
+			iter.next();
+		}
+		
+        return [body = format_api_response(true, features)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/features/:id - Get specific feature
+server.route("GET", "^/api/features/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!features_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	feature_id = req.matches[0];
+    
+    try {
+        if(features_db.exists(feature_id)) {
+            feature = features_db.get(feature_id);
+            return [body = format_api_response(true, feature)];
+        }
+        
+        return [body = format_api_response(false, None, "Feature not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/features - Create new feature
+server.route("POST", "^/api/features$", [this](req, res) {
+	
+	if(!features_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Generate new feature ID
+        feature_id = "feature_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        
+        // Create new feature with defaults
+        feature = [
+            id = feature_id,
+            createdAt = std.millis(),
+            updatedAt = std.millis(),
+            progress = 0,
+            status = "planned",
+        ];
+        
+        // Copy provided fields
+        if(body.title)
+            feature.title = body.title;
+        if(body.description)
+            feature.description = body.description;
+        if(body.priority)
+            feature.priority = body.priority;
+        if(body.category)
+            feature.category = body.category;
+        if(body.targetDate)
+            feature.targetDate = body.targetDate;
+		
+        // Save to database
+        features_db.put(feature_id, feature);
+		
+        return [body = format_api_response(true, feature)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/features/:id - Update feature
+server.route("PUT", "^/api/features/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!features_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	feature_id = req.matches[0];
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!features_db.exists(feature_id)) {
+            return [body = format_api_response(false, None, "Feature not found")];
+        }
+        
+        feature = features_db.get(feature_id);
+        
+        // Update fields
+        feature.updatedAt = std.millis();
+        
+        if(body.title)
+            feature.title = body.title;
+        if(body.description)
+            feature.description = body.description;
+        if(body.priority)
+            feature.priority = body.priority;
+        if(body.category)
+            feature.category = body.category;
+        if(body.targetDate)
+            feature.targetDate = body.targetDate;
+        if(body.status)
+            feature.status = body.status;
+        if(body.progress)
+            feature.progress = body.progress;
+
+        // Save updated feature
+        features_db.put(feature_id, feature);
+        
+        // Log the update
+        std.print(std.string("[", std.date("%d-%m-%Y_%H-%M-%S"), "] Updated feature: id=", feature_id, ", updated fields: title=", feature.title, ", description=", feature.description, ", priority=", feature.priority, ", category=", feature.category, ", targetDate=", feature.targetDate, ", status=", feature.status, ", progress=", feature.progress));
+        
+        return [body = format_api_response(true, feature)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// DELETE /api/features/:id - Delete feature
+server.route("DELETE", "^/api/features/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!features_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	feature_id = req.matches[0];
+    
+    try {
+        if(features_db.exists(feature_id)) {
+            features_db.delete(feature_id);
+            return [body = format_api_response(true)];
+        }
+        
+        return [body = format_api_response(false, None, "Feature not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// ════════════════════════════════════════════
+//  Bugs API Endpoints
+// ════════════════════════════════════════════
+
+// GET /api/bugs/list - Get all bugs
+server.route("GET", "^/api/bugs/list$", [this](req, res) {
+	
+	if(!bugs_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	bugs = [];
+    
+    try {
+        iter = bugs_db.iter();
+        
+        for(iter.valid()) {
+			key = iter.key();
+            if(!key)
+                break;
+            bug = bugs_db.get(key);       
+            if(bug)
+                bugs.push_back(bug);
+        
+			iter.next();
+		}
+		
+        return [body = format_api_response(true, bugs)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/bugs/:id - Get specific bug
+server.route("GET", "^/api/bugs/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!bugs_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	bug_id = req.matches[0];
+    
+    try {
+        if(bugs_db.exists(bug_id)) {
+            bug = bugs_db.get(bug_id);
+            return [body = format_api_response(true, bug)];
+        }
+        
+        return [body = format_api_response(false, None, "Bug not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/bugs - Create new bug
+server.route("POST", "^/api/bugs$", [this](req, res) {
+	
+	if(!bugs_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Generate new bug ID
+        bug_id = "bug_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        
+        // Create new bug with defaults
+        bug = [
+            id = bug_id,
+            createdAt = std.millis(),
+            updatedAt = std.millis(),
+            status = "new",
+        ];
+        
+        // Copy provided fields
+        if(body.title)
+            bug.title = body.title;
+        if(body.description)
+            bug.description = body.description;
+        if(body.priority)
+            bug.priority = body.priority;
+        if(body.source)
+            bug.source = body.source;
+        if(body.environment)
+            bug.environment = body.environment;
+
+        // Save to database
+        bugs_db.put(bug_id, bug);
+        
+        return [body = format_api_response(true, bug)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/bugs/:id - Update bug
+server.route("PUT", "^/api/bugs/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!bugs_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	bug_id = req.matches[0];
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!bugs_db.exists(bug_id)) {
+            return [body = format_api_response(false, None, "Bug not found")];
+        }
+        
+        bug = bugs_db.get(bug_id);
+        
+        // Update fields
+        bug.updatedAt = std.millis();
+        
+        if(body.title)
+            bug.title = body.title;
+        if(body.description)
+            bug.description = body.description;
+        if(body.priority)
+            bug.priority = body.priority;
+        if(body.source)
+            bug.source = body.source;
+        if(body.environment)
+            bug.environment = body.environment;
+        if(body.status)
+            bug.status = body.status;
+
+        // Save updated bug
+        bugs_db.put(bug_id, bug);
+        
+        // Log the update
+        std.print(std.string("[", std.date("%d-%m-%Y_%H-%M-%S"), "] Updated bug: id=", bug_id, ", updated fields: title=", bug.title, ", description=", bug.description, ", priority=", bug.priority, ", source=", bug.source, ", environment=", bug.environment, ", status=", bug.status));
+        
+        return [body = format_api_response(true, bug)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// DELETE /api/bugs/:id - Delete bug
+server.route("DELETE", "^/api/bugs/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!bugs_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	bug_id = req.matches[0];
+    
+    try {
+        if(bugs_db.exists(bug_id)) {
+            bugs_db.delete(bug_id);
+            return [body = format_api_response(true)];
+        }
+        
+        return [body = format_api_response(false, None, "Bug not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// ════════════════════════════════════════════
+//  History API Endpoints
+// ════════════════════════════════════════════
+
+// GET /api/history/list - Get all history entries
+server.route("GET", "^/api/history/list$", [this](req, res) {
+	
+	if(!history_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	history_entries = [];
+    
+    try {
+        iter = history_db.iter();
+        
+        for(iter.valid()) {
+			key = iter.key();
+            if(!key)
+                break;
+            
+            entry = history_db.get(key);
+            
+            if(entry)
+                history_entries.push_back(entry);
+			
+			iter.next();
+        }
+        
+        return [body = format_api_response(true, history_entries)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/history/:id - Get specific history entry
+server.route("GET", "^/api/history/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!history_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	history_id = req.matches[0];
+    
+    try {
+        if(history_db.exists(history_id)) {
+            entry = history_db.get(history_id);
+            return [body = format_api_response(true, entry)];
+        }
+        
+        return [body = format_api_response(false, None, "History entry not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/history - Create history entry
+server.route("POST", "^/api/history$", [this](req, res) {
+	
+	if(!history_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Generate new history ID
+        history_id = "history_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        
+        // Create history entry
+        entry = [
+            id = history_id,
+            timestamp = std.millis(),
+        ];
+        
+        // Copy provided fields
+        if(body.type)
+            entry.type = body.type;
+        if(body.description)
+            entry.description = body.description;
+        if(body.data)
+            entry.data = body.data;
+        if(body.revertAction)
+            entry.revertAction = body.revertAction;
+        
+        // Save to database
+        history_db.put(history_id, entry);
+        
+        return [body = format_api_response(true, entry)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/history/:id - Update history entry
+server.route("PUT", "^/api/history/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!history_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	history_id = req.matches[0];
+    body = parse_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!history_db.exists(history_id)) {
+            return [body = format_api_response(false, None, "History entry not found")];
+        }
+        
+        entry = history_db.get(history_id);
+        
+        // Update fields
+        if(body.type)
+            entry.type = body.type;
+        if(body.description)
+            entry.description = body.description;
+        if(body.data)
+            entry.data = body.data;
+        if(body.revertAction)
+            entry.revertAction = body.revertAction;
+        
+        // Save updated entry
+        history_db.put(history_id, entry);
+        
+        // Log the update
+        std.print(std.string("[", std.date("%d-%m-%Y_%H-%M-%S"), "] Updated history entry: id=", history_id, ", updated fields: type=", entry.type, ", description=", entry.description, ", data=", entry.data, ", revertAction=", entry.revertAction));
+        
+        return [body = format_api_response(true, entry)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// DELETE /api/history/:id - Delete history entry
+server.route("DELETE", "^/api/history/([a-zA-Z0-9_-]+)$", [this](req, res) {
+	
+	if(!history_db)
+		return [body = format_api_response(false, None, "Not enabled.")];
+	
+	history_id = req.matches[0];
+    
+    try {
+        if(history_db.exists(history_id)) {
+            history_db.delete(history_id);
+            return [body = format_api_response(true)];
+        }
+        
+        return [body = format_api_response(false, None, "History entry not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});

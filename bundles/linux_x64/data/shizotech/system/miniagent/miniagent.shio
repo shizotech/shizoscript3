@@ -370,22 +370,40 @@ class miniagent
 		return llm_api.context.body.messages;
 	}
 	
-	subagent(system_role)
+	subagent(system_role, log_actions = true)
 	{
 		sub_agt = create_miniagent(llm_api.api_base_url, llm_api.context.body.model, system_role, llm_api.context.stream.auth_token);
-		if(on_action) {
+		if(on_action && log_actions) {
 			sub_agt_id = sub_agt.agent_id;
 			sub_agt.on_action = [this, sub_agt_id](action) {
 				this.on_action([agent = [id=sub_agt_id, action=action]]);
 			};
-		}
-		
+		}	
 		return sub_agt;
 	}
 	
 	simple_agent(system_role) 
 	{
 		return generic_agent(llm_api.api_base_url, llm_api.context.body.model, system_role, llm_api.context.stream.auth_token);
+	}
+	
+	simple_rag(query, data, context = "", return_format = "") {
+		managed rag_agt = subagent("simple_rag", false);
+		
+		//The order kind of matters for less token cache misses
+		rag_prompt = "<rag_data>\n" + std.string(data) + "</rag_data>\n";
+		
+		if(context) {
+			rag_prompt += "<rag_context>\n" + context + "</rag_context>\n";	
+		}
+		
+		rag_prompt += "<rag_query>\n" + query + "</rag_query>\n";
+		
+		if(return_format) {
+			rag_prompt += "<rag_return_format>\n" + return_format + "</rag_return_format>\n";	
+		}
+		
+		return rag_agt.single_task(rag_prompt).strip();
 	}
 	
 	report_back(txt)
@@ -408,22 +426,20 @@ class miniagent
 	
 		action_history.push_back(entry);
 		
-		if(fileio.exists(AGENT_DIR)) {
-			base_path = fileio.exists(AGENT_DIR) ? AGENT_DIR : ".backup/";
-			base_path += "action_logs/";
-			for(1) {
-				ts = std.timestamp();
-				ts = ts.replace("-", "_");
-				ts = ts.replace(":", "_");
-				ts = ts.replace(" ", "__");
+		base_path = fileio.exists(AGENT_DIR) ? AGENT_DIR : ".backup/";
+		base_path += "action_logs/";
+		for(1) {
+			ts = std.timestamp();
+			ts = ts.replace("-", "_");
+			ts = ts.replace(":", "_");
+			ts = ts.replace(" ", "__");
+			
+			if(fileio.exists(base_path + ts + ".json"))
+				std.sleep(10);
+				continue;
 				
-				if(fileio.exists(base_path + ts + ".json"))
-					std.sleep(10);
-					continue;
-					
-				fileio.write_json(base_path + ts + ".json", entry);
-				break;
-			}
+			fileio.write_json(base_path + ts + ".json", entry);
+			break;
 		}
 	}
 }

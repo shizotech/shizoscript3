@@ -3,97 +3,139 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ShizoGPT • SHIZOTECH</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+  <title>Dashboard • ShizoGPT Ecosystem</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="components/ui.css" />
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar Overlay (mobile) -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
+  <div id="app" class="app">
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <div class="logo">S</div>
-          <span>Shizo<b>GPT</b></span>
+          <div class="logo"><i class="fa-solid fa-grid-2"></i></div>
+          <span>Dashboard</span>
         </div>
-        <button id="btnNewChat" class="btn-new-chat">
-          <i class="fa-solid fa-plus"></i>
-          New Chat
-        </button>
-      </div>
-      <div id="conversationList" class="sidebar-conversations"></div>
-      <div class="sidebar-footer">
-        <select id="modeSelect" class="mode-select">
-          <option value="normal">💬 Normal Chat</option>
-          <option value="research">🔍 Deep Research</option>
-          <option value="coding">💻 Coding</option>
-        </select>
-      </div>
-    </aside>
-
-    <!-- Main -->
-    <div class="main-area">
-      <header class="main-header">
         <button id="btnToggleSidebar" class="btn-toggle-sidebar">
           <i class="fa-solid fa-bars"></i>
         </button>
-        <div id="headerTitle" class="header-title">New Chat</div>
-        <div id="statusBadge" class="status-badge">
-          <span class="status-dot"></span>
-          <span class="status-label">Ready</span>
+      </div>
+      
+      <nav id="dashboardNav" class="dashboard-nav">
+        <div class="nav-section-label">
+          <i class="fa-solid fa-compass"></i> Navigation
+        </div>
+        
+        <button class="nav-item active" data-module="chat">
+          <i class="fa-solid fa-comments"></i>
+          <span>Chat</span>
+        </button>
+        
+        <button class="nav-item" data-module="features">
+          <i class="fa-solid fa-rocket"></i>
+          <span>Features</span>
+        </button>
+        
+        <button class="nav-item" data-module="bugs">
+          <i class="fa-solid fa-bug"></i>
+          <span>Bug Tracker</span>
+        </button>
+        
+        <button class="nav-item" data-module="history">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>History</span>
+        </button>
+        
+        <button class="nav-item" data-module="expertgroups">
+          <i class="fa-solid fa-user-astronaut"></i>
+          <span>Expert Groups</span>
+        </button>
+        
+        <button class="nav-item" data-module="settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </button>
+        
+        <div class="nav-section-label">
+          <i class="fa-solid fa-cog"></i> Settings
+        </div>
+        
+        <button class="nav-item nav-item-secondary" id="btnClearData">
+          <i class="fa-solid fa-trash"></i>
+          <span>Clear Data</span>
+        </button>
+        
+        <button class="nav-item nav-item-secondary" id="btnThemeToggle">
+          <i class="fa-solid fa-moon"></i>
+          <span>Dark Mode</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="mainContent" class="main-content">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="header-left">
+          <button id="btnToggleSidebarMobile" class="btn-toggle-sidebar-mobile">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <h1 id="dashboardTitle" class="dashboard-title">Chat</h1>
+        </div>
+        
+        <div class="header-right">
+          <div class="user-context">
+            <div class="user-avatar">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="user-info">
+              <span class="user-name">User</span>
+              <span class="user-role">Admin</span>
+            </div>
+          </div>
+          
+          <button id="btnNotifications" class="btn-notifications">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-badge" id="notificationBadge">0</span>
+          </button>
         </div>
       </header>
 
-      <section id="messages" class="messages">
-        <div id="messagesInner" class="messages-inner">
-          <div id="emptyState" class="empty-state">
-            <div class="empty-icon"><i class="fa-solid fa-bolt"></i></div>
-            <h2>How can I help you?</h2>
-            <p>Start a conversation by typing a message below. Your chats are saved locally in your browser.</p>
-          </div>
+      <!-- Module Container -->
+      <div id="moduleContainer" class="module-container">
+        <!-- Modules will be injected here -->
+        <div id="chatModule" class="module active">
+          <iframe id="chatFrame" src="chat/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
-      </section>
-
-      <section class="composer">
-        <div class="composer-inner">
-          <textarea id="prompt" rows="1" placeholder="Message ShizoGPT…" aria-label="Prompt input"></textarea>
-          <button id="btnSend" class="btn-send" title="Send">
-            <i class="fa-solid fa-arrow-up"></i>
-          </button>
-          <button id="btnStop" class="btn-stop" title="Stop">
-            <i class="fa-solid fa-stop"></i>
-          </button>
+        
+        <div id="featuresModule" class="module">
+          <iframe id="featuresFrame" src="features/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
-      </section>
-    </div>
+        
+        <div id="bugsModule" class="module">
+          <iframe id="bugsFrame" src="bugs/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        </div>
+        
+        <div id="historyModule" class="module">
+          <iframe id="historyFrame" src="history/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        </div>
+        
+        <div id="expertgroupsModule" class="module">
+          <iframe id="expertgroupsFrame" src="expertgroups/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        </div>
+        
+        <div id="settingsModule" class="module">
+          <iframe id="settingsFrame" src="settings/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        </div>
+      </div>
+    </main>
 
-    <!-- Panel Resizer -->
-    <div id="panelResizer" class="panel-resizer" style="display:none;"></div>
-
-    <!-- HTML Editor Panel -->
-    <aside id="editorPanel" class="editor-panel">
-      <div class="editor-panel-header">
-        <i class="fa-solid fa-code"></i> Live Preview
-        <button id="btnCloseEditor" class="btn-close-editor"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="editor-wrapper">
-        <pre id="htmlCode" class="editor-code language-html"></pre>
-        <div id="editorResizer" class="editor-resizer"></div>
-        <iframe id="htmlPreview" class="editor-preview"></iframe>
-      </div>
-      <div class="editor-toolbar">
-        <button id="btnDesktop" class="active"><i class="fa-solid fa-desktop"></i> Desktop</button>
-        <button id="btnMobile"><i class="fa-solid fa-mobile-screen"></i> Mobile</button>
-      </div>
-    </aside>
+    <!-- Overlay for mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
-  <script src="script.js"></script>
+  <script src="components/utils.js"></script>
+  <script src="dashboard.js"></script>
 </body>
 </html>

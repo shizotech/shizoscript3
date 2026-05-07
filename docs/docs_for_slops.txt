@@ -995,10 +995,10 @@ std.sleep(
   - Suspend script execution for a duration (async)
         --------------------------------------------------
 std.string(
-    value: string - Initial string value
+    value: string - Initial string values to concatenate
 ) -> std.string
 
-  - Create a new string, optionally initialized with a given value
+  - Create a new string, optionally initialized with given values that are concatenated
         --------------------------------------------------
 std.system(
     command: string - Command string to be passed to the system shell,
@@ -2490,6 +2490,12 @@ delete(
 )
 
   - Delete a key-value pair from the database
+        --------------------------------------------------
+dump(
+    Returns a JSON object with format info and entries map
+)
+
+  - Dump entire database as JSON object
         --------------------------------------------------
 exists(
     key: string - The key to check for existence in the database

@@ -19,6 +19,7 @@ if(!fileio.exists(agent_space)) {
 		fileio.mkdir(agent_space + "skills");
 		fileio.mkdir(agent_space + "roles");
 		fileio.mkdir(agent_space + "todos");
+		fileio.mkdir(agent_space + "dashboard");
 	}
 }
 
@@ -90,7 +91,10 @@ for(!cfg)
 
 //Start webserver
 server = webserver.http_server(13337);
-server.static("", "web"); //TODO: add functions to only serve certain routes when AUTHED	
+server.static("", "web"); //TODO: add functions to only serve certain routes when AUTHED
+
+#include "dashboard_api.shio"
+
 server.start();
 
 running_agents = [];
@@ -104,7 +108,8 @@ server.route("POST", "^/api/adminagent", [this](req, res) {
 	
 	prompt = body.prompt;
 	
-	new_agent = miniagent(cfg.api, None, "planner", cfg.token);
+	new_agent = miniagent(cfg.api, None, fileio.exists(AGENT_DIR) ? "orchestrator" : "planner", cfg.token);
+	new_agent.env.agent_space = agent_space;
 	
 	new_token = body.session_id ?? std.random_hash();
 	

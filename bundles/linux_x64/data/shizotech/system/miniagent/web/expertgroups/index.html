@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expert Groups • ShizoGPT Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="components/theme.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar: Group Selection -->
+    <aside id="groupSidebar" class="group-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="logo"><i class="fa-solid fa-users"></i></div>
+          <span>Expert Groups</span>
+        </div>
+        <button id="btnNewGroup" class="btn-new-group">
+          <i class="fa-solid fa-plus"></i>
+          New Group
+        </button>
+      </div>
+      
+      <div id="groupList" class="group-list">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-robot"></i></div>
+          <p>No groups yet</p>
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button id="btnToggleSidebar" class="btn-toggle-sidebar">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main: Chat Area -->
+    <main class="main-chat">
+      <header class="chat-header">
+        <button id="btnToggleGroupSidebar" class="btn-toggle-sidebar">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="chat-title" id="currentGroupTitle">Select a Group</div>
+        <div class="group-status">
+          <span class="status-dot"></span>
+          <span class="status-label" id="groupStatus">Ready</span>
+        </div>
+      </header>
+
+      <section class="messages" id="chatMessages">
+        <div class="messages-inner">
+          <div id="emptyChatState" class="empty-chat-state">
+            <div class="empty-icon"><i class="fa-solid fa-comments"></i></div>
+            <h2>Start a Group Conversation</h2>
+            <p>Select or create a group to begin collaborating with AI agents.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="composer">
+        <div class="composer-inner">
+          <textarea id="groupMessageInput" rows="1" placeholder="Message group..." aria-label="Group message input"></textarea>
+          <button id="btnSendMessage" class="btn-send" title="Send">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Right Sidebar: Active Participants -->
+    <aside id="participantsSidebar" class="participants-sidebar">
+      <div class="sidebar-header participants-header">
+        <div class="sidebar-brand">
+          <div class="logo"><i class="fa-solid fa-user-astronaut"></i></div>
+          <span>Participants</span>
+        </div>
+      </div>
+      
+      <div class="participants-list" id="participantsList">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-user-astronaut"></i></div>
+          <p>No active participants</p>
+        </div>
+      </div>
+      
+      <div class="participants-footer">
+        <div class="participant-stats">
+          <span><i class="fa-solid fa-circle-check"></i> <span id="onlineCount">0</span> Active</span>
+          <span><i class="fa-solid fa-circle-info"></i> <span id="totalAgents">0</span> Agents</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
