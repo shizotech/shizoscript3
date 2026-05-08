@@ -1463,11 +1463,7 @@ process_group_agent(&expertgroup, agentId) {
 	agent_uid = expertgroup.id + "_" + agentId;
 	
 	if(agent_active_lock.has(agent_uid)) {
-		//Agent still active, mark another round and exit...
-		if(agent_active_lock[agent_uid].agent) {
-			std.print("CHECK AGAIN!");
-			agent_active_lock[agent_uid].agent.env.check_again = true;
-		}
+		//Agent thread already active
 		return;
 	}
 	
@@ -1477,28 +1473,22 @@ process_group_agent(&expertgroup, agentId) {
 		active = true,
 	];
 	
-	conversation_loop_active = true;
-	conversation_loop_first = true;
-	
-	//Kind of overcomplicated, get agent attributes (new style)
-	
-	agent_config = None;
-	
-	if(expertgroup.agents ?? false) {
-		for(i = 0; i < expertgroup.agents.size(); i++) {
-			if(expertgroup.agents[i].id == agentId) {
-				agent_config = expertgroup.agents[i];
+	//Basically run forever until error, these threads get "kicked off once"
+	//And then run forever to simulate a proper message loop.
+	//Maybe there is a better architecture but this technically should work
+
+	for(1) {
+		try {
+			agent_config = None;
+		
+			if(expertgroup.agents ?? false) {
+				for(i = 0; i < expertgroup.agents.size(); i++) {
+					if(expertgroup.agents[i].id == agentId) {
+						agent_config = expertgroup.agents[i];
+					}
+				}
 			}
-		}
-	}
-	
-	try {
-	
-		for(conversation_loop_active) {
-			//Always loop exactly one time
-			conversation_loop_active = conversation_loop_first;
-			conversation_loop_first = false;
-			
+				
 			agt = miniagent(cfg.api, None, "chatparticient", cfg.token); 
 			
 			agent_active_lock[agent_uid].agent = agt;
@@ -1556,8 +1546,6 @@ process_group_agent(&expertgroup, agentId) {
 			agt.env.agentId = agentId;
 			
 			//Checkout roles/chatparticient for how sending messages is handled.
-			
-			std.print("RUN!");
 			agt.single_task(prompt);
 			
 			if(!agt.env.finished_turn_check) //Agent didnt call send_message and also didnt call finish()
@@ -1565,22 +1553,35 @@ process_group_agent(&expertgroup, agentId) {
 				agt.single_task("Complete your turn by either calling 'send_message' to send a message to the group chat or 'finish' to end your turn.");
 			}
 			
-			std.print("DONE!");
-			//Since the agent might decide that it stops because this happens to often,
-			//Run it with a clean context once again after this so that a natural conversation can happen
-			//Without external triggering 
-			conversation_loop_active = agt.env.check_again;
+			//Re-read and sleep until a new message arrived...
+			last_read_message_id = agt.env.last_read_message_id;
 			
-			//Re-read
-			expertgroup = expertgroups_db.get(expertgroup.id);
-        
+			for(1) {
+				expertgroup = expertgroups_db.get(expertgroup.id);
+				if(expertgroup.messages[-1].id == last_read_message_id)
+					std.sleep(1000 * 15);
+				else
+					break;
+			}
 		}
-	}
-	catch(e) {
-		
+		catch(e) {
+			//Safer to kill the agent for now, do proper error handling later
+			break;
+		}
 	}
 	
 	agent_active_lock.erase(agent_uid);
+}
+
+process_group(&expertgroup) {
+	// Process user message
+	agent_threads = std.thread(process_group_agent);
+	
+	for(i = 0; i < expertgroup.agentIds.size(); i++) {
+		agent_threads.run(&expertgroup, expertgroup.agentIds[i]);
+	}
+	
+	//Detail: dont join() on the threads.
 }
 
 // POST /api/expertgroups/:id/messages - Add message to expert group
@@ -1654,17 +1655,8 @@ server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/messages$", [this](req
         // Save updated expert group
         expertgroups_db.put(expertgroup_id, expertgroup);
         
-        // Process user message
-		agent_threads = std.thread(process_group_agent);
-		
-        if(message.agentId == "user") {
-            
-            for(i = 0; i < expertgroup.agentIds.size(); i++) {
-                agent_threads.run(&expertgroup, expertgroup.agentIds[i]);
-            }
-        }
-        
-		//Detail: dont join() on the threads.
+		if(message.agentId == "user")
+			process_group(&expertgroup);
 		
         return [body = format_api_response(true, message)];
     }
