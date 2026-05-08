@@ -214,6 +214,440 @@ All data is stored as JSON strings in LevelDB with the following key patterns:
 4. **Event Streaming:** WebSocket support for real-time updates
 5. **Caching:** Redis/memcached for performance
 
+## Expert Groups Message Pushing Flow
+
+### Overview
+
+The Expert Groups module provides a complete group chat functionality with AI agents. The backend provides endpoints for message storage and retrieval, while message processing requires additional AI implementation.
+
+### Data Flow Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Frontend (web/expertgroups/)                    │
+│  ┌──────────────────────┐  ┌──────────────────────┐                    │
+│  │   User Interface     │  │   Message Polling    │                    │
+│  │  (input field,       │  │   (2s interval)      │                    │
+│  │   chat display)      │  │                      │                    │
+│  └──────────┬───────────┘  └──────────┬───────────┘                    │
+│             │                         │                                 │
+│             │ POST message            │ GET messages                  │
+│             ├─────────────────────────┼─────────────────┐              │
+│             │                         │                 │              │
+└─────────────┼─────────────────────────┼─────────────────┼──────────────┘
+              │                         │                 │
+    ┌─────────▼─────────┐   ┌─────────▼─────────┐  ┌──────▼──────┐
+    │  Backend Server   │   │   Backend Server  │  │   Backend   │
+    │  (localhost:13337 │   │  (localhost:13337 │  │   Server    │
+    │   dashboard_api   │   │   dashboard_api   │  │  (AI Processing│
+    │        .shio)     │   │        .shio)     │  │      )      │
+    └─────────┬─────────┘   └─────────┬─────────┘  └──────┬──────┘
+              │                         │                 │
+    ┌─────────▼─────────┐   ┌─────────▼─────────┐  ┌──────▼──────┐
+    │  LevelDB          │   │  LevelDB          │  │   LevelDB   │
+    │  expertgroups.db  │   │  expertgroups.db  │  │expertgroups.db│
+    └───────────────────┘   └───────────────────┘  └─────────────┘
+```
+
+### Message Pushing Workflow
+
+#### 1. User Sending a Message
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant Database
+
+    User->>Frontend: Type and send message
+    Frontend->>Frontend: Add message to UI (optimistic)
+    Frontend->>Backend: POST /api/expertgroups/:id/messages
+    Backend->>Database: Store message
+    Database-->>Backend: Acknowledgment
+    Backend-->>Frontend: {ok: true, data: message}
+    Frontend->>Frontend: Update local state
+    Backend->>Backend: Trigger AI processing
+    Backend->>Backend: Generate agent responses
+    Backend->>Database: Store agent responses
+    Frontend->>Backend: GET /api/expertgroups/:id/messages (polling)
+    Backend-->>Frontend: {ok: true, data: [messages]}
+    Frontend->>Frontend: Display new responses
+```
+
+**Step-by-Step Process:**
+
+1. **User types message** in the input field
+2. **Frontend validates** the message text (non-empty, length limits)
+3. **Frontend adds message** to UI immediately (optimistic update)
+4. **Frontend sends POST request** to `/api/expertgroups/:groupId/messages`
+5. **Backend stores message** in the group's messages array
+6. **Backend triggers AI processing** (custom implementation needed)
+7. **Agent responses are generated** using agent personalities
+8. **Backend stores responses** to group messages array
+9. **Frontend polls** for new messages every 2 seconds
+10. **Frontend receives responses** via polling and updates UI
+
+#### 2. Agent Response Generation Flow
+
+```mermaid
+sequenceDiagram
+    participant Message
+    participant Backend
+    participant AI
+    participant Database
+
+    Message->>Backend: New message detected
+    Backend->>Backend: Check message agentId
+    Backend->>Backend: Is agentId == "user"?
+    alt User message
+        Backend->>Backend: Iterate through agents
+        loop Each agent
+            Backend->>AI: Generate response with personality
+            AI-->>Backend: AI-generated response
+            Backend->>Backend: Create response message
+            Backend->>Database: Store response
+        end
+        Backend->>Backend: Update group timestamp
+    else Agent message
+        Backend->>Backend: Skip AI processing
+    end
+```
+
+**Backend Processing Example (ShizoScript):**
+
+```shizo
+// This would be implemented in dashboard_api.shio
+
+// Get group and messages
+group = expertgroups_db.get(expertgroup_id);
+messages = group.messages;
+
+// Get latest user message
+lastMessage = messages[messages.size() - 1];
+
+if(lastMessage.agentId == "user") {
+    // Process with AI for each agent in group
+    for each agent in group.agents {
+        // Generate response using agent personality
+        response = generate_ai_response(
+            lastMessage.content,
+            agent.personality,
+            messages
+        );
+        
+        // Add response to group
+        message_id = "msg_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        response_message = [
+            id = message_id,
+            timestamp = std.millis(),
+            agentId = agent.id,
+            content = response
+        ];
+        
+        group.messages.push_back(response_message);
+    }
+    
+    // Update timestamp
+    group.updatedAt = std.millis();
+    
+    // Save updated group
+    expertgroups_db.put(expertgroup_id, group);
+}
+```
+
+### API Endpoint Reference
+
+#### Expert Groups Message Endpoints
+
+| Method | Endpoint | Description | Request Body | Response |
+|--------|----------|-------------|--------------|----------|
+| GET | `/api/expertgroups/:id/messages` | Get all messages in group | - | `data: [message, ...]` |
+| POST | `/api/expertgroups/:id/messages` | Add message to group | `agentId`, `content` | `data: message` |
+
+#### Message Object Structure
+
+```json
+{
+  "id": "msg_01-Jan-2026_12-30-00_abc456",
+  "timestamp": 1704069000000,
+  "agentId": "user",
+  "content": "Message content"
+}
+```
+
+**Fields:**
+- `id` (string): Unique message identifier
+- `timestamp` (number): Unix timestamp in milliseconds
+- `agentId` (string): ID of the message sender ("user" for human, agent ID for AI)
+- `content` (string): Message text content
+
+### Complete JavaScript Examples
+
+#### Sending a User Message
+
+```javascript
+async function sendMessage(groupId, text) {
+  // Step 1: Add user message to UI immediately
+  appendMessageBubble({
+    agentId: 'user',
+    content: text,
+    timestamp: Date.now()
+  });
+  
+  // Step 2: Add message to backend
+  try {
+    const addedMessage = await window.DashboardExpertGroups.API.addMessage(groupId, {
+      agentId: 'user',
+      content: text
+    });
+    
+    // Step 3: Update local state with backend response
+    if (addedMessage) {
+      addedMessage.timestamp = Date.now();
+      // Use addedMessage instead of original for accurate ID/timestamp
+    }
+  } catch (e) {
+    console.error('Error adding message:', e);
+    // Step 4: Handle error (e.g., show error UI)
+    showNotification('Failed to send message: ' + e.message, 'error');
+  }
+}
+
+// Usage example
+const groupId = 'expertgroup_01-Jan-2026_12-00-00_xyz123';
+sendMessage(groupId, 'Hello agents! What are we working on today?');
+```
+
+#### Polling for New Messages
+
+```javascript
+// Start polling (2-second interval)
+let lastMessageTimestamp = null;
+
+setInterval(async () => {
+  if (!activeGroupId) return;
+  
+  try {
+    const messages = await window.DashboardExpertGroups.API.getMessages(activeGroupId);
+    
+    if (!messages || !messages.length) return;
+    
+    // Check if there are new messages from backend
+    const lastBackendMessage = messages[messages.length - 1];
+    const hasNewMessages = !lastMessageTimestamp || 
+                          (lastBackendMessage && 
+                           lastBackendMessage.timestamp > lastMessageTimestamp);
+    
+    if (hasNewMessages) {
+      // Update state
+      messagesState = messages;
+      lastMessageTimestamp = lastBackendMessage.timestamp;
+      
+      // Re-render messages to show new backend messages
+      renderMessages();
+    }
+  } catch (e) {
+    console.error('Error polling messages:', e);
+  }
+}, 2000); // Poll every 2 seconds
+```
+
+#### Complete Message Flow Example
+
+```javascript
+async function completeMessageFlow() {
+  const groupId = 'expertgroup_01-Jan-2026_12-00-00_xyz123';
+  
+  // 1. Send user message
+  const userMsg = await window.DashboardExpertGroups.API.addMessage(groupId, {
+    agentId: 'user',
+    content: 'Hello agents! What are we working on today?'
+  });
+  
+  console.log('User message sent:', userMsg);
+  
+  // 2. Poll for responses (after 2 seconds)
+  setTimeout(async () => {
+    const messages = await window.DashboardExpertGroups.API.getMessages(groupId);
+    console.log('Latest messages:', messages);
+    
+    // Display agent responses
+    messages.forEach(msg => {
+      if (msg.agentId !== 'user') {
+        console.log(`Agent response: ${msg.content}`);
+      }
+    });
+  }, 2000);
+  
+  // 3. Continue polling for additional responses
+  const pollingInterval = setInterval(async () => {
+    const messages = await window.DashboardExpertGroups.API.getMessages(groupId);
+    const lastBackendMessage = messages[messages.length - 1];
+    
+    if (lastBackendMessage && lastBackendMessage.timestamp > lastMessageTimestamp) {
+      console.log('New message received:', lastBackendMessage.content);
+      lastMessageTimestamp = lastBackendMessage.timestamp;
+      
+      // Stop polling after 10 seconds
+      clearInterval(pollingInterval);
+    }
+  }, 2000);
+}
+```
+
+### Backend Implementation Notes
+
+#### Adding Message Processing
+
+To implement AI-powered message processing, add the following to `dashboard_api.shio`:
+
+1. **Create a message processing function:**
+
+```shizo
+// Message processing helper
+process_messages(expertgroup_id) {
+    group = expertgroups_db.get(expertgroup_id);
+    messages = group.messages;
+    
+    if(!messages || messages.size() == 0)
+        return;
+    
+    // Check for new user messages
+    lastMessage = messages[messages.size() - 1];
+    
+    if(lastMessage.agentId == "user") {
+        // Process with AI for each agent
+        agents = group.agents || [];
+        
+        for(i = 0; i < agents.size(); i++) {
+            agent = agents[i];
+            
+            // Generate response using agent personality
+            response = generate_ai_response(
+                lastMessage.content,
+                agent.personality,
+                messages
+            );
+            
+            // Create response message
+            message_id = "msg_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+            response_message = [
+                id = message_id,
+                timestamp = std.millis(),
+                agentId = agent.id,
+                content = response
+            ];
+            
+            group.messages.push_back(response_message);
+        }
+        
+        // Update timestamp
+        group.updatedAt = std.millis();
+        
+        // Save updated group
+        expertgroups_db.put(expertgroup_id, group);
+    }
+}
+```
+
+2. **Call processing after message addition:**
+
+```shizo
+// In POST /api/expertgroups/:id/messages endpoint
+// ... after saving message ...
+process_messages(expertgroup_id);
+```
+
+### Error Handling
+
+#### Common Message Errors
+
+| Error | Status | Description |
+|-------|--------|-------------|
+| `Expert group not found` | 404 | Group ID doesn't exist |
+| `Invalid request body` | 400 | JSON parsing failed |
+| `Not enabled` | 503 | LevelDB not initialized |
+| `Empty content` | 400 | Message content is empty |
+
+#### Error Response Format
+
+```json
+{
+  "ok": false,
+  "error": "Error message"
+}
+```
+
+#### JavaScript Error Handling
+
+```javascript
+async function sendMessageWithRetry(groupId, text) {
+  let retries = 3;
+  
+  while (retries > 0) {
+    try {
+      const result = await window.DashboardExpertGroups.API.addMessage(groupId, {
+        agentId: 'user',
+        content: text
+      });
+      
+      return result;
+    } catch (e) {
+      console.error('API Error:', e);
+      retries--;
+      
+      if (retries === 0) {
+        showNotification('Failed to send message after 3 attempts', 'error');
+        throw e;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+}
+```
+
+### Best Practices
+
+#### 1. Always Add to UI First
+
+```javascript
+// Good: Optimistic UI update
+appendMessageBubble({ agentId: 'user', content: text, timestamp: Date.now() });
+await window.DashboardExpertGroups.API.addMessage(groupId, { ... });
+```
+
+#### 2. Handle Timestamp Discrepancies
+
+```javascript
+// Backend timestamps may differ from client timestamps
+// Always use backend timestamp for message ordering
+if (addedMessage) {
+  addedMessage.timestamp = Date.now(); // Use current time for ordering
+}
+```
+
+#### 3. Poll with Deduplication
+
+```javascript
+// Only update when new messages exist
+const hasNewMessages = lastBackendMessage.timestamp > lastMessageTimestamp;
+```
+
+#### 4. Validate Message Content
+
+```javascript
+function validateMessage(message) {
+  return message &&
+         message.agentId &&
+         message.content &&
+         typeof message.content === 'string' &&
+         message.content.length <= 10000; // 10KB limit
+}
+```
+
 ## Error Handling
 
 All errors return:

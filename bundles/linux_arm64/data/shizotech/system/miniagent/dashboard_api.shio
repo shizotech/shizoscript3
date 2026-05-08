@@ -7,6 +7,7 @@
 // - History Module (action history)
 // - Settings Module (dashboard settings)
 // - Work Mode Module (agent activity control)
+// - Expert Groups Module (group chat functionality)
 //
 // All endpoints follow a common response format:
 // {
@@ -20,6 +21,10 @@
 // - Regular updates: Frontend polls every 2 seconds for updates
 // - Backend manages all data (AI agents add/remove/update entries)
 // - No human controls except initial creation/direct examination
+
+//Start webserver
+server = webserver.http_server(13337);
+server.static("", "web"); //TODO: add functions to only serve certain routes when AUTHED
 
 // Initialize LevelDB for dashboard data persistence
 features_db = leveldb.db(agent_space + "dashboard/features.db");
@@ -66,6 +71,177 @@ get_default_settings() {
 get_default_workmode() {
     return [enabled = true];
 }
+
+// ════════════════════════════════════════════
+//  Planner Chat API Endpoints
+// ════════════════════════════════════════════
+
+running_agents = [];
+
+conversations = leveldb.db(std.config_path("miniagent", "convdb"));
+
+//PRIVATE ADMIN AGENT
+server.route("POST", "^/api/adminagent", [this](req, res) {
+	
+	body = std.json(req.body);
+	
+	prompt = body.prompt;
+	
+	new_agent = miniagent(cfg.api, None, fileio.exists(AGENT_DIR) ? "orchestrator" : "planner", cfg.token);
+	new_agent.env.agent_space = agent_space;
+	
+	new_token = body.session_id ?? std.random_hash();
+	
+	if(body.session_id && conversations.exists("admin:"+body.session_id))
+		new_agent.llm_api.context.body.messages = conversations.get("admin:"+body.session_id);
+	
+	client_agent_id = req.client_ip;
+	
+	try {
+		if(running_agents.has(client_agent_id))
+		{
+			running_agents[client_agent_id].agent.stop();
+		}
+	}
+	catch(e) {
+		
+	}
+	
+	new_agent.on_action = [client_agent_id](action) {
+		
+		if(action.agent) {
+			//Handle worker
+			//Weird transformation
+			agent = action.agent;
+			action = agent.action;
+			action.agent = "worker";
+			action.id = agent.id;
+		}
+		else
+			action.agent = "planner";
+		
+		if(action.start_agent ?? false) {
+			action.spawn = action.start_agent;
+			action.id = action.start_agent;
+		}
+		
+		if(!action.has("text") && !action.has("tool") && !action.has("spawn"))
+			return;
+		
+		running_agents[client_agent_id].queue.push_back(action);
+	};
+	
+	running_agents[client_agent_id] = [
+		agent=new_agent,
+		token=new_token,
+		queue=[],
+		status="generating",
+		last_poll = std.millis(),
+	];
+	
+	start_agent = [new_token](prompt, client_ip, agt)
+	{
+		agt.task(prompt);
+		
+		if(running_agents.has(client_ip))
+			running_agents[client_ip].status = "done";
+		
+		result = conversations.batch([
+			["put", "admin:"+new_token, agt.llm_api.context.body.messages],
+		]);
+	};
+	
+	std.thread(start_agent).run(prompt, req.client_ip, new_agent);
+	
+	return [
+		body=[ok=1, session_id=new_token],
+	];
+	
+});
+
+server.route("POST", "^/api/adminagent/poll", [this](req, res) {
+	
+	try {		
+		body = std.json(req.body);
+		
+		if(!running_agents.has(req.client_ip))
+			return [body=[ok=true,status="done"]];
+		if(running_agents[req.client_ip].token != body.session_id)
+			std.print("Invalid session: ", body.session_id, " : ", running_agents[req.client_ip].token);
+			return [body=[ok=false,status="error"]];
+		
+		running_agents[req.client_ip].last_poll = std.millis();
+		
+		queue = &running_agents[req.client_ip].queue;
+		
+		if(!queue.size()) {
+			if(running_agents[req.client_ip].status == "done")
+				running_agents.erase(req.client_ip);	
+				return [body=[ok=true, status="done"]];
+			return [body=[ok=true, status="waiting"]];
+		}
+		
+		delta_queue = queue[0];
+		
+		queue.erase(0);
+
+		if(delta_queue.has("spawn"))
+		{
+			return [body=[ok=true, status="spawn", delta=delta_queue]];
+		}
+		
+		if(delta_queue.has("text")) {
+			for(i = 0; i < queue.size(); i++) {
+				if(queue[i].has("spawn"))
+					break;
+				if(delta_queue.has("id") && queue[i].id != delta_queue.id)
+					break;
+				if(queue[i].has("tool"))
+					break;
+				
+				delta_queue.text += queue[i].text;
+				queue.erase(i);
+				i--;
+			}
+		}
+		
+		if(delta_queue.has("tool") && delta_queue.tool.name) {
+			if(delta_queue.tool.name == "finalize") {
+				if(delta_queue.tool.args.assistant_answer)
+					delta_queue.text = "\n\n" + delta_queue.tool.args.assistant_answer;
+			}
+			else {
+				//Transform tool call to text...
+				delta_queue.text = "\n> [TOOL] " + delta_queue.tool.name;
+				
+				if(delta_queue.tool.args.has("path"))
+					delta_queue.text += " `" + delta_queue.tool.args.path + "`";
+				
+				delta_queue.text += "\n\n";	
+			}			
+		}
+
+		return [body=[ok=true, status="generating", delta=delta_queue]];
+	}
+	catch(e) {
+		return [body=[ok=false,status="error", error="internal server error."]];
+	}
+});
+
+server.route("POST", "^/api/adminagent/stop", [this](req, res) {
+	try {
+		if(running_agents.has(req.client_ip))
+			running_agents[req.client_ip].agent.stop();
+			running_agents.erase(req.client_ip);
+	}
+	catch(e) {
+		
+	}
+	
+	return [
+		body=[ok=true],
+	];
+});
 
 // ════════════════════════════════════════════
 //  Settings API Endpoints
@@ -712,3 +888,647 @@ server.route("DELETE", "^/api/history/([a-zA-Z0-9_-]+)$", [this](req, res) {
         return [body = format_api_response(false, None, std.string(e))];
     }
 });
+
+// ════════════════════════════════════════════
+//  Expert Groups API Endpoints
+// ════════════════════════════════════════════
+
+// Initialize LevelDB for expert groups
+expertgroups_db = leveldb.db(agent_space + "dashboard/expertgroups.db");
+
+// Helper function to parse expert group request body
+parse_expertgroup_request_body(body) {
+    try {
+        json = std.json(body);
+        // Check if JSON object is empty (size == 0)
+        if(json.size && json.size() == 0)
+            return None;
+        return json;
+    }
+    catch(e) {
+        return None;
+    }
+}
+
+// GET /api/expertgroups/list - Get all expert groups
+server.route("GET", "^/api/expertgroups/list$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroups = [];
+    
+    try {
+        iter = expertgroups_db.iter();
+        
+        for(iter.valid()) {
+            key = iter.key();
+            if(!key)
+                break;
+            
+            value = expertgroups_db.get(key);
+            expertgroup = std.json(value);
+            
+            if(expertgroup)
+                expertgroups.push_back(expertgroup);
+            
+            iter.next();
+        }
+        
+        return [body = format_api_response(true, expertgroups)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/expertgroups - Create new expert group
+server.route("POST", "^/api/expertgroups$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        // Generate new expert group ID
+        expertgroup_id = "expertgroup_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        
+        // Create new expert group with defaults
+        expertgroup = [
+            id = expertgroup_id,
+            createdAt = std.millis(),
+            updatedAt = std.millis(),
+            agentIds = [],
+            messages = [],
+            personalities = [],
+        ];
+        
+        // Copy provided fields
+        if(body.name)
+            expertgroup.name = body.name;
+        if(body.description)
+            expertgroup.description = body.description;
+        if(body.agentIds)
+            expertgroup.agentIds = body.agentIds;
+        if(body.personalities)
+            expertgroup.personalities = body.personalities;
+        
+        // Save to database
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        return [body = format_api_response(true, expertgroup)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/expertgroups/:id - Get specific expert group
+server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    
+    try {
+        if(expertgroups_db.exists(expertgroup_id)) {
+            expertgroup = expertgroups_db.get(expertgroup_id);
+            return [body = format_api_response(true, expertgroup)];
+        }
+        
+        return [body = format_api_response(false, None, "Expert group not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/expertgroups/:id - Update expert group
+server.route("PUT", "^/api/expertgroups/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Update fields
+        expertgroup.updatedAt = std.millis();
+        
+        if(body.name)
+            expertgroup.name = body.name;
+        if(body.description)
+            expertgroup.description = body.description;
+        if(body.agentIds)
+            expertgroup.agentIds = body.agentIds;
+        if(body.personalities)
+            expertgroup.personalities = body.personalities;
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        return [body = format_api_response(true, expertgroup)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// DELETE /api/expertgroups/:id - Delete expert group
+server.route("DELETE", "^/api/expertgroups/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    
+    try {
+        if(expertgroups_db.exists(expertgroup_id)) {
+            expertgroups_db.delete(expertgroup_id);
+            return [body = format_api_response(true)];
+        }
+        
+        return [body = format_api_response(false, None, "Expert group not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/expertgroups/:id/agents - Get agents in expert group
+server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    
+    try {
+        if(expertgroups_db.exists(expertgroup_id)) {
+            expertgroup = expertgroups_db.get(expertgroup_id);
+            agentIds = [];
+            
+            if(expertgroup.agentIds)
+                agentIds = expertgroup.agentIds;
+            
+            return [body = format_api_response(true, agentIds)];
+        }
+        
+        return [body = format_api_response(false, None, "Expert group not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/expertgroups/:id/agents - Add agent to expert group
+server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Initialize agentIds if it doesn't exist
+        if(expertgroup.agentIds == None)
+            expertgroup.agentIds = [];
+        
+        // Add agent ID to list
+        if(body.agentId) {
+            expertgroup.agentIds.push_back(body.agentId);
+        }
+        
+        // Update timestamp
+        expertgroup.updatedAt = std.millis();
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        return [body = format_api_response(true, expertgroup.agentIds)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// DELETE /api/expertgroups/:id/agents/:agentId - Remove agent from expert group
+server.route("DELETE", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    agent_id = req.matches[1];
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Initialize agentIds if it doesn't exist
+        if(expertgroup.agentIds == None)
+            expertgroup.agentIds = [];
+        
+        // Remove agent ID from list
+        new_agentIds = [];
+        for(i = 0; i < expertgroup.agentIds.size(); i++) {
+			agentId = expertgroup.agentIds[i];
+            if(agentId != agent_id)
+                new_agentIds.push_back(agentId);
+        }
+        expertgroup.agentIds = new_agentIds;
+        
+        // Update timestamp
+        expertgroup.updatedAt = std.millis();
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        return [body = format_api_response(true, expertgroup.agentIds)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/expertgroups/:id/agents/:agentId - Get specific agent in group
+server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    agent_id = req.matches[1];
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Get agents list
+        agents = [];
+        if(expertgroup.agents)
+            agents = expertgroup.agents;
+        
+        // Find specific agent
+        for(i = 0; i < agents.size(); i++) {
+            agent = agents[i];
+            if(agent.id && agent.id == agent_id)
+                return [body = format_api_response(true, agent)];
+        }
+        
+        return [body = format_api_response(false, None, "Agent not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// PUT /api/expertgroups/:id/agents/:agentId - Update agent in group
+server.route("PUT", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    agent_id = req.matches[1];
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Get agents list or initialize
+        agents = [];
+        if(expertgroup.agents)
+            agents = expertgroup.agents;
+        
+        // Find and update agent
+        updated = false;
+        for(i = 0; i < agents.size(); i++) {
+            agent = agents[i];
+            if(agent.id && agent.id == agent_id) {
+                // Update provided fields
+                if(body.name)
+                    agent.name = body.name;
+                if(body.role)
+                    agent.role = body.role;
+                if(body.personality)
+                    agent.personality = body.personality;
+                if(body.color)
+                    agent.color = body.color;
+                if(body.avatar)
+                    agent.avatar = body.avatar;
+                
+                agents[i] = agent;
+                updated = true;
+                break;
+            }
+        }
+        
+        if(!updated)
+            return [body = format_api_response(false, None, "Agent not found")];
+        
+        // Update agents list in group
+        expertgroup.agents = agents;
+        expertgroup.updatedAt = std.millis();
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        return [body = format_api_response(true, agents)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// POST /api/expertgroups/:id/agents/:agentId/personality - Update agent personality
+server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)/personality$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    agent_id = req.matches[1];
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Initialize personalities if it doesn't exist
+        if(!expertgroup.personalities)
+            expertgroup.personalities = [];
+        
+        // Update personality for the agent
+        if(body.personality != None)
+            expertgroup.personalities[agent_id] = body.personality;
+        
+        // Update timestamp
+        expertgroup.updatedAt = std.millis();
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        // Return the updated personalities object
+        return [body = format_api_response(true, expertgroup.personalities)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+// GET /api/expertgroups/:id/messages - Get messages in expert group
+server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)/messages$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    
+    try {
+        if(expertgroups_db.exists(expertgroup_id)) {
+            expertgroup = expertgroups_db.get(expertgroup_id);
+            messages = [];
+            
+            if(expertgroup.messages)
+                messages = expertgroup.messages;
+            
+            // Return both messages and personalities
+            personalities = [];
+            if(expertgroup.personalities)
+                personalities = expertgroup.personalities;
+            
+            return [body = format_api_response(true, [messages = messages, personalities = personalities])];
+        }
+        
+        return [body = format_api_response(false, None, "Expert group not found")];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+agent_active_lock = [];
+
+process_group_agent(&expertgroup, agentId) {
+	
+	//Todo: this function somewhat should run in a loop until
+	//All agents decided to stop talking and there are no new messages
+	//Currently they only "loop" once but thats ok for now
+	
+	agent_uid = expertgroup.id + "_" + agentId;
+	
+	if(agent_active_lock.has(agent_uid)) {
+		//Agent still active, mark another round and exit...
+		if(agent_active_lock[agent_uid].agent) {
+			agent_active_lock[agent_uid].agent.env.check_again = true;
+		}
+		return;
+	}
+	
+	agent_active_lock[agent_uid] = [
+		active = true,
+	];
+	
+	conversation_loop_active = true;
+	
+	try {
+	
+		for(conversation_loop_active) {
+			
+			conversation_loop_active = false;
+			
+			agt = miniagent(cfg.api, None, "chatparticient", cfg.token); 
+			
+			agent_active_lock[agent_uid].agent = agt;
+			
+			prompt = "<participants>\n";
+			prompt += "<participant name=\"user\" type=\"human\"/>\n";
+			for(i = 0; i < expertgroup.agentIds.size(); i++) {
+				prompt += "<participant name=\"" + expertgroup.agentIds[i] + "\" type=\"agent\"/>\n";
+			}
+			
+			prompt += "</participants>\n\n";
+			
+			prompt += "<chat_history>\n\n";
+			
+			for(i = 0; i < expertgroup.messages.size(); i++) {
+				msg = &expertgroup.messages[i];
+				type = msg.agentId == "user" ? "human" : "agent";
+				
+				messageTag =
+					"<message id=\"" + msg.id +
+					"\" author=\"" + msg.agentId +
+					"\" type=\"" + type + "\"";
+					
+				if (agentId == msg.agentId) {
+					messageTag += " active_agent=\"true\"";
+				}
+				
+				messageTag += ">\n";
+
+				prompt += messageTag;
+				prompt += msg.content;
+				prompt += "\n</message>\n\n";
+			}
+			
+			prompt += "</chat_history>\n\n";
+			prompt += "<self>\n" + agentId + "\n</self>\n\n";
+			prompt += "<personality>\n" + expertgroup.personalities[agentId] + "\n</personality>";
+			
+			agt.env.expertgroup_id = expertgroup.id;
+			agt.env.last_read_message_id = expertgroup.messages[-1].id;
+			agt.env.expertgroups_db = expertgroups_db;
+			agt.env.agentId = agentId;
+			
+			//Checkout roles/chatparticient for how sending messages is handled.
+			
+			agt.single_task(prompt);
+			
+			//Since the agent might decide that it stops because this happens to often,
+			//Run it with a clean context once again after this so that a natural conversation can happen
+			//Without external triggering 
+			conversation_loop_active = agt.env.check_again;
+		}
+	}
+	catch(e) {
+		
+	}
+	
+	agent_active_lock.erase(agent_uid);
+}
+
+// POST /api/expertgroups/:id/messages - Add message to expert group
+server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/messages$", [this](req, res) {
+    
+    if(!expertgroups_db)
+        return [body = format_api_response(false, None, "Not enabled.")];
+    
+    expertgroup_id = req.matches[0];
+    body = parse_expertgroup_request_body(req.body);
+    
+    if(!body) {
+        return [body = format_api_response(false, None, "Invalid request body")];
+    }
+    
+    try {
+        if(!expertgroups_db.exists(expertgroup_id)) {
+            return [body = format_api_response(false, None, "Expert group not found")];
+        }
+        
+        expertgroup = expertgroups_db.get(expertgroup_id);
+        
+        // Initialize messages if it doesn't exist
+        if(!expertgroup.messages)
+            expertgroup.messages = [];
+        
+        // Initialize personalities if it doesn't exist
+        if(!expertgroup.personalities)
+            expertgroup.personalities = [];
+        
+        // Generate new message ID
+        message_id = "msg_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+        
+        // Create new message
+        message = [
+            id = message_id,
+            timestamp = std.millis(),
+        ];
+        
+        // Copy provided fields
+        if(body.agentId)
+            message.agentId = body.agentId;
+        if(body.content)
+            message.content = body.content;
+        
+        // Add message to group
+        expertgroup.messages.push_back(message);
+        
+        // Update personalities from request if provided
+        if(body.personalities) {
+            // Merge personalities (update existing, add new)
+            for(i = 0; i < body.personalities.size(); i++) {
+				key = body.personalities[i];
+                expertgroup.personalities[key] = body.personalities[key];
+            }
+        }
+        
+        // Update timestamp
+        expertgroup.updatedAt = std.millis();
+        
+        // Save updated expert group
+        expertgroups_db.put(expertgroup_id, expertgroup);
+        
+        // Process user message
+		agent_threads = std.thread(process_group_agent);
+		
+        if(message.agentId == "user") {
+            
+            for(i = 0; i < expertgroup.agentIds.size(); i++) {
+                agent_threads.run(&expertgroup, expertgroup.agentIds[i]);
+            }
+        }
+        
+		//Detail: dont join() on the threads.
+		
+        return [body = format_api_response(true, message)];
+    }
+    catch(e) {
+        return [body = format_api_response(false, None, std.string(e))];
+    }
+});
+
+server.start();
+			
+std.print("Webinterface: " + "http://localhost:13337\n");
+
+std.system("start http://localhost:13337");

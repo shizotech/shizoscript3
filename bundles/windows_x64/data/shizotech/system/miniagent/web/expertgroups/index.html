@@ -5,11 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Expert Groups • ShizoGPT Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="components/ui.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="components/theme.css" />
+  <!-- Markdown rendering support -->
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
 </head>
 <body>
   <div class="app">
+    <!-- Modals -->
+    <div id="addGroupModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3 class="ui-modal-title"><i class="fa-solid fa-users"></i> Create New Group</h3>
+          <button class="ui-modal-close" data-modal-action="cancel"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="ui-modal-body">
+          <div class="ui-form-group">
+            <label for="groupNameInput" class="ui-form-label">Group Name</label>
+            <input type="text" id="groupNameInput" class="ui-form-input" placeholder="Enter group name..." maxlength="100">
+          </div>
+        </div>
+        <div class="ui-modal-footer">
+          <button id="btnCancelGroup" class="ui-btn ui-btn-secondary" data-modal-action="cancel">Cancel</button>
+          <button id="btnSubmitGroup" class="ui-btn ui-btn-primary">Create Group</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmDeleteModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3 class="ui-modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Delete</h3>
+          <button class="ui-modal-close" data-modal-action="cancel"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="ui-modal-body">
+          <p>Are you sure you want to delete this group? This action cannot be undone.</p>
+        </div>
+        <div class="ui-modal-footer">
+          <button id="btnCancelDelete" class="ui-btn ui-btn-secondary" data-modal-action="cancel">Cancel</button>
+          <button id="btnConfirmDelete" class="ui-btn ui-btn-danger">Delete Group</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="addAgentModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3 class="ui-modal-title"><i class="fa-solid fa-user-plus"></i> Add Agent to Group</h3>
+          <button class="ui-modal-close" data-modal-action="cancel"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="ui-modal-body">
+          <div class="ui-form-group">
+            <label class="ui-form-label">Available Agents</label>
+            <div id="availableAgentsList" class="agents-grid">
+              <!-- Agents will be rendered here -->
+            </div>
+          </div>
+          <div class="ui-form-group">
+            <label for="agentPersonalityInput" class="ui-form-label">Agent Personality</label>
+            <textarea id="agentPersonalityInput" class="ui-form-input" rows="4" placeholder="Describe the agent's personality, behavior, and tone..." maxlength="2000"></textarea>
+            <small class="ui-form-hint">Define how the agent should behave and respond</small>
+          </div>
+        </div>
+        <div class="ui-modal-footer">
+          <button id="btnCancelAddAgent" class="ui-btn ui-btn-secondary" data-modal-action="cancel">Cancel</button>
+          <button id="btnSubmitAddAgent" class="ui-btn ui-btn-primary">Add Selected</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="editPersonalityModal" class="ui-modal-overlay">
+      <div class="ui-modal">
+        <div class="ui-modal-header">
+          <h3 class="ui-modal-title"><i class="fa-solid fa-pen-nib"></i> Edit Agent Personality</h3>
+          <button class="ui-modal-close" data-modal-action="cancel"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="ui-modal-body">
+          <div class="ui-form-group">
+            <label for="editPersonalityInput" class="ui-form-label">Personality</label>
+            <textarea id="editPersonalityInput" class="ui-form-input" rows="6" placeholder="Describe the agent's personality, behavior, and tone..." maxlength="2000"></textarea>
+            <small class="ui-form-hint">Define how the agent should behave and respond</small>
+          </div>
+        </div>
+        <div class="ui-modal-footer">
+          <button id="btnCancelEditPersonality" class="ui-btn ui-btn-secondary" data-modal-action="cancel">Cancel</button>
+          <button id="btnSavePersonality" class="ui-btn ui-btn-primary">Save Personality</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Sidebar: Group Selection -->
     <aside id="groupSidebar" class="group-sidebar">
       <div class="sidebar-header">
@@ -27,11 +112,12 @@
         <div class="empty-state">
           <div class="empty-icon"><i class="fa-solid fa-robot"></i></div>
           <p>No groups yet</p>
+          <p style="margin-top:8px;font-size:12px">Click "New Group" to create one</p>
         </div>
       </div>
       
       <div class="sidebar-footer">
-        <button id="btnToggleSidebar" class="btn-toggle-sidebar">
+        <button id="btnToggleSidebar" class="btn-footer-toggle">
           <i class="fa-solid fa-gear"></i>
           <span>Settings</span>
         </button>
@@ -41,7 +127,7 @@
     <!-- Main: Chat Area -->
     <main class="main-chat">
       <header class="chat-header">
-        <button id="btnToggleGroupSidebar" class="btn-toggle-sidebar">
+        <button id="btnToggleGroupSidebar" class="btn-header-toggle">
           <i class="fa-solid fa-bars"></i>
         </button>
         <div class="chat-title" id="currentGroupTitle">Select a Group</div>
