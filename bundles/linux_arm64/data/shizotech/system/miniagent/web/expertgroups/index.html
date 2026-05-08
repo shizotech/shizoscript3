@@ -56,18 +56,39 @@
           <button class="ui-modal-close" data-modal-action="cancel"><i class="fa-solid fa-times"></i></button>
         </div>
         <div class="ui-modal-body">
-          <div class="ui-form-group">
-            <label class="ui-form-label">Available Agents</label>
-            <div id="availableAgentsList" class="agents-grid">
-              <!-- Agents will be rendered here -->
-            </div>
-          </div>
-          <div class="ui-form-group">
-            <label for="agentPersonalityInput" class="ui-form-label">Agent Personality</label>
-            <textarea id="agentPersonalityInput" class="ui-form-input" rows="4" placeholder="Describe the agent's personality, behavior, and tone..." maxlength="2000"></textarea>
-            <small class="ui-form-hint">Define how the agent should behave and respond</small>
-          </div>
-        </div>
+           <div class="ui-form-group">
+             <label class="ui-form-label">Available Agents</label>
+             <div id="availableAgentsList" class="agents-grid">
+               <!-- Agents will be rendered here -->
+             </div>
+           </div>
+           <div class="ui-form-group">
+             <label for="agentPersonalityInput" class="ui-form-label">Agent Personality</label>
+             <textarea id="agentPersonalityInput" class="ui-form-input" rows="4" placeholder="Describe the agent's personality, behavior, and tone..." maxlength="2000"></textarea>
+             <small class="ui-form-hint">Define how the agent should behave and respond</small>
+           </div>
+           <div class="ui-form-group permissions-group">
+             <label class="ui-form-label">Agent Permissions</label>
+             <div class="permissions-list">
+               <label class="ui-checkbox-label">
+                 <input type="checkbox" id="permReadFiles" class="ui-checkbox-input" />
+                 <span class="ui-checkbox-box"></span>
+                 <span class="ui-checkbox-label-text">Can read files</span>
+               </label>
+               <label class="ui-checkbox-label">
+                 <input type="checkbox" id="permWriteFiles" class="ui-checkbox-input" />
+                 <span class="ui-checkbox-box"></span>
+                 <span class="ui-checkbox-label-text">Can write files</span>
+               </label>
+               <label class="ui-checkbox-label">
+                 <input type="checkbox" id="permUseSkills" class="ui-checkbox-input" />
+                 <span class="ui-checkbox-box"></span>
+                 <span class="ui-checkbox-label-text">Can use skills</span>
+               </label>
+             </div>
+             <small class="ui-form-hint">Select the permissions this agent should have</small>
+           </div>
+         </div>
         <div class="ui-modal-footer">
           <button id="btnCancelAddAgent" class="ui-btn ui-btn-secondary" data-modal-action="cancel">Cancel</button>
           <button id="btnSubmitAddAgent" class="ui-btn ui-btn-primary">Add Selected</button>

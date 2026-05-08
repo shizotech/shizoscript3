@@ -975,6 +975,8 @@ server.route("POST", "^/api/expertgroups$", [this](req, res) {
             expertgroup.description = body.description;
         if(body.agentIds)
             expertgroup.agentIds = body.agentIds;
+		if(body.agents)
+			expertgroup.agents = body.agents;
         if(body.personalities)
             expertgroup.personalities = body.personalities;
         
@@ -1038,6 +1040,8 @@ server.route("PUT", "^/api/expertgroups/([a-zA-Z0-9_-]+)$", [this](req, res) {
             expertgroup.description = body.description;
         if(body.agentIds)
             expertgroup.agentIds = body.agentIds;
+		if(body.agents)
+			expertgroup.agents = body.agents;
         if(body.personalities)
             expertgroup.personalities = body.personalities;
         
@@ -1084,11 +1088,16 @@ server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents$", [this](req, r
         if(expertgroups_db.exists(expertgroup_id)) {
             expertgroup = expertgroups_db.get(expertgroup_id);
             agentIds = [];
+            agents = [];
             
             if(expertgroup.agentIds)
                 agentIds = expertgroup.agentIds;
             
-            return [body = format_api_response(true, agentIds)];
+            if(expertgroup.agents)
+                agents = expertgroup.agents;
+            
+            // Return both agent IDs and full agent objects
+            return [body = format_api_response(true, [agentIds = agentIds, agents = agents])];
         }
         
         return [body = format_api_response(false, None, "Expert group not found")];
@@ -1111,20 +1120,43 @@ server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents$", [this](req, 
         return [body = format_api_response(false, None, "Invalid request body")];
     }
     
+	std.print(body);
+	
     try {
         if(!expertgroups_db.exists(expertgroup_id)) {
             return [body = format_api_response(false, None, "Expert group not found")];
         }
-        
+		
         expertgroup = expertgroups_db.get(expertgroup_id);
         
         // Initialize agentIds if it doesn't exist
-        if(expertgroup.agentIds == None)
+        if(!expertgroup.agentIds)
             expertgroup.agentIds = [];
         
-        // Add agent ID to list
+        // Initialize agents array if it doesn't exist (new format)
+        if(!expertgroup.agents)
+            expertgroup.agents = [];
+        
+        // Handle both old format (agentId only) and new format (full agent object with permissions)
         if(body.agentId) {
+            // Old format: only agent ID provided
             expertgroup.agentIds.push_back(body.agentId);
+        } 
+		
+		if(body.agent && body.agent.id) {
+            // New format: full agent object with permissions
+            agentObj = body.agent;
+            
+            // Set default values for new permission attributes if not provided
+            if(agentObj.canReadFiles == None) agentObj.canReadFiles = false;
+            if(agentObj.canWriteFiles == None) agentObj.canWriteFiles = false;
+            if(agentObj.canUseSkills == None) agentObj.canUseSkills = false;
+            
+            // Add agent ID to list
+            expertgroup.agentIds.push_back(agentObj.id);
+            
+            // Add full agent object to agents array
+            expertgroup.agents.push_back(agentObj);
         }
         
         // Update timestamp
@@ -1169,6 +1201,14 @@ server.route("DELETE", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-
         }
         expertgroup.agentIds = new_agentIds;
         
+		//Remove from new format...
+		for(i = 0; i < expertgroup.agents.size(); i++) {
+			if(expertgroup.agents[i].id == agent_id) {
+				expertgroup.agents.erase(i);
+				break;
+			}
+		}
+		
         // Update timestamp
         expertgroup.updatedAt = std.millis();
         
@@ -1231,6 +1271,8 @@ server.route("PUT", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)
         return [body = format_api_response(false, None, "Invalid request body")];
     }
     
+	std.print(body);
+	
     try {
         if(!expertgroups_db.exists(expertgroup_id)) {
             return [body = format_api_response(false, None, "Expert group not found")];
@@ -1260,15 +1302,64 @@ server.route("PUT", "^/api/expertgroups/([a-zA-Z0-9_-]+)/agents/([a-zA-Z0-9_-]+)
                 if(body.avatar)
                     agent.avatar = body.avatar;
                 
+                // Update permission attributes with defaults
+                if(body.canReadFiles != None)
+                    agent.canReadFiles = body.canReadFiles;
+                else if(agent.canReadFiles == None)
+                    agent.canReadFiles = false;
+                    
+                if(body.canWriteFiles != None)
+                    agent.canWriteFiles = body.canWriteFiles;
+                else if(agent.canWriteFiles == None)
+                    agent.canWriteFiles = false;
+                    
+                if(body.canUseSkills != None)
+                    agent.canUseSkills = body.canUseSkills;
+                else if(agent.canUseSkills == None)
+                    agent.canUseSkills = false;
+                
                 agents[i] = agent;
                 updated = true;
                 break;
             }
         }
         
-        if(!updated)
-            return [body = format_api_response(false, None, "Agent not found")];
-        
+        if(!updated) {
+            // Just create a new one...
+			// Update provided fields
+			agent = [id=agent_id];
+			if(body.name)
+				agent.name = body.name;
+			if(body.role)
+				agent.role = body.role;
+			if(body.personality)
+				agent.personality = body.personality;
+			if(body.color)
+				agent.color = body.color;
+			if(body.avatar)
+				agent.avatar = body.avatar;
+			
+			// Update permission attributes with defaults
+			if(body.canReadFiles != None)
+				agent.canReadFiles = body.canReadFiles;
+			else if(agent.canReadFiles == None)
+				agent.canReadFiles = false;
+				
+			if(body.canWriteFiles != None)
+				agent.canWriteFiles = body.canWriteFiles;
+			else if(agent.canWriteFiles == None)
+				agent.canWriteFiles = false;
+				
+			if(body.canUseSkills != None)
+				agent.canUseSkills = body.canUseSkills;
+			else if(agent.canUseSkills == None)
+				agent.canUseSkills = false;
+			
+			agent.id = 
+			
+			expertgroup.agents.push_back(agent);
+        }
+		
         // Update agents list in group
         expertgroup.agents = agents;
         expertgroup.updatedAt = std.millis();
@@ -1359,6 +1450,10 @@ server.route("GET", "^/api/expertgroups/([a-zA-Z0-9_-]+)/messages$", [this](req,
 
 agent_active_lock = [];
 
+//Kind of hackery, used to manually add tools
+//Make an official better way for that later...
+#include "roles/SHARED"
+
 process_group_agent(&expertgroup, agentId) {
 	
 	//Todo: this function somewhat should run in a loop until
@@ -1370,26 +1465,54 @@ process_group_agent(&expertgroup, agentId) {
 	if(agent_active_lock.has(agent_uid)) {
 		//Agent still active, mark another round and exit...
 		if(agent_active_lock[agent_uid].agent) {
+			std.print("CHECK AGAIN!");
 			agent_active_lock[agent_uid].agent.env.check_again = true;
 		}
 		return;
 	}
 	
+	//std.print(expertgroup);
+
 	agent_active_lock[agent_uid] = [
 		active = true,
 	];
 	
 	conversation_loop_active = true;
+	conversation_loop_first = true;
+	
+	//Kind of overcomplicated, get agent attributes (new style)
+	
+	agent_config = None;
+	
+	if(expertgroup.agents ?? false) {
+		for(i = 0; i < expertgroup.agents.size(); i++) {
+			if(expertgroup.agents[i].id == agentId) {
+				agent_config = expertgroup.agents[i];
+			}
+		}
+	}
 	
 	try {
 	
 		for(conversation_loop_active) {
-			
-			conversation_loop_active = false;
+			//Always loop exactly one time
+			conversation_loop_active = conversation_loop_first;
+			conversation_loop_first = false;
 			
 			agt = miniagent(cfg.api, None, "chatparticient", cfg.token); 
 			
 			agent_active_lock[agent_uid].agent = agt;
+			
+			if(agent_config.canReadFiles) {
+				add_read_tools(agt);
+				add_code_read_tools(agt);
+			}
+			if(agent_config.canWriteFiles) {
+				add_write_tools(agt);
+			}
+			if(agent_config.canUseSkills) {
+				add_skill_tools(agt);
+			}
 			
 			prompt = "<participants>\n";
 			prompt += "<participant name=\"user\" type=\"human\"/>\n";
@@ -1423,7 +1546,9 @@ process_group_agent(&expertgroup, agentId) {
 			
 			prompt += "</chat_history>\n\n";
 			prompt += "<self>\n" + agentId + "\n</self>\n\n";
-			prompt += "<personality>\n" + expertgroup.personalities[agentId] + "\n</personality>";
+			
+			if(expertgroup.personalities[agentId])
+				prompt += "<personality>\n" + expertgroup.personalities[agentId] + "\n</personality>";
 			
 			agt.env.expertgroup_id = expertgroup.id;
 			agt.env.last_read_message_id = expertgroup.messages[-1].id;
@@ -1432,12 +1557,23 @@ process_group_agent(&expertgroup, agentId) {
 			
 			//Checkout roles/chatparticient for how sending messages is handled.
 			
+			std.print("RUN!");
 			agt.single_task(prompt);
 			
+			if(!agt.env.finished_turn_check) //Agent didnt call send_message and also didnt call finish()
+			{
+				agt.single_task("Complete your turn by either calling 'send_message' to send a message to the group chat or 'finish' to end your turn.");
+			}
+			
+			std.print("DONE!");
 			//Since the agent might decide that it stops because this happens to often,
 			//Run it with a clean context once again after this so that a natural conversation can happen
 			//Without external triggering 
 			conversation_loop_active = agt.env.check_again;
+			
+			//Re-read
+			expertgroup = expertgroups_db.get(expertgroup.id);
+        
 		}
 	}
 	catch(e) {
@@ -1496,10 +1632,20 @@ server.route("POST", "^/api/expertgroups/([a-zA-Z0-9_-]+)/messages$", [this](req
         // Update personalities from request if provided
         if(body.personalities) {
             // Merge personalities (update existing, add new)
-            for(i = 0; i < body.personalities.size(); i++) {
-				key = body.personalities[i];
+            if(body.agents ?? false) {
+				expertgroup.agents = body.agents;
+			}
+			for(i = 0; i < body.personalities.size(); i++) {
+				key = body.personalities.key(i);
                 expertgroup.personalities[key] = body.personalities[key];
-            }
+				
+				for(j = 0; j < expertgroup.agents.size(); j++) {
+					if(expertgroup.agents[j].id == key) {
+						expertgroup.agents[j].personality = body.personalities[key];
+						break;
+					}
+				}
+			}
         }
         
         // Update timestamp

@@ -1128,3 +1128,96 @@ body {
   color: var(--text-secondary);
   margin-top: 4px;
 }
+
+/* ── Agent Permissions Checkboxes ── */
+.permissions-group {
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.permissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ui-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  background: var(--panel);
+  border: 2px solid var(--border);
+}
+
+.ui-checkbox-label:hover {
+  border-color: rgba(0, 168, 132, 0.3);
+  background: rgba(0, 168, 132, 0.03);
+}
+
+.ui-checkbox-label.selected {
+  background: rgba(0, 168, 132, 0.08);
+  border-color: rgba(0, 168, 132, 0.5);
+}
+
+.ui-checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.ui-checkbox-input:checked {
+  background: linear-gradient(135deg, #005c4b 0%, #00a884 100%);
+  border-color: #005c4b;
+}
+
+.ui-checkbox-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+.ui-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.ui-checkbox-label.selected .ui-checkbox-box {
+  border-color: #00a884;
+  background: rgba(0, 168, 132, 0.1);
+}
+
+.ui-checkbox-label-text {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.ui-checkbox-label.selected .ui-checkbox-label-text {
+  color: #00a884;
+  font-weight: 600;
+}

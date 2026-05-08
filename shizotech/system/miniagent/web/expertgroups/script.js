@@ -100,7 +100,17 @@
       const response = await fetch(`${this.baseUrl}/api/expertgroups/${encodeURIComponent(groupId)}/agents`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (data.ok) return data.data || [];
+      if (data.ok) {
+        // Handle both old format (array of IDs) and new format (object with agentIds and agents)
+        if (data.data && Array.isArray(data.data)) {
+          // Old format: just return agent IDs
+          return data.data;
+        } else if (data.data && data.data.agentIds) {
+          // New format: return object with both agentIds and agents
+          return data.data;
+        }
+        return [];
+      }
       throw new Error(data.error || 'Failed to fetch agents');
     } catch (e) {
       console.error('Error fetching agents:', e);
@@ -250,19 +260,26 @@
    const md = window.markdownit ? window.markdownit({ html: false, linkify: true, breaks: true }) : null;
 
    // Render markdown text to HTML safely
-   window.DashboardExpertGroups.renderMarkdown = function(text) {
-     if (!md) {
-       // Fallback: simple markdown conversion without markdownit
-       return window.DashboardExpertGroups.escapeHtml(text);
-     }
-     
-     try {
-       return md.render(text);
-     } catch (e) {
-       console.error('Markdown rendering error:', e);
-       return window.DashboardExpertGroups.escapeHtml(text);
-     }
-   };
+    window.DashboardExpertGroups.renderMarkdown = function(text) {
+      // Input validation: ensure text is a string
+      if (text === null || text === undefined) {
+        return '';
+      }
+      // Convert to string if not already a string
+      text = String(text);
+      
+      if (!md) {
+        // Fallback: simple markdown conversion without markdownit
+        return window.DashboardExpertGroups.escapeHtml(text);
+      }
+      
+      try {
+        return md.render(text);
+      } catch (e) {
+        console.error('Markdown rendering error:', e);
+        return window.DashboardExpertGroups.escapeHtml(text);
+      }
+    };
 
    // ════════════════════════════════════════════
    //  Expert Group Store
@@ -437,17 +454,17 @@
                                   (lastBackendMessage && lastBackendMessage.timestamp > this.state.lastMessageTimestamp);
             
             if (hasNewMessages) {
-               // Find messages that are not yet in our state
-               // FIX 2: Only append messages from agents, not from user (user messages are already in UI)
-               const newMessages = messages.filter(msg => {
-                 // FIX: Ensure message has id (generate one if missing) and check if already in state
-                 if (!msg.id) {
-                   msg.id = msg.timestamp + '-' + Math.random().toString(36).substring(2, 9);
-                   console.warn('Polling message missing id, generated:', msg.id);
-                 }
-                 return !this.state.messages.some(existing => existing.id === msg.id) &&
-                   msg.agentId !== 'user'  // Skip user messages - they're already displayed
-               });
+                // Find messages that are not yet in our state
+                // FIX 2: Only append messages from agents, not from user (user messages are already in UI)
+                const newMessages = messages.filter(msg => {
+                  // FIX: Ensure message has id (generate one if missing) and check if already in state
+                  if (!msg.id) {
+                    msg.id = msg.timestamp + '-' + Math.random().toString(36).substring(2, 9);
+                    console.warn('Polling message missing id, generated:', msg.id);
+                  }
+                  return !this.state.messages.some(existing => existing.id === msg.id) &&
+                    msg.agentId && msg.agentId !== 'user'  // Skip user messages and ensure agentId exists
+                });
                
                if (newMessages.length > 0) {
                  // Append only new messages
@@ -821,11 +838,11 @@
         item.dataset.groupId = group.id;
         
         // Get last message preview
-         const messages = Array.isArray(group.messages) ? group.messages : [];
-         const lastMessage = messages[messages.length - 1];
-        const preview = lastMessage 
-          ? `${this.getMessageAgentName(lastMessage.agentId)}: ${lastMessage.content.substring(0, 40) + (lastMessage.content.length > 40 ? '...' : '')}`
-          : 'No messages yet';
+          const messages = Array.isArray(group.messages) ? group.messages : [];
+          const lastMessage = messages[messages.length - 1];
+          const preview = lastMessage && lastMessage.agentId && lastMessage.content 
+            ? `${this.getMessageAgentName(lastMessage.agentId)}: ${String(lastMessage.content).substring(0, 40) + (String(lastMessage.content).length > 40 ? '...' : '')}`
+            : 'No messages yet';
         
         // Get agent count
         const agentIds = group.agentIds || [];
@@ -1082,68 +1099,76 @@
     currentEditingPersonalityAgentId: null,
 
     // Open add agent modal
-    openAddAgentModal(groupId) {
-      const modal = document.getElementById('addAgentModal');
-      const agentsGrid = document.getElementById('availableAgentsList');
-      
-      if (modal && agentsGrid) {
-        this.selectedAgentsForAdd = [];
-        this.currentAddingAgentsToId = groupId;
-        
-        // Clear existing agents
-        agentsGrid.innerHTML = '';
-        
-        // Clear personality input
-        const personalityInput = document.getElementById('agentPersonalityInput');
-        if (personalityInput) personalityInput.value = '';
-        
-        // Get current agents in group
-        const group = this.state.groups.find(g => g.id === groupId);
-        const currentAgentIds = group?.agentIds || [];
-        
-        // Render available agents
-         this.availableAgents.forEach(agent => {
-           const agentOption = document.createElement('div');
-           agentOption.className = 'agent-option';
-           agentOption.dataset.agentId = agent.id;
-          
-          // Custom agent gets different avatar and no role display
-          const isCustom = agent.id === 'custom';
-          const avatarIcon = isCustom ? 'fa-user-plus' : 
-            agent.id === 'planner' ? 'fa-robot' : 
-            agent.id === 'architect' ? 'fa-cubes' : 
-            agent.id === 'analyst' ? 'fa-chart-line' : 
-            agent.id === 'writer' ? 'fa-pen-nib' : 
-            agent.id === 'coder' ? 'fa-code' : 
-            agent.id === 'researcher' ? 'fa-microscope' : 
-            agent.id === 'designer' ? 'fa-palette' : 
-            agent.id === 'reviewer' ? 'fa-check-circle' : 'fa-robot';
-          
-          const roleHtml = isCustom ? '' : `<div class="agent-role">${agent.role}</div>`;
-          
-          agentOption.innerHTML = `
-            <div class="agent-avatar" style="background: linear-gradient(135deg, ${agent.color} 0%, #00c498 100%);">
-              <i class="fa-solid ${avatarIcon}"></i>
-            </div>
-            <div class="agent-name">${agent.name}</div>
-            ${roleHtml}
-          `;
-          
-          agentOption.addEventListener('click', () => {
-            agentOption.classList.toggle('selected');
-            if (agentOption.classList.contains('selected')) {
-              this.selectedAgentsForAdd.push(agent.id);
-            } else {
-              this.selectedAgentsForAdd = this.selectedAgentsForAdd.filter(id => id !== agent.id);
-            }
-          });
-          
-          agentsGrid.appendChild(agentOption);
-        });
-        
-        modal.classList.add('active');
-      }
-    },
+     openAddAgentModal(groupId) {
+       const modal = document.getElementById('addAgentModal');
+       const agentsGrid = document.getElementById('availableAgentsList');
+       
+       if (modal && agentsGrid) {
+         this.selectedAgentsForAdd = [];
+         this.currentAddingAgentsToId = groupId;
+         
+         // Clear existing agents
+         agentsGrid.innerHTML = '';
+         
+         // Clear personality input
+         const personalityInput = document.getElementById('agentPersonalityInput');
+         if (personalityInput) personalityInput.value = '';
+         
+         // Clear permission checkboxes
+          const permReadFiles = document.getElementById('permReadFiles');
+          if (permReadFiles) permReadFiles.checked = false;
+          const permWriteFiles = document.getElementById('permWriteFiles');
+          if (permWriteFiles) permWriteFiles.checked = false;
+          const permUseSkills = document.getElementById('permUseSkills');
+          if (permUseSkills) permUseSkills.checked = false;
+         
+         // Get current agents in group
+         const group = this.state.groups.find(g => g.id === groupId);
+         const currentAgentIds = group?.agentIds || [];
+         
+         // Render available agents
+          this.availableAgents.forEach(agent => {
+            const agentOption = document.createElement('div');
+            agentOption.className = 'agent-option';
+            agentOption.dataset.agentId = agent.id;
+           
+           // Custom agent gets different avatar and no role display
+           const isCustom = agent.id === 'custom';
+           const avatarIcon = isCustom ? 'fa-user-plus' : 
+             agent.id === 'planner' ? 'fa-robot' : 
+             agent.id === 'architect' ? 'fa-cubes' : 
+             agent.id === 'analyst' ? 'fa-chart-line' : 
+             agent.id === 'writer' ? 'fa-pen-nib' : 
+             agent.id === 'coder' ? 'fa-code' : 
+             agent.id === 'researcher' ? 'fa-microscope' : 
+             agent.id === 'designer' ? 'fa-palette' : 
+             agent.id === 'reviewer' ? 'fa-check-circle' : 'fa-robot';
+           
+           const roleHtml = isCustom ? '' : `<div class="agent-role">${agent.role}</div>`;
+           
+           agentOption.innerHTML = `
+             <div class="agent-avatar" style="background: linear-gradient(135deg, ${agent.color} 0%, #00c498 100%);">
+               <i class="fa-solid ${avatarIcon}"></i>
+             </div>
+             <div class="agent-name">${agent.name}</div>
+             ${roleHtml}
+           `;
+           
+           agentOption.addEventListener('click', () => {
+             agentOption.classList.toggle('selected');
+             if (agentOption.classList.contains('selected')) {
+               this.selectedAgentsForAdd.push(agent.id);
+             } else {
+               this.selectedAgentsForAdd = this.selectedAgentsForAdd.filter(id => id !== agent.id);
+             }
+           });
+           
+           agentsGrid.appendChild(agentOption);
+         });
+         
+         modal.classList.add('active');
+       }
+     },
 
     // Close add agent modal
     closeAddAgentModal() {
@@ -1154,59 +1179,84 @@
     },
 
     // Add selected agents to group
-     async addSelectedAgents() {
-       const groupId = this.currentAddingAgentsToId;
-       const personality = document.getElementById('agentPersonalityInput')?.value?.trim() || '';
-       
-       if (!groupId || this.selectedAgentsForAdd.length === 0) {
-         this.closeAddAgentModal();
-         return;
-       }
-       
-       // Update group with new agents
-        const group = this.state.groups.find(g => g.id === groupId);
-        if (group) {
-          const newAgentIds = Array.isArray(group.agentIds) ? [...group.agentIds] : [];
-          const addedIds = [];
-         
-         // Add each selected agent with unique ID
-         this.selectedAgentsForAdd.forEach(agentId => {
-           const uniqueId = this.generateUniqueAgentId(agentId, newAgentIds);
-           newAgentIds.push(uniqueId);
-           addedIds.push({ originalId: agentId, uniqueId: uniqueId });
-         });
-         
-         // Initialize personalities object if it doesn't exist
-          if (!group.personalities || typeof group.personalities !== 'object' || Array.isArray(group.personalities)) {
-            group.personalities = {};
-          }
-         
-         // Add personality for each newly added agent
-         addedIds.forEach(item => {
-           group.personalities[item.uniqueId] = personality;
-         });
-         
-         // Update local state
-         group.agentIds = newAgentIds;
-         group.updatedAt = Date.now();
-         
-         // Update backend
-         try {
-           await window.DashboardExpertGroups.API.update(groupId, { 
-             agentIds: newAgentIds,
-             personalities: group.personalities
+      async addSelectedAgents() {
+        const groupId = this.currentAddingAgentsToId;
+        const personality = document.getElementById('agentPersonalityInput')?.value?.trim() || '';
+        const canReadFiles = document.getElementById('permReadFiles')?.checked || false;
+        const canWriteFiles = document.getElementById('permWriteFiles')?.checked || false;
+        const canUseSkills = document.getElementById('permUseSkills')?.checked || false;
+        
+        if (!groupId || this.selectedAgentsForAdd.length === 0) {
+          this.closeAddAgentModal();
+          return;
+        }
+        
+        // Update group with new agents
+         const group = this.state.groups.find(g => g.id === groupId);
+         if (group) {
+           const newAgentIds = Array.isArray(group.agentIds) ? [...group.agentIds] : [];
+           const addedIds = [];
+           
+           // Initialize agents array if it doesn't exist
+           if (!group.agents) group.agents = [];
+           
+           // Add each selected agent with unique ID
+           this.selectedAgentsForAdd.forEach(agentId => {
+             const uniqueId = this.generateUniqueAgentId(agentId, newAgentIds);
+             newAgentIds.push(uniqueId);
+             addedIds.push({ originalId: agentId, uniqueId: uniqueId });
+             
+             // Add full agent object with permissions
+             const agent = this.availableAgents.find(a => a.id === agentId);
+             if (agent) {
+               const agentObj = {
+                 id: uniqueId,
+                 name: agent.name,
+                 role: agent.role,
+                 personality: personality,
+                 color: agent.color,
+                 avatar: agent.avatar,
+                 canReadFiles: canReadFiles,
+                 canWriteFiles: canWriteFiles,
+                 canUseSkills: canUseSkills,
+                 createdAt: Date.now()
+               };
+               group.agents.push(agentObj);
+             }
            });
-         } catch (e) {
-           console.error('Error updating group agents:', e);
-         }
-         
-         this.closeAddAgentModal();
-         this.renderParticipants();
-         this.renderGroupList();
-         
-         this.notifyDashboard('agentsAdded', { groupId, count: addedIds.length });
-       }
-     },
+           
+           // Initialize personalities object if it doesn't exist
+             if (!group.personalities || typeof group.personalities !== 'object' || Array.isArray(group.personalities)) {
+               group.personalities = {};
+             }
+             
+             // Add personality for each newly added agent
+             addedIds.forEach(item => {
+               group.personalities[item.uniqueId] = personality;
+             });
+             
+             // Update local state
+             group.agentIds = newAgentIds;
+             group.updatedAt = Date.now();
+             
+             // Update backend with full group data
+             try {
+               await window.DashboardExpertGroups.API.update(groupId, { 
+                 agentIds: newAgentIds,
+                 agents: group.agents,
+                 personalities: group.personalities
+               });
+             } catch (e) {
+               console.error('Error updating group agents:', e);
+             }
+             
+             this.closeAddAgentModal();
+             this.renderParticipants();
+             this.renderGroupList();
+             
+             this.notifyDashboard('agentsAdded', { groupId, count: addedIds.length });
+           }
+         },
 
     // Open edit personality modal
     openEditPersonalityModal(groupId, agentId, personality) {

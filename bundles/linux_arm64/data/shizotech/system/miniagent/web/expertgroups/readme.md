@@ -27,6 +27,9 @@ The Expert Groups module provides a group chat functionality with AI agents. Thi
       "personality": "Strategic and organized, focuses on long-term planning",
       "color": "#006d5a",
       "avatar": "fa-robot",
+      "canReadFiles": true,
+      "canWriteFiles": false,
+      "canUseSkills": true,
       "createdAt": 1704067200000
     }
   ],
@@ -54,6 +57,9 @@ The Expert Groups module provides a group chat functionality with AI agents. Thi
   "personality": "Agent Personality Description",
   "color": "#hexcolor",
   "avatar": "icon-name",
+  "canReadFiles": true,
+  "canWriteFiles": false,
+  "canUseSkills": true,
   "createdAt": 1234567890
 }
 ```
@@ -338,7 +344,10 @@ Adds an agent to an expert group.
     "role": "Strategic Planner",
     "personality": "Strategic and organized, focuses on long-term planning",
     "color": "#006d5a",
-    "avatar": "fa-robot"
+    "avatar": "fa-robot",
+    "canReadFiles": true,
+    "canWriteFiles": false,
+    "canUseSkills": true
   }
 }
 ```
@@ -361,7 +370,10 @@ const success = await window.DashboardExpertGroups.API.addAgent(
     role: 'Strategic Planner',
     personality: 'Strategic and organized, focuses on long-term planning',
     color: '#006d5a',
-    avatar: 'fa-robot'
+    avatar: 'fa-robot',
+    canReadFiles: true,
+    canWriteFiles: false,
+    canUseSkills: true
   }
 );
 ```

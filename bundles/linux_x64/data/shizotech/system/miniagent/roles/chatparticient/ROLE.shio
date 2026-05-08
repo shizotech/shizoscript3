@@ -5,12 +5,19 @@ add_tools(agt)
 {
 	agt.add_tool(
 		"send_message",
-		"Send a message into the group chat",
+		"Send a message into the group chat (IMPORTANT)",
 		[
-			message = "&string(): Message to send",
+			message = "&string(): Message to send to the group chat (AS YOUR GROUP PARTICIPANT ID PERSONALITY)",
 		],
 		[](agt, args)
 		{
+			if(!args.message) {
+				return [
+					ok = 0,
+					error = "message cannot be empty. Provide the 'message' argument when using this tool.",
+				];
+			}
+			
 			expertgroup_id = agt.env.expertgroup_id;
 			last_read_message_id = agt.env.last_read_message_id;
 			
@@ -41,7 +48,7 @@ add_tools(agt)
 						"\" type=\"" + type + "\"";
 						
 					if (agt.env.agentId == msg.agentId) {
-						messageTag += " active_agent=\"true\"";
+						messageTag += " is_self=\"true\"";
 					}
 
 					messageTag += ">\n";
@@ -64,6 +71,8 @@ add_tools(agt)
 				];		
 			}
 			
+			agt.env.finished_turn_check = true;
+			
 			message_id = "msg_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
 			response_message = [
 				id = message_id,
@@ -82,11 +91,95 @@ add_tools(agt)
 	);
 	
 	agt.add_tool(
-		"wait",
-		"Finish your turn",
-		None,
+		"finish",
+		"Finish your turn (call that AFTER you have send all messages)",
+		[
+			response_mode = ["MESSAGE", "SILENT"],
+			message = "string(): Final message to send to the group chat (AS YOUR GROUP PARTICIPANT ID PERSONALITY)",
+		],
 		[](agt, args)
 		{
+			//So many special cases to make these stupid fcks behave
+			//Todo for the future: dont wrap responses into function calls
+			//Just let the llm naturally generate the message and take the plain text as answer directly.
+			
+			if(!args.message && args.response_mode == "MESSAGE" && !agt.env.finished_turn_check) {
+				return [
+					ok = false,
+					error = "You have called this function with 'response_mode=MESSAGE' however you have not yet send an actual message to the group chat.\n If you want to proceed sending an actual message, call this function again with a valid 'message' argument.",
+				];
+			}
+			
+			agt.env.finished_turn_check = true;
+			
+			if(args.message) {
+				expertgroup_id = agt.env.expertgroup_id;
+				last_read_message_id = agt.env.last_read_message_id;
+				
+				_lock = local_file_lock("expert_group_chat_" + expertgroup_id);
+				
+				//First, check if another message was sent
+				expertgroup = agt.env.expertgroups_db.get(expertgroup_id);
+				
+				if(expertgroup.messages[-1].id != last_read_message_id) {
+					unread_messages = "";
+					found_last_msg = false;
+					
+					for(i = 0; i < expertgroup.messages.size(); i++) {
+						
+						if(!found_last_msg) {
+							if(expertgroup.messages[i].id == last_read_message_id) {
+								found_last_msg = true;
+								continue;
+							}
+						}
+						
+						msg = &expertgroup.messages[i];
+						type = msg.agentId == "user" ? "human" : "agent";
+						
+						messageTag =
+							"<message id=\"" + msg.id +
+							"\" author=\"" + msg.agentId +
+							"\" type=\"" + type + "\"";
+							
+						if (agt.env.agentId == msg.agentId) {
+							messageTag += " active_agent=\"true\"";
+						}
+
+						messageTag += ">\n";
+			
+						unread_messages += messageTag;
+						unread_messages += msg.content;
+						unread_messages += "\n</message>\n\n";
+					}
+					
+					agt.env.last_read_message_id = expertgroup.messages[-1].id;
+
+					//Since the agent might decide that it stops because this happens to often,
+					//Run it with a clean context once again after this so that a natural conversation can happen
+					//Without external triggering 
+					agt.env.check_again = true;
+
+					return [
+						ok = 0,
+						unread_messages = unread_messages + "\n\n" + "Your message was not sent, because there are new unread messages from others in the chat.\nPlease check the unread messages and adapt your new message.\nTo proceed sending it, call this function again with your edited message.\nYou may choose to ignore the new messages send your message again, unless there is an explicit task change, duplicate information, or a change of direction.",
+					];		
+				}
+				
+				message_id = "msg_" + std.date("%d-%m-%Y_%H-%M-%S") + "_" + std.random_hash();
+				response_message = [
+					id = message_id,
+					timestamp = std.millis(),
+					agentId = agt.env.agentId,
+					content = args.message,
+				];
+				
+				expertgroup.messages.push_back(response_message);
+				agt.env.expertgroups_db.put(expertgroup.id, expertgroup);
+				
+				agt.env.last_read_message_id = message_id;
+			}
+			
 			agt.stop();
 			
 			return "You may stop now and wait for further messages.";
