@@ -106,7 +106,7 @@
     async load() {
       try {
         const bugs = await window.DashboardBugs.API.list();
-        return bugs;
+        return bugs.map(bug => this.normalizeBug(bug));
       } catch {
         return [];
       }
@@ -127,7 +127,8 @@
         ...bug,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        status: 'new'
+        status: 'new',
+        progress: 0
       });
       return newBug;
     },
@@ -147,7 +148,7 @@
     // Get a bug by ID
     async getById(id) {
       const bug = await window.DashboardBugs.API.get(id);
-      return bug || null;
+      return bug ? this.normalizeBug(bug) : null;
     },
     
     // Get bugs by filter
@@ -165,6 +166,16 @@
       }
       
       return bugs;
+    },
+    
+    // Update progress
+    async updateProgress(id, progress) {
+      return this.update(id, { progress: Math.min(100, Math.max(0, progress)) });
+    },
+    
+    // Normalize bug data to ensure progress field exists
+    normalizeBug(bug) {
+      return { ...bug, progress: bug.progress ?? 0 };
     }
   };
 
@@ -232,7 +243,7 @@
     async loadBugs() {
       try {
         const bugs = await window.DashboardBugs.API.list();
-        this.state.bugs = bugs;
+        this.state.bugs = bugs.map(bug => window.DashboardBugs.Store.normalizeBug(bug));
       } catch (e) {
         console.error('Failed to load bugs:', e);
         this.state.bugs = [];
@@ -337,72 +348,73 @@
     },
 
     // Execute delete after confirmation
-    async executeDelete() {
-      const modal = document.getElementById('confirmDeleteModal');
-      const itemId = modal.dataset.itemId;
-      const eventType = modal.dataset.eventType;
-      const idKey = modal.dataset.idKey;
+     async executeDelete() {
+       const modal = document.getElementById('confirmDeleteModal');
+       const itemId = modal.dataset.itemId;
+       const eventType = modal.dataset.eventType;
+       const idKey = modal.dataset.idKey;
 
-      if (itemId && eventType) {
-        if (eventType === 'bugDeleted') {
-          await window.DashboardBugs.Store.delete(itemId);
-          
-          this.closeModals();
-          
-          // Notify dashboard
-          this.notifyDashboard(eventType, { [idKey]: itemId });
-          
-          // Refresh from backend
-          await this.loadBugs();
-          this.renderBugs();
-          this.updateCount();
-        }
-      }
-    },
+       if (itemId && eventType) {
+         if (eventType === 'bugDeleted') {
+           await window.DashboardBugs.Store.delete(itemId);
+           
+           this.closeModals();
+           
+           // Notify dashboard
+           this.notifyDashboard(eventType, { [idKey]: itemId });
+           
+           // Refresh from backend
+           await this.loadBugs();
+           await this.renderBugs();
+           this.updateCount();
+         }
+       }
+     },
 
     // Submit bug form
-    async submitBug() {
-      const title = document.getElementById('bugTitle').value.trim();
-      const description = document.getElementById('bugDescription').value.trim();
-      const priority = document.getElementById('bugPriority').value;
-      const source = document.getElementById('bugSource').value;
-      const environment = document.getElementById('bugEnvironment').value;
+     async submitBug() {
+       const title = document.getElementById('bugTitle').value.trim();
+       const description = document.getElementById('bugDescription').value.trim();
+       const priority = document.getElementById('bugPriority').value;
+       const source = document.getElementById('bugSource').value;
+       const environment = document.getElementById('bugEnvironment').value;
 
-      if (!title) {
-        alert('Please enter a bug title');
-        return;
-      }
+       if (!title) {
+         alert('Please enter a bug title');
+         return;
+       }
 
-      const bug = {
-        title,
-        description,
-        priority,
-        source,
-        environment,
-        status: 'new',
-        history: [
-          {
-            status: 'new',
-            timestamp: Date.now(),
-            notes: 'Bug reported'
-          }
-        ]
-      };
+       const bug = {
+         title,
+         description,
+         priority,
+         source,
+         environment,
+         status: 'new',
+         progress: 0,
+         history: [
+           {
+             status: 'new',
+             timestamp: Date.now(),
+             notes: 'Bug reported'
+           }
+         ]
+       };
 
-      const newBug = await window.DashboardBugs.Store.add(bug);
-      
-      // Reset form
-      document.getElementById('addBugForm').reset();
-      this.closeModals();
+       const newBug = await window.DashboardBugs.Store.add(bug);
+       
+       // Reset form
+       document.getElementById('addBugForm').reset();
+       this.closeModals();
 
-      // Notify dashboard
-      this.notifyDashboard('bugAdded', { bug: newBug });
-      
-      // Refresh from backend
-      await this.loadBugs();
-      this.renderBugs();
-      this.updateCount();
-    },
+       // Notify dashboard
+       this.notifyDashboard('bugAdded', { bug: newBug });
+       
+       // Refresh from backend
+       await this.loadBugs();
+       await this.renderBugs();
+       this.updateCount();
+     },
 
     // Delete current bug
     async deleteCurrentBug() {
@@ -480,17 +492,41 @@
               <span class="bug-details-meta-label">Last Updated</span>
               <span class="bug-details-meta-value">${formatDate(bug.updatedAt)}</span>
             </div>
+            <div class="bug-details-meta-item">
+              <span class="bug-details-meta-label">Progress</span>
+              <span class="bug-details-meta-value">${bug.progress}%</span>
+            </div>
+          </div>
+
+          <div class="progress-bar-container">
+            <div class="progress-bar-label">Bug Progress</div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" style="width: ${bug.progress}%"></div>
+            </div>
           </div>
 
           ${this.renderStatusWorkflow(bug.status)}
-          ${bug.history ? this.renderStatusHistory(bug.history) : ''}
+            ${bug.history ? this.renderStatusHistory(bug.history) : ''}
 
-          ${bug.status !== 'closed' ? this.renderVerificationInterface(bug.id) : ''}
-        </div>
-      `;
+            ${bug.status !== 'closed' ? this.renderProgressControls(bug.id) : ''}
+          </div>
+        `;
 
-      modal.style.display = 'flex';
-    },
+        modal.style.display = 'flex';
+        
+        // Setup progress update buttons
+         modal.querySelectorAll('.progress-update-btn').forEach(btn => {
+           btn.addEventListener('click', async (e) => {
+             e.stopPropagation();
+             const increment = parseInt(btn.dataset.increment);
+             const bug = await window.DashboardBugs.Store.getById(bugId);
+             const newProgress = bug.progress + increment;
+             await window.DashboardBugs.Store.updateProgress(bugId, newProgress);
+             await this.loadBugs();
+             await this.renderBugs();
+           });
+         });
+      },
 
     // Render status workflow
     renderStatusWorkflow(currentStatus) {
@@ -552,30 +588,45 @@
       `;
     },
 
-    // Update bug status
-    async updateBugStatus(bugId, newStatus, notes = null) {
-      const bug = await window.DashboardBugs.Store.getById(bugId);
-      if (!bug) return;
-
-      await window.DashboardBugs.Store.update(bugId, {
-        status: newStatus,
-        history: [...(bug.history || []), {
-          status: newStatus,
-          timestamp: Date.now(),
-          notes: notes || `Status updated to ${newStatus}`
-        }]
-      });
-
-      // Notify dashboard
-      this.notifyDashboard('bugUpdated', { bug: await window.DashboardBugs.Store.getById(bugId) });
-      
-      // Refresh modal
-      this.openBugDetails(bugId);
-      
-      // Refresh from backend
-      await this.loadBugs();
-      this.renderBugs();
+    // Render progress controls
+    renderProgressControls(bugId) {
+      return `
+        <div class="progress-controls">
+          <h3><i class="fa-solid fa-chart-line"></i> Update Progress</h3>
+          <div class="progress-actions" style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+            <button class="ui-btn ui-btn-secondary progress-update-btn" data-increment="-10" style="flex: 1; min-width: 60px;">-10%</button>
+            <button class="ui-btn ui-btn-secondary progress-update-btn" data-increment="-5" style="flex: 1; min-width: 60px;">-5%</button>
+            <button class="ui-btn ui-btn-success progress-update-btn" data-increment="+5" style="flex: 1; min-width: 60px;">+5%</button>
+            <button class="ui-btn ui-btn-success progress-update-btn" data-increment="+10" style="flex: 1; min-width: 60px;">+10%</button>
+          </div>
+        </div>
+      `;
     },
+
+    // Update bug status
+     async updateBugStatus(bugId, newStatus, notes = null) {
+       const bug = await window.DashboardBugs.Store.getById(bugId);
+       if (!bug) return;
+
+       await window.DashboardBugs.Store.update(bugId, {
+         status: newStatus,
+         history: [...(bug.history || []), {
+           status: newStatus,
+           timestamp: Date.now(),
+           notes: notes || `Status updated to ${newStatus}`
+         }]
+       });
+
+       // Notify dashboard
+       this.notifyDashboard('bugUpdated', { bug: await window.DashboardBugs.Store.getById(bugId) });
+       
+       // Refresh modal
+       this.openBugDetails(bugId);
+       
+       // Refresh from backend
+       await this.loadBugs();
+       await this.renderBugs();
+     },
 
     // Render bugs
     renderBugs() {
@@ -596,23 +647,30 @@
       container.innerHTML = html;
 
       // Setup card action buttons
-      container.querySelectorAll('.bug-card-action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const card = btn.closest('.bug-card');
-          const bugId = card.dataset.bugId;
-          
-          if (btn.dataset.action === 'view') {
-            this.openBugDetails(bugId);
-          } else if (btn.dataset.action === 'priority-up') {
-            this.updateBugPriority(bugId, 'up');
-          } else if (btn.dataset.action === 'priority-down') {
-            this.updateBugPriority(bugId, 'down');
-          } else if (btn.dataset.action === 'delete') {
-            this.deleteBugFromCard(bugId);
-          }
-        });
-      });
+        for (const btn of container.querySelectorAll('.bug-card-action-btn')) {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const card = btn.closest('.bug-card');
+            const bugId = card.dataset.bugId;
+            
+            if (btn.dataset.action === 'view') {
+              this.openBugDetails(bugId);
+            } else if (btn.dataset.action === 'progress') {
+              const bug = await window.DashboardBugs.Store.getById(bugId);
+              const increment = parseInt(btn.dataset.increment) || 0;
+              const newProgress = bug.progress + increment;
+              await window.DashboardBugs.Store.updateProgress(bugId, newProgress);
+              await this.renderBugs();
+              this.updateCount();
+            } else if (btn.dataset.action === 'priority-up') {
+              this.updateBugPriority(bugId, 'up');
+            } else if (btn.dataset.action === 'priority-down') {
+              this.updateBugPriority(bugId, 'down');
+            } else if (btn.dataset.action === 'delete') {
+              this.deleteBugFromCard(bugId);
+            }
+          });
+        }
     },
 
     // Render bug card
@@ -644,11 +702,8 @@
               <button class="bug-card-action-btn" data-action="view" title="View Details">
                 <i class="fa-solid fa-eye"></i>
               </button>
-              <button class="bug-card-action-btn" data-action="priority-up" title="Increase Priority">
-                <i class="fa-solid fa-arrow-up"></i>
-              </button>
-              <button class="bug-card-action-btn" data-action="priority-down" title="Decrease Priority">
-                <i class="fa-solid fa-arrow-down"></i>
+              <button class="bug-card-action-btn" data-action="progress" data-increment="0" title="Reset Progress">
+                <i class="fa-solid fa-rotate-left"></i>
               </button>
             </div>
           </div>
@@ -670,6 +725,13 @@
                 <span style="font-size: 11px; color: var(--text-secondary);">Updated: ${formatDate(bug.updatedAt)}</span>
               </div>
             </div>
+            <div class="progress-bar-container" style="margin-top: 12px;">
+               <div class="progress-bar-label">Bug Progress</div>
+               <div class="progress-bar-track">
+                 <div class="progress-bar-fill" style="width: ${bug.progress}%"></div>
+               </div>
+               <div class="progress-bar-text" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${bug.progress}% Complete</div>
+             </div>
           </div>
         </div>
       `;
@@ -704,15 +766,15 @@
       }
 
       // Refresh modal if open
-      const modal = document.getElementById('bugDetailsModal');
-      if (modal.dataset.bugId === bugId) {
-        this.openBugDetails(bugId);
-      }
+       const modal = document.getElementById('bugDetailsModal');
+       if (modal.dataset.bugId === bugId) {
+         this.openBugDetails(bugId);
+       }
 
-      // Refresh from backend
-      await this.loadBugs();
-      this.renderBugs();
-    },
+       // Refresh from backend
+       await this.loadBugs();
+       await this.renderBugs();
+     },
 
     // Get filtered bugs
     getFilteredBugs() {

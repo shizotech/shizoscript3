@@ -565,7 +565,7 @@
 
     // Get next status in workflow
     getNextStatus(currentStatus) {
-      const workflow = ['planned', 'in-progress', 'completed'];
+      const workflow = ['planned', 'in-progress', 'running', 'error', 'completed'];
       const currentIndex = workflow.indexOf(currentStatus);
       
       if (currentIndex === -1) return 'planned';
@@ -623,7 +623,7 @@
       };
 
       return `
-        <div class="feature-card" data-feature-id="${feature.id}">
+        <div class="feature-card ${feature.status === 'running' ? 'running' : ''} ${feature.status === 'error' ? 'error' : ''}" data-feature-id="${feature.id}">
           <div class="feature-card-header">
             <div class="feature-card-category">
               <i class="fa-solid fa-tag"></i>

@@ -5,7 +5,7 @@
 add_tools(agt)
 {
 	//This is needed because some models tend to loop forever without an exit...
-	agt.add_finalize_tool(false);
+	agt.add_finalize_tool(true);
 	
 	add_read_tools(agt);
 	add_code_read_tools(agt);

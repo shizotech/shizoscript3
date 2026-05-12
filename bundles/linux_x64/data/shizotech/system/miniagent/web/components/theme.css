@@ -22,6 +22,8 @@
   --danger: #8b6c6c;
   --danger-hover: #7a5e5e;
   --danger-glow: rgba(139, 108, 108, 0.15);
+  --running: #00a884;
+  --running-glow: rgba(0, 168, 132, 0.15);
   --success: #00a884;
   --success-glow: rgba(0, 168, 132, 0.15);
 
@@ -75,6 +77,8 @@
   --danger: #dc3545;
   --danger-hover: #c82333;
   --danger-glow: rgba(220, 53, 69, 0.2);
+  --running: #28a745;
+  --running-glow: rgba(40, 167, 69, 0.2);
   --success: #28a745;
   --success-glow: rgba(40, 167, 69, 0.2);
 

@@ -142,6 +142,20 @@ All responses follow this structure:
 }
 ```
 
+### Work Mode Module
+
+| Method | Endpoint | Description | Request Body | Response |
+|--------|----------|-------------|--------------|----------|
+| GET | `/api/workmode` | Get current work mode state | - | `data: { enabled: boolean }` |
+| PUT | `/api/workmode` | Update work mode state | `{ enabled: boolean }` | `data: { enabled: boolean }` |
+
+**Work Mode Object Structure:**
+```json
+{
+  "enabled": true/false
+}
+```
+
 ## Implementation Details
 
 ### Backend (ShizoScript)

@@ -85,13 +85,13 @@ add_tools(agt)
 	//This is needed because some models tend to loop forever without an exit...
 	agt.add_finalize_tool(false);
 
-	add_read_tools(agt);
-	add_code_read_tools(agt);
-	add_skill_tools(agt);
+	//add_read_tools(agt);
+	//add_code_read_tools(agt);
+	//add_skill_tools(agt);
 
 	agt.add_tool(
 		"task",
-		"Use downstream agents",
+		"Use downstream agents for direct actions",
 		[
 			manifest = "&string(): **TASK MANIFEST PROTOCOL**",
 			readonly = ["true", "false"],
@@ -105,7 +105,7 @@ add_tools(agt)
 			task_prompt += "<your_task>\n" + args.manifest + "\n</your_task>";
 			
 			//global_file_lock = std.global("agent_file_lock");
-			managed sub_agt = agt.subagent(args.readonly == "true" ? "explorer" : "executor");
+			managed sub_agt = agt.subagent("planner");
 			
 			if(agt.on_action)
 				agt.on_action([start_agent=sub_agt.agent_id]);	

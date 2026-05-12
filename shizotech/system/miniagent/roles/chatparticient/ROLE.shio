@@ -29,8 +29,11 @@ add_tools(agt)
 			if(expertgroup.messages[-1].id != last_read_message_id) {
 				unread_messages = "";
 				found_last_msg = false;
-				
+				last_task = "";
 				for(i = 0; i < expertgroup.messages.size(); i++) {
+					msg = &expertgroup.messages[i];
+					if(msg.agentId == "user")
+						last_task = msg.content;
 					
 					if(!found_last_msg) {
 						if(expertgroup.messages[i].id == last_read_message_id) {
@@ -39,7 +42,6 @@ add_tools(agt)
 						}
 					}
 					
-					msg = &expertgroup.messages[i];
 					type = msg.agentId == "user" ? "human" : "agent";
 					
 					messageTag =
@@ -57,6 +59,8 @@ add_tools(agt)
 					unread_messages += msg.content;
 					unread_messages += "\n</message>\n\n";
 				}
+				
+				unread_messages += "<current_objective>\n" + last_task + "\n</current_objective>\n\n";
 				
 				agt.env.last_read_message_id = expertgroup.messages[-1].id;
 
@@ -95,7 +99,7 @@ add_tools(agt)
 		"Finish your turn (call that AFTER you have send all messages)",
 		[
 			response_mode = ["MESSAGE", "SILENT"],
-			message = "string(): Final message to send to the group chat (AS YOUR GROUP PARTICIPANT ID PERSONALITY)",
+			chat_message = "string(): OPTIONAL message to send to the group chat (AS YOUR GROUP PARTICIPANT ID PERSONALITY)",
 		],
 		[](agt, args)
 		{
@@ -103,16 +107,19 @@ add_tools(agt)
 			//Todo for the future: dont wrap responses into function calls
 			//Just let the llm naturally generate the message and take the plain text as answer directly.
 			
-			if(!args.message && args.response_mode == "MESSAGE" && !agt.env.finished_turn_check) {
+			if(args.response_mode == "SILENT")
+				args.chat_message = "";
+			
+			if(!args.chat_message && args.response_mode == "MESSAGE" && !agt.env.finished_turn_check) {
 				return [
 					ok = false,
-					error = "You have called this function with 'response_mode=MESSAGE' however you have not yet send an actual message to the group chat.\n If you want to proceed sending an actual message, call this function again with a valid 'message' argument.",
+					error = "You have called this function with 'response_mode=MESSAGE' however you have not yet send an actual message to the group chat.\n If you want to proceed sending an actual message, call this function again with a valid 'message' argument or choose response_mode: 'SILENT'.",
 				];
 			}
 			
 			agt.env.finished_turn_check = true;
 			
-			if(args.message) {
+			if(args.chat_message) {
 				expertgroup_id = agt.env.expertgroup_id;
 				last_read_message_id = agt.env.last_read_message_id;
 				
@@ -124,9 +131,11 @@ add_tools(agt)
 				if(expertgroup.messages[-1].id != last_read_message_id) {
 					unread_messages = "";
 					found_last_msg = false;
-					
+					last_task = "";
 					for(i = 0; i < expertgroup.messages.size(); i++) {
-						
+						msg = &expertgroup.messages[i];
+						if(msg.agentId == "user")
+							last_task = msg.content;
 						if(!found_last_msg) {
 							if(expertgroup.messages[i].id == last_read_message_id) {
 								found_last_msg = true;
@@ -134,7 +143,6 @@ add_tools(agt)
 							}
 						}
 						
-						msg = &expertgroup.messages[i];
 						type = msg.agentId == "user" ? "human" : "agent";
 						
 						messageTag =
@@ -153,16 +161,18 @@ add_tools(agt)
 						unread_messages += "\n</message>\n\n";
 					}
 					
-					agt.env.last_read_message_id = expertgroup.messages[-1].id;
-
+					unread_messages += "<current_objective>\n" + last_task + "\n</current_objective>\n\n";
+					
 					//Since the agent might decide that it stops because this happens to often,
 					//Run it with a clean context once again after this so that a natural conversation can happen
 					//Without external triggering 
 					agt.env.check_again = true;
-
+					
+					agt.env.last_read_message_id = expertgroup.messages[-1].id;
+					
 					return [
 						ok = 0,
-						unread_messages = unread_messages + "\n\n" + "Your message was not sent, because there are new unread messages from others in the chat.\nPlease check the unread messages and adapt your new message.\nTo proceed sending it, call this function again with your edited message.\nYou may choose to ignore the new messages send your message again, unless there is an explicit task change, duplicate information, or a change of direction.",
+						unread_messages = "Your message was not sent, because there are new unread messages in the chat.unread_messages:\n\n" + unread_messages +"\n\n" + "If your message is still relevant, then call this function again with the same parameters.\nIf you want to discard your message because it is outdated or not relevant to the chat anymore, then call this function again with response_mode: 'SILENT'.",
 					];		
 				}
 				
@@ -171,7 +181,7 @@ add_tools(agt)
 					id = message_id,
 					timestamp = std.millis(),
 					agentId = agt.env.agentId,
-					content = args.message,
+					content = args.chat_message,
 				];
 				
 				expertgroup.messages.push_back(response_message);

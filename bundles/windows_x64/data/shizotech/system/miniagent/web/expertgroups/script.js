@@ -309,17 +309,17 @@
     },
     
     // Add a group
-    async add(group) {
-      const newGroup = await window.DashboardExpertGroups.API.create({
-        ...group,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        agentIds: group.agentIds || ['planner', 'architect'],
-        personalities: group.personalities || {},
-        messages: []
-      });
-      return newGroup;
-    },
+     async add(group) {
+       const newGroup = await window.DashboardExpertGroups.API.create({
+         ...group,
+         createdAt: Date.now(),
+         updatedAt: Date.now(),
+         agentIds: group.agentIds || ['planner', 'architect', 'coder1', 'coder2', 'coder3', 'researcher', 'designer', 'reviewer', 'skeptic'],
+         personalities: group.personalities || {},
+         messages: []
+       });
+       return newGroup;
+     },
     
     // Update a group
     async update(id, updates) {
@@ -410,11 +410,17 @@
     async createDefaultGroup() {
       const group = await window.DashboardExpertGroups.Store.add({
         name: 'Default Group',
-        agentIds: ['planner', 'architect', 'analyst'],
+        agentIds: ['planner', 'architect', 'coder1', 'coder2', 'coder3', 'researcher', 'designer', 'reviewer', 'skeptic'],
         personalities: {
-          planner: 'You are a strategic planner. Focus on breaking down tasks into clear phases and setting achievable goals.',
-          architect: 'You are a system architect. Emphasize modularity, scalability, and maintainability in your designs.',
-          analyst: 'You are a data analyst. Provide insights backed by data and highlight key metrics.'
+          planner: 'You are a strategic planner and team lead. You coordinate the team, break down complex tasks into actionable phases, and ensure goals are achievable and measurable. You keep the group focused on priorities and timelines.',
+          architect: 'You are a system architect. You emphasize modularity, scalability, maintainability, and technical debt management. You consider long-term system evolution and integration patterns.',
+          coder1: 'You are a lead implementation engineer. You focus on clean, efficient code, best practices, and robust solutions. You ensure implementations follow architectural guidelines and coding standards.',
+          coder2: 'You are a performance and security specialist. You analyze code for optimization opportunities, identify potential security vulnerabilities, and ensure systems can handle scale and security requirements.',
+          coder3: 'You are an integration and consistency engineer. You ensure seamless system integration, data consistency, and interoperability between components. You focus on APIs, protocols, and data flow.',
+          researcher: 'You are a deep researcher and context specialist. You gather information, analyze context, and provide data-driven insights. You help the team stay informed with relevant research and findings.',
+          designer: 'You are a UI/UX and frontend experience specialist. You focus on user-centered design, accessibility, visual hierarchy, and user satisfaction. You ensure products are intuitive and delightful to use.',
+          reviewer: 'You are a quality assurance and code review expert. You critically evaluate work, identify edge cases, and ensure high standards of quality. You provide constructive feedback and champion testing.',
+          skeptic: 'You are a critical thinking specialist and assumption challenger. You question assumptions, identify potential flaws, and explore alternative approaches. You ensure robust decision-making by playing devil\'s advocate.'
         }
       });
       
@@ -701,10 +707,17 @@
     async createGroup(name) {
       const group = {
         name: name,
-        agentIds: ['planner', 'architect'],
+        agentIds: ['planner', 'architect', 'coder1', 'coder2', 'coder3', 'researcher', 'designer', 'reviewer', 'skeptic'],
         personalities: {
-          planner: 'You are a strategic planner. Focus on breaking down tasks into clear phases and setting achievable goals.',
-          architect: 'You are a system architect. Emphasize modularity, scalability, and maintainability in your designs.'
+          planner: 'You are a strategic planner and team lead. You coordinate the team, break down complex tasks into actionable phases, and ensure goals are achievable and measurable. You keep the group focused on priorities and timelines.',
+          architect: 'You are a system architect. You emphasize modularity, scalability, maintainability, and technical debt management. You consider long-term system evolution and integration patterns.',
+          coder1: 'You are a lead implementation engineer. You focus on clean, efficient code, best practices, and robust solutions. You ensure implementations follow architectural guidelines and coding standards.',
+          coder2: 'You are a performance and security specialist. You analyze code for optimization opportunities, identify potential security vulnerabilities, and ensure systems can handle scale and security requirements.',
+          coder3: 'You are an integration and consistency engineer. You ensure seamless system integration, data consistency, and interoperability between components. You focus on APIs, protocols, and data flow.',
+          researcher: 'You are a deep researcher and context specialist. You gather information, analyze context, and provide data-driven insights. You help the team stay informed with relevant research and findings.',
+          designer: 'You are a UI/UX and frontend experience specialist. You focus on user-centered design, accessibility, visual hierarchy, and user satisfaction. You ensure products are intuitive and delightful to use.',
+          reviewer: 'You are a quality assurance and code review expert. You critically evaluate work, identify edge cases, and ensure high standards of quality. You provide constructive feedback and champion testing.',
+          skeptic: 'You are a critical thinking specialist and assumption challenger. You question assumptions, identify potential flaws, and explore alternative approaches. You ensure robust decision-making by playing devil\'s advocate.'
         },
         messages: []
       };
@@ -1045,15 +1058,15 @@
 
     // Available agents for adding
     availableAgents: [
-      { id: 'planner', name: 'Planner', role: 'Strategic Planner', color: '#006d5a' },
-      { id: 'architect', name: 'Architect', role: 'System Architect', color: '#00a884' },
-      { id: 'analyst', name: 'Analyst', role: 'Data Analyst', color: '#00c498' },
-      { id: 'writer', name: 'Writer', role: 'Content Writer', color: '#008a6e' },
-      { id: 'coder', name: 'Coder', role: 'Expert Coder', color: '#005c4b' },
-      { id: 'researcher', name: 'Researcher', role: 'Deep Researcher', color: '#007a71' },
-      { id: 'designer', name: 'Designer', role: 'UI/UX Designer', color: '#009a8c' },
-      { id: 'reviewer', name: 'Reviewer', role: 'Quality Reviewer', color: '#00b09d' },
-      { id: 'custom', name: 'Custom', role: 'Custom Personality', color: '#6b4b7a' }
+      { id: 'planner', name: 'Planner', role: 'Strategic Planner / Team Lead', color: '#006d5a', avatar: 'fa-robot' },
+      { id: 'architect', name: 'Architect', role: 'System Architect', color: '#00a884', avatar: 'fa-cubes' },
+      { id: 'coder1', name: 'Coder #1', role: 'Lead Implementation Engineer', color: '#005c4b', avatar: 'fa-code' },
+      { id: 'coder2', name: 'Coder #2', role: 'Performance & Security Specialist', color: '#004a3d', avatar: 'fa-shield-alt' },
+      { id: 'coder3', name: 'Coder #3', role: 'Integration & Consistency Engineer', color: '#003b2f', avatar: 'fa-plug' },
+      { id: 'researcher', name: 'Researcher', role: 'Knowledge & Context Specialist', color: '#007a71', avatar: 'fa-microscope' },
+      { id: 'designer', name: 'Designer', role: 'UI/UX & Frontend Experience Specialist', color: '#009a8c', avatar: 'fa-palette' },
+      { id: 'reviewer', name: 'Reviewer', role: 'Quality Assurance & Code Review Expert', color: '#00b09d', avatar: 'fa-check-circle' },
+      { id: 'skeptic', name: 'Skeptic', role: 'Critical Thinking & Assumption Challenger', color: '#6b4b7a', avatar: 'fa-lightbulb' }
     ],
 
     // Generate unique agent ID for duplicate types
@@ -1133,16 +1146,17 @@
             agentOption.dataset.agentId = agent.id;
            
            // Custom agent gets different avatar and no role display
-           const isCustom = agent.id === 'custom';
-           const avatarIcon = isCustom ? 'fa-user-plus' : 
-             agent.id === 'planner' ? 'fa-robot' : 
-             agent.id === 'architect' ? 'fa-cubes' : 
-             agent.id === 'analyst' ? 'fa-chart-line' : 
-             agent.id === 'writer' ? 'fa-pen-nib' : 
-             agent.id === 'coder' ? 'fa-code' : 
-             agent.id === 'researcher' ? 'fa-microscope' : 
-             agent.id === 'designer' ? 'fa-palette' : 
-             agent.id === 'reviewer' ? 'fa-check-circle' : 'fa-robot';
+            const isCustom = agent.id === 'custom';
+            const avatarIcon = isCustom ? 'fa-user-plus' : 
+              agent.id === 'planner' ? 'fa-robot' : 
+              agent.id === 'architect' ? 'fa-cubes' : 
+              agent.id === 'coder1' ? 'fa-code' : 
+              agent.id === 'coder2' ? 'fa-shield-alt' : 
+              agent.id === 'coder3' ? 'fa-plug' : 
+              agent.id === 'researcher' ? 'fa-microscope' : 
+              agent.id === 'designer' ? 'fa-palette' : 
+              agent.id === 'reviewer' ? 'fa-check-circle' : 
+              agent.id === 'skeptic' ? 'fa-lightbulb' : 'fa-robot';
            
            const roleHtml = isCustom ? '' : `<div class="agent-role">${agent.role}</div>`;
            
@@ -1326,25 +1340,26 @@
     },
 
     // Helper functions
-     getAgentById(id) {
-       // Extract base agent ID if it has a suffix (e.g., "coder#2" -> "coder")
-       const match = id.match(/^(.+?)#(\d+)$/);
-       const baseId = match ? match[1] : id;
-       
-       // Default agent personalities
-       const agentPersonalities = [
-         { id: 'planner', name: 'Planner', role: 'Strategic Planner', avatar: 'fa-robot', color: '#006d5a' },
-         { id: 'architect', name: 'Architect', role: 'System Architect', avatar: 'fa-cubes', color: '#00a884' },
-         { id: 'analyst', name: 'Analyst', role: 'Data Analyst', avatar: 'fa-chart-line', color: '#00c498' },
-         { id: 'writer', name: 'Writer', role: 'Content Writer', avatar: 'fa-pen-nib', color: '#008a6e' },
-         { id: 'coder', name: 'Coder', role: 'Expert Coder', avatar: 'fa-code', color: '#005c4b' },
-         { id: 'researcher', name: 'Researcher', role: 'Deep Researcher', avatar: 'fa-microscope', color: '#007a71' },
-         { id: 'designer', name: 'Designer', role: 'UI/UX Designer', avatar: 'fa-palette', color: '#009a8c' },
-         { id: 'reviewer', name: 'Reviewer', role: 'Quality Reviewer', avatar: 'fa-check-circle', color: '#00b09d' }
-       ];
-       
-       return agentPersonalities.find(a => a.id === baseId);
-     },
+      getAgentById(id) {
+        // Extract base agent ID if it has a suffix (e.g., "coder#2" -> "coder")
+        const match = id.match(/^(.+?)#(\d+)$/);
+        const baseId = match ? match[1] : id;
+        
+        // Default agent personalities
+        const agentPersonalities = [
+          { id: 'planner', name: 'Planner', role: 'Strategic Planner / Team Lead', avatar: 'fa-robot', color: '#006d5a' },
+          { id: 'architect', name: 'Architect', role: 'System Architect', avatar: 'fa-cubes', color: '#00a884' },
+          { id: 'coder1', name: 'Coder #1', role: 'Lead Implementation Engineer', avatar: 'fa-code', color: '#005c4b' },
+          { id: 'coder2', name: 'Coder #2', role: 'Performance & Security Specialist', avatar: 'fa-shield-alt', color: '#004a3d' },
+          { id: 'coder3', name: 'Coder #3', role: 'Integration & Consistency Engineer', avatar: 'fa-plug', color: '#003b2f' },
+          { id: 'researcher', name: 'Researcher', role: 'Knowledge & Context Specialist', avatar: 'fa-microscope', color: '#007a71' },
+          { id: 'designer', name: 'Designer', role: 'UI/UX & Frontend Experience Specialist', avatar: 'fa-palette', color: '#009a8c' },
+          { id: 'reviewer', name: 'Reviewer', role: 'Quality Assurance & Code Review Expert', avatar: 'fa-check-circle', color: '#00b09d' },
+          { id: 'skeptic', name: 'Skeptic', role: 'Critical Thinking & Assumption Challenger', avatar: 'fa-lightbulb', color: '#6b4b7a' }
+        ];
+        
+        return agentPersonalities.find(a => a.id === baseId);
+      },
 
     getMessageAgentName(agentId) {
        if (agentId === 'user') return 'You';

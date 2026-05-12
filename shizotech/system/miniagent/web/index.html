@@ -52,6 +52,8 @@
           <span>History</span>
         </button>
         
+        
+        
         <button class="nav-item" data-module="settings">
           <i class="fa-solid fa-gear"></i>
           <span>Settings</span>
@@ -69,6 +71,16 @@
         <button class="nav-item nav-item-secondary" id="btnThemeToggle">
           <i class="fa-solid fa-moon"></i>
           <span>Dark Mode</span>
+        </button>
+        
+        <button class="nav-item nav-item-secondary" id="btnWorkMode">
+          <i class="fa-solid fa-play"></i>
+          <span>Work Mode</span>
+        </button>
+        
+        <button class="nav-item nav-item-secondary" id="btnSecretEgg" style="opacity: 0.5;">
+          <i class="fa-solid fa-egg"></i>
+          <span>Secret</span>
         </button>
       </nav>
     </aside>
@@ -128,11 +140,17 @@
         <div id="settingsModule" class="module">
           <iframe id="settingsFrame" src="settings/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
+        
+        <div id="cowLaysEggsModule" class="module">
+          <iframe id="cowEggFrame" src="" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        </div>
       </div>
     </main>
 
     <!-- Overlay for mobile -->
     <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    
   </div>
 
   <script src="components/utils.js"></script>

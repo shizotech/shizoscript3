@@ -222,6 +222,32 @@ body {
   color: var(--danger);
 }
 
+/* ── Work Mode Color States ── */
+.nav-item.workmode-active {
+  background: linear-gradient(135deg, #005c4b 0%, #00a884 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(0, 168, 132, 0.35), inset 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-item.workmode-active:hover {
+  box-shadow: 0 0 16px rgba(0, 168, 132, 0.45);
+}
+
+.nav-item.workmode-stopped {
+  background: linear-gradient(135deg, rgba(139, 108, 108, 0.2), rgba(139, 108, 108, 0.1));
+  color: #d68686;
+  border-color: rgba(139, 108, 108, 0.4);
+  box-shadow: 0 0 8px rgba(139, 108, 108, 0.2), inset 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-item.workmode-stopped:hover {
+  background: linear-gradient(135deg, rgba(139, 108, 108, 0.25), rgba(139, 108, 108, 0.15));
+  color: #d68686;
+  border-color: rgba(139, 108, 108, 0.5);
+  box-shadow: 0 0 12px rgba(139, 108, 108, 0.3);
+}
+
 /* ── Main Content Area ── */
 .main-content {
   flex: 1;
@@ -918,11 +944,146 @@ body {
 }
 
 .ui-progress-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-align: right;
-}
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+  
+  /* ── Cow Egg Easter Egg Overlay ── */
+  .cow-egg-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #87CEEB 0%, #90EE90 100%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  
+  .cow-egg-overlay.hidden {
+    display: none;
+  }
+  
+  .cow-egg-scene {
+    text-align: center;
+    position: relative;
+  }
+  
+  .cow {
+    font-size: 80px;
+    cursor: pointer;
+    transition: transform 0.3s;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: inline-block;
+    position: relative;
+    user-select: none;
+  }
+  
+  .cow:hover {
+    transform: scale(1.1);
+  }
+  
+  .cow:focus-visible {
+    outline: 3px solid #333;
+    outline-offset: 4px;
+    border-radius: 50%;
+  }
+  
+  .egg {
+    font-size: 40px;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0) scale(0);
+    transition: all 0.5s ease-out;
+    z-index: -1;
+  }
+  
+  .egg.laid {
+    top: 150px;
+    transform: translate(-50%, 0) scale(1);
+    animation: bounce 0.5s;
+  }
+  
+  .egg--golden::before {
+    content: "🥚";
+    filter: drop-shadow(0 0 4px gold);
+  }
+  
+  .egg--dino::before {
+    content: "🦕";
+  }
+  
+  .egg--chicken::before {
+    content: "🐥";
+  }
+  
+  .egg--standard::before {
+    content: "🥚";
+  }
+  
+  @keyframes bounce {
+    0% {
+      transform: translate(-50%, 0) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -20px) scale(1.2);
+    }
+    100% {
+      transform: translate(-50%, 0) scale(1);
+    }
+  }
+  
+  .instruction,
+  .sound-toggle-btn {
+    margin-top: 30px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .instruction:hover,
+  .sound-toggle-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .egg-label {
+    margin-top: 10px;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .egg-label.visible {
+    opacity: 1;
+  }
+  
+  /* Theme-aware styles for light/dark modes */
+  .theme-light .cow-egg-overlay {
+    background: linear-gradient(135deg, #E0F7FA 0%, #E8F5E9 100%);
+  }
+  
+  .theme-light .instruction,
+  .theme-light .sound-toggle-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+  }
+  
+  .theme-light .cow:focus-visible {
+    outline-color: #00a884;
+  }
 
 .ui-table {
   width: 100%;

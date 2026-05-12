@@ -260,6 +260,14 @@ class miniagent
 	stop()
 	{
 		llm_api.stop();
+		
+		for(i = 0; i < _child_agents.size(); i++) {
+			try {
+				if(_child_agents[i])
+					_child_agents[i].stop();
+			}
+			catch(e) { }		
+		}
 	}
 	
 	add_tool(
@@ -378,13 +386,34 @@ class miniagent
 			sub_agt.on_action = [this, sub_agt_id](action) {
 				this.on_action([agent = [id=sub_agt_id, action=action]]);
 			};
-		}	
+		}
+
+		//Clear old entries first
+		for(i = 0; i < _child_agents.size(); i++) {
+			if(_child_agents[i])
+				_child_agents.erase(i);
+				i--;
+		}
+
+		_child_agents.push_back(sub_agt);
+		
 		return sub_agt;
 	}
 	
 	simple_agent(system_role) 
 	{
-		return generic_agent(llm_api.api_base_url, llm_api.context.body.model, system_role, llm_api.context.stream.auth_token);
+		sub_agt = generic_agent(llm_api.api_base_url, llm_api.context.body.model, system_role, llm_api.context.stream.auth_token);
+	
+		//Clear old entries first
+		for(i = 0; i < _child_agents.size(); i++) {
+			if(!_child_agents[i])
+				_child_agents.erase(i);
+				i--;
+		}
+
+		_child_agents.push_back(sub_agt);
+		
+		return sub_agt;
 	}
 	
 	simple_rag(query, data, context = "", return_format = "") {
@@ -442,6 +471,8 @@ class miniagent
 			break;
 		}
 	}
+	
+	_child_agents = [];
 }
 
 create_miniagent(api_url, model, system_role, auth_token = None)

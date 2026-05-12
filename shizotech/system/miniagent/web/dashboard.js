@@ -9,6 +9,7 @@ const DashboardState = {
   modules: new Map(),
   sidebarVisible: true,
   theme: 'dark',
+  workMode: false,
   notifications: 0,
 
   // Initialize dashboard state
@@ -18,6 +19,7 @@ const DashboardState = {
     this.modules.set('bugs', { title: 'Bug Tracker', active: false });
     this.modules.set('history', { title: 'History', active: false });
     this.modules.set('expertgroups', { title: 'Expert Groups', active: false });
+    
     this.modules.set('settings', { title: 'Settings', active: false });
   },
 
@@ -98,6 +100,99 @@ const DashboardState = {
       this.theme = savedTheme;
     }
     this.applyTheme();
+  },
+
+  // Toggle work mode
+   async toggleWorkMode() {
+     this.workMode = !this.workMode;
+     
+     // Update UI immediately for responsiveness
+     this.updateWorkModeIcon();
+     
+     try {
+       // Call backend API to persist work mode state
+       const res = await fetch('/api/workmode', {
+         method: 'PUT',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ enabled: this.workMode })
+       });
+       
+       if (!res.ok) {
+         throw new Error(`Server error: ${res.status}`);
+       }
+       
+       const data = await res.json();
+       if (data.ok) {
+         // Save to localStorage as backup
+         this.saveWorkMode();
+         console.log('Work mode toggled and synced with backend:', this.workMode);
+       } else {
+         throw new Error(data.error || 'Backend rejected the request');
+       }
+     } catch (error) {
+       console.error('Failed to sync work mode with backend:', error);
+       // Revert UI on error to maintain consistency
+       this.workMode = !this.workMode;
+       this.updateWorkModeIcon();
+     }
+   },
+
+  // Save work mode preference
+  saveWorkMode() {
+    localStorage.setItem('dashboard_workmode', JSON.stringify(this.workMode));
+  },
+
+  // Load saved work mode
+   loadWorkMode() {
+     const savedWorkMode = localStorage.getItem('dashboard_workmode');
+     if (savedWorkMode !== null) {
+       this.workMode = JSON.parse(savedWorkMode);
+     }
+     this.updateWorkModeIcon();
+   },
+
+   // Load work mode from server
+   async loadWorkModeFromServer() {
+     try {
+       const res = await fetch('/api/workmode', {
+         method: 'GET',
+         headers: { 'Content-Type': 'application/json' }
+       });
+       
+       if (!res.ok) {
+         throw new Error(`Server error: ${res.status}`);
+       }
+       
+       const data = await res.json();
+       if (data.ok && data.data && data.data.enabled !== undefined) {
+         this.workMode = data.data.enabled;
+         this.saveWorkMode();
+       }
+     } catch (error) {
+       console.error('Work Mode API Error:', error);
+       // Fall back to localStorage on error
+       const savedWorkMode = localStorage.getItem('dashboard_workmode');
+       if (savedWorkMode !== null) {
+         this.workMode = JSON.parse(savedWorkMode);
+       }
+     }
+     this.updateWorkModeIcon();
+   },
+
+  // Update work mode icon
+  updateWorkModeIcon() {
+    const btn = document.getElementById('btnWorkMode');
+    if (!btn) return;
+    
+    if (this.workMode) {
+      btn.querySelector('i').className = 'fa-solid fa-play';
+      btn.classList.remove('workmode-stopped');
+      btn.classList.add('workmode-active');
+    } else {
+      btn.querySelector('i').className = 'fa-solid fa-pause';
+      btn.classList.remove('workmode-active');
+      btn.classList.add('workmode-stopped');
+    }
   },
 
   // Update notification badge
@@ -290,6 +385,13 @@ const NavigationManager = {
         this.updateThemeIcon();
       });
     }
+    
+    const workModeBtn = document.getElementById('btnWorkMode');
+    if (workModeBtn) {
+      workModeBtn.addEventListener('click', async () => {
+        await DashboardState.toggleWorkMode();
+      });
+    }
   },
 
   // Activate a module
@@ -433,6 +535,8 @@ const ModuleEvents = {
   }
 };
 
+
+
 // ════════════════════════════════════════════
 //  Dashboard Initialization
 // ════════════════════════════════════════════
@@ -452,8 +556,42 @@ const Dashboard = {
     DashboardState.loadTheme();
     NavigationManager.updateThemeIcon();
     
+    // Load work mode from server (with localStorage fallback)
+    DashboardState.loadWorkModeFromServer();
+    DashboardState.updateWorkModeIcon();
+    
     // Initialize module manager
+    ModuleManager.register('chat', { iframeSrc: 'chat/index.html' });
+    ModuleManager.register('features', { iframeSrc: 'features/index.html' });
+    ModuleManager.register('bugs', { iframeSrc: 'bugs/index.html' });
+    ModuleManager.register('history', { iframeSrc: 'history/index.html' });
+    ModuleManager.register('expertgroups', { iframeSrc: 'expertgroups/index.html' });
+    
+    ModuleManager.register('settings', { iframeSrc: 'settings/index.html' });
+    
     ModuleManager.init();
+    
+    
+    
+    
+    
+    // Setup hidden button in settings section
+    const hiddenBtn = document.getElementById('btnSecretEgg');
+    if (hiddenBtn) {
+      hiddenBtn.addEventListener('click', () => {
+        const container = document.getElementById('cowLaysEggsModule');
+        if (container) {
+          container.classList.toggle('active');
+          if (container.classList.contains('active')) {
+            // Load iframe when shown
+            const iframe = container.querySelector('iframe');
+            if (iframe && iframe.src === '') {
+              iframe.src = 'cow_lays_eggs.html';
+            }
+          }
+        }
+      });
+    }
     
     // Log initialization
     console.log('Dashboard Ecosystem initialized');

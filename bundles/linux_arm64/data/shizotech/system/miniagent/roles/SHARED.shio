@@ -593,7 +593,7 @@ Decision must be binary and final.
 	
 	agt.add_tool(
 		"replace_string_in_file",
-		"Replace one or multiple occurences of a given string within a text file",
+		"Replace one or multiple occurences of a given string within a text file\nMake sure to NOT include any line numbers returned by read functions.",
 		[
 			path = "&string(): Name or path of the file",
 			intention = "&string(): Intention of the operation",
@@ -659,7 +659,7 @@ Decision must be binary and final.
 			if(!old_content.contains_ignoring_whitespaces(original)) {
 				return [
 					ok = false,
-					error = "The original code provided was not found in the file.\nMake sure to copy the source code you want to replace exactly as it is, so the replace function can find it.",
+					error = "The original code provided was not found in the file.\nMake sure to copy the source code you want to replace exactly as it is, without line numbers, so the replace function can find it.",
 				];
 			}
 			//Evaluate possible changes

@@ -60,6 +60,12 @@ Use the sidebar to navigate between modules:
 
 ## Features
 
+### Work Mode
+- **Toggle agent activity**: Enable/disable automated agent processing
+- **Backend persistence**: State synchronized with LevelDB via `/api/workmode` endpoints
+- **localStorage backup**: Offline support with fallback synchronization
+- **Real-time sync**: API calls on toggle with error handling and UI rollback
+
 ### Feature Tracker
 - Add, update, delete features
 - Priority levels (low, medium, high, critical)
@@ -105,7 +111,8 @@ Use the sidebar to navigate between modules:
 1. Open `dashboard.html` in your browser
 2. Navigate between modules using the sidebar
 3. Each module operates independently but shares the dashboard theme
-4. Data is persisted using localStorage
+4. Data is persisted using localStorage with optional backend sync
+5. **Work Mode**: Toggle agent activity via the Work Mode button in the sidebar (syncs with backend `/api/workmode` endpoints)
 
 ## Constraints
 
