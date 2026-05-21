@@ -1,5 +1,4 @@
 warning: internal type 'std.global' does not implement a 'create_new' function.
-[__init__] ! shared json?
 === TABLE OF CONTENTS ===
   - Namespace: curl
   - Namespace: eigen
@@ -11,7 +10,6 @@ warning: internal type 'std.global' does not implement a 'create_new' function.
   - Namespace: python
   - Namespace: shizonet
   - Namespace: shzdocs
-  - Namespace: shztests
   - Namespace: std
   - Namespace: subprocess
   - Namespace: telegram
@@ -74,7 +72,6 @@ warning: internal type 'std.global' does not implement a 'create_new' function.
   - Object Type: std.thread
   - Object Type: subprocess.process
   - Object Type: telegram.bot
-  - Object Type: test_object
   - Object Type: webserver.http_server
   - Object Type: webserver.https_server
   - Object Type: webserver.stream_writer
@@ -473,6 +470,13 @@ math.min(
 
   - Minimum of values
         --------------------------------------------------
+math.mod(
+    x: float - Dividend,
+    y: float - Divisor
+)
+
+  - Remainder of division
+        --------------------------------------------------
 math.pow(
     base: float,
     exp: float
@@ -483,6 +487,20 @@ math.pow(
 math.rand()
 
   - Random float in range [0,1]
+        --------------------------------------------------
+math.random_float(
+    min: float - Minimum value,
+    max: float - Maximum value
+)
+
+  - Random float in range [min,max]
+        --------------------------------------------------
+math.random_int(
+    min: int - Minimum value,
+    max: int - Maximum value
+)
+
+  - Random integer in range [min,max]
         --------------------------------------------------
 math.round(
     value: float - Floating point number to round
@@ -688,19 +706,6 @@ shzdocs.search_keywords(
 )
 
   - Search documentation across namespaces, classes, functions, and variables and return path/description overview.
-        --------------------------------------------------
-
-
-==================================================
-Namespace: shztests
-==================================================
-
-        --------------------------------------------------
-shztests.check_object()
-
-        --------------------------------------------------
-shztests.test_object() -> test_object
-
         --------------------------------------------------
 
 
@@ -17486,12 +17491,26 @@ y(
 Object: shizonet.artnet_device
 ==================================================
 
-    ip     -> variable
-    mac    -> variable
-    name   -> variable
-    online -> variable
-    type   -> variable
+        --------------------------------------------------
+ip()
 
+  - Get the device IP address
+        --------------------------------------------------
+mac()
+
+  - Get the device MAC address
+        --------------------------------------------------
+name()
+
+  - Get the device name
+        --------------------------------------------------
+online()
+
+  - Get the online status of the device
+        --------------------------------------------------
+type()
+
+  - Get the device type
         --------------------------------------------------
 
 
@@ -17499,12 +17518,18 @@ Object: shizonet.artnet_device
 Object: shizonet.client
 ==================================================
 
-    artnet_sync -> variable
-    enabled     -> variable
-    ip          -> variable
-    mac         -> variable
-    name        -> variable
+        --------------------------------------------------
+artnet_sync(
+    sync: bool - Optional: enable/disable Artnet sync
+)
 
+  - Get or set the Artnet sync status
+        --------------------------------------------------
+enabled(
+    enabled: bool - Optional: enable/disable shizonet
+)
+
+  - Get or set the shizonet enabled status
         --------------------------------------------------
 get(
     command: string - Command name to send,
@@ -17522,6 +17547,20 @@ get_all(
 )
 
   - Send a GET command to all connected devices, optionally with payload, callback, and timeout. Returns the number of devices that accepted the command.
+        --------------------------------------------------
+ip()
+
+  - Get the client IP address
+        --------------------------------------------------
+mac()
+
+  - Get the client MAC address
+        --------------------------------------------------
+name(
+    name: string - Optional: new node name
+)
+
+  - Get or set the client node name
         --------------------------------------------------
 on_command(
     cmd: string - Name of the command to listen for,
@@ -17570,12 +17609,6 @@ send_osc(
 Object: shizonet.device
 ==================================================
 
-    ip     -> variable
-    mac    -> variable
-    name   -> variable
-    online -> variable
-    type   -> variable
-
         --------------------------------------------------
 fetch(
     command: string - Command name to send,
@@ -17607,6 +17640,22 @@ get_static_buffer_names()
 
   - Retrieve names and details of static buffers in the device
         --------------------------------------------------
+ip()
+
+  - Get the device IP address
+        --------------------------------------------------
+mac()
+
+  - Get the device MAC address
+        --------------------------------------------------
+name()
+
+  - Get the device name
+        --------------------------------------------------
+online()
+
+  - Get the online status of the device
+        --------------------------------------------------
 send(
     command: string - Name of the command to send,
     data: object - Payload data to transmit (optional),
@@ -17632,18 +17681,28 @@ send_queue(
 
   - Send a command with optional data via a queued reliable connection, optionally waiting for the send to finish.
         --------------------------------------------------
+type()
+
+  - Get the device type
+        --------------------------------------------------
 
 
 ==================================================
 Object: shizonet.server
 ==================================================
 
-    artnet_sync -> variable
-    enabled     -> variable
-    ip          -> variable
-    mac         -> variable
-    name        -> variable
+        --------------------------------------------------
+artnet_sync(
+    sync: bool - Optional: enable/disable Artnet sync
+)
 
+  - Get or set the Artnet sync status
+        --------------------------------------------------
+enabled(
+    enabled: bool - Optional: enable/disable shizonet
+)
+
+  - Get or set the shizonet enabled status
         --------------------------------------------------
 get(
     command: string - Command name to send,
@@ -17661,6 +17720,20 @@ get_all(
 )
 
   - Send a GET command to all connected devices, optionally with payload, callback, and timeout. Returns the number of devices that accepted the command.
+        --------------------------------------------------
+ip()
+
+  - Get the server IP address
+        --------------------------------------------------
+mac()
+
+  - Get the server MAC address
+        --------------------------------------------------
+name(
+    name: string - Optional: new node name
+)
+
+  - Get or set the server node name
         --------------------------------------------------
 on_command(
     cmd: string - Name of the command to listen for,
@@ -18639,36 +18712,6 @@ unban_chat_member(
 )
 
   - Unban a user from a chat
-        --------------------------------------------------
-
-
-==================================================
-Object: test_object
-==================================================
-
-    test_member -> variable
-    testint     -> variable
-
-        --------------------------------------------------
-call_cb()
-
-  - test fn
-        --------------------------------------------------
-test_auto_fn()
-
-  - A test function registered via automatic binding.
-        --------------------------------------------------
-test_cb()
-
-  - test fn
-        --------------------------------------------------
-test_fn()
-
-  - test fn
-        --------------------------------------------------
-test_thread()
-
-  - test fn
         --------------------------------------------------
 
 
