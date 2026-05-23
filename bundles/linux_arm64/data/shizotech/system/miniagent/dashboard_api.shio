@@ -24,7 +24,7 @@
 
 //Start webserver
 server = webserver.http_server(13337);
-server.static("", "web"); //TODO: add functions to only serve certain routes when AUTHED
+server.static("", __DIR__ + "/web"); //TODO: add functions to only serve certain routes when AUTHED
 
 // Initialize LevelDB for dashboard data persistence
 features_db = leveldb.db(agent_space + "dashboard/features.db");
