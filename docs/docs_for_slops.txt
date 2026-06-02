@@ -2928,7 +2928,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -3384,6 +3385,10 @@ clear_children()
 
   - Remove all child widgets.
         --------------------------------------------------
+close()
+
+  - Close the popup.
+        --------------------------------------------------
 codebox(
     text - string
 ) -> nanogui.codebox
@@ -3574,7 +3579,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -4198,7 +4204,8 @@ margin(
   - Get or set the window inner margin.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -4874,7 +4881,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -5478,7 +5486,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -5906,6 +5915,10 @@ clear_items()
 
   - Remove all combobox items.
         --------------------------------------------------
+close()
+
+  - Close the popup.
+        --------------------------------------------------
 codebox(
     text - string
 ) -> nanogui.codebox
@@ -6102,7 +6115,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -6910,7 +6924,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -7550,7 +7565,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -8236,7 +8252,8 @@ loop(
   - Get or set looped envelope mode.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -8858,7 +8875,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -9472,7 +9490,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -10135,7 +10154,8 @@ links()
   - Get list of linked controls (outgoing links).
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -10727,7 +10747,8 @@ links()
   - Get list of linked controls (outgoing links).
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -11329,7 +11350,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -11895,7 +11917,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -12480,7 +12503,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -13083,7 +13107,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -13242,6 +13267,12 @@ projection_keyboard_step(
 
   - Get or set keyboard movement step in pixels.
         --------------------------------------------------
+projection_load(
+    json - object
+)
+
+  - Load shader state from a JSON object.
+        --------------------------------------------------
 projection_point(
     x - int,
     y - int,
@@ -13253,6 +13284,10 @@ projection_point(
 projection_reset()
 
   - Reset projection mapping points to the widget bounds.
+        --------------------------------------------------
+projection_save()
+
+  - Save current shader state to a JSON object.
         --------------------------------------------------
 projection_select(
     index - int
@@ -13733,7 +13768,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -14326,7 +14362,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -14981,7 +15018,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -15591,7 +15629,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -16290,7 +16329,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -16900,7 +16940,8 @@ length(
   - Get or set the beat length of this timeline item.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -17456,7 +17497,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -18018,7 +18060,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -18574,7 +18617,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -19130,7 +19174,8 @@ layout(
   - Get current layout or set layout by name.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
@@ -19694,7 +19739,8 @@ margin(
   - Get or set the window inner margin.
         --------------------------------------------------
 matrixnode(
-    name - string
+    name - string,
+    guid - string
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
