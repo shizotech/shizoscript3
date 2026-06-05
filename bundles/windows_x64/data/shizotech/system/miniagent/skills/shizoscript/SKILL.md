@@ -526,7 +526,7 @@ Before using a lambda:
 - [ ] Capture list explicitly defined
 - [ ] No implicit variable usage
 - [ ] Reference captures validated for lifetime safety
-- [ ] Syntax matches `[]() {}` format
+- [ ] Syntax matches `[...](...){...}` format
 - [ ] Ends with `;`
 
 ---
@@ -589,6 +589,14 @@ To resolve include files, follow the following sequence:
 2. If an included file does not exist relative to the source file, try to resolve it with `shizoscript_resolve_include()`
 
 3. If `shizoscript_resolve_include()` did not yield any results, assume that the file does not exist.
+
+# Debugging and verifying shizoscript code
+
+Use the `shizoscript_debug_file` tool to verify shizoscript files and their syntax.
+
+Note that due to shizoscript's dynamic type system it might be necessary to utilize the "run_duration" parameter to catch potential runtime problems.
+
+---
 
 # FINAL RULE
 

@@ -1,4 +1,3 @@
-warning: internal type 'std.global' does not implement a 'create_new' function.
 === TABLE OF CONTENTS ===
   - Namespace: curl
   - Namespace: eigen
@@ -13,6 +12,7 @@ warning: internal type 'std.global' does not implement a 'create_new' function.
   - Namespace: std
   - Namespace: subprocess
   - Namespace: telegram
+  - Namespace: tempfile
   - Namespace: testmodule
   - Namespace: webserver
   - Namespace: win32
@@ -81,6 +81,7 @@ warning: internal type 'std.global' does not implement a 'create_new' function.
   - Object Type: std.thread
   - Object Type: subprocess.process
   - Object Type: telegram.bot
+  - Object Type: tempfile.tempfile
   - Object Type: webserver.http_server
   - Object Type: webserver.https_server
   - Object Type: webserver.stream_writer
@@ -1094,6 +1095,20 @@ telegram.bot(
 ) -> telegram.bot
 
   - Create a new Telegram API instance with a bot token
+        --------------------------------------------------
+
+
+==================================================
+Namespace: tempfile
+==================================================
+
+        --------------------------------------------------
+tempfile.tempfile(
+    prefix: string - Prefix for the temp file name (default: "tmp").,
+    ext: string - File extension (default: "").
+) -> tempfile.tempfile
+
+  - Instantiate a new tempfile object with optional init(prefix="tmp", ext="").
         --------------------------------------------------
 
 
@@ -26447,6 +26462,36 @@ unban_chat_member(
 
 
 ==================================================
+Object: tempfile.tempfile
+==================================================
+
+        --------------------------------------------------
+close()
+
+  - Close and delete the temporary file.
+        --------------------------------------------------
+init(
+    prefix: string - Prefix for the temp file name (default: "tmp").,
+    ext: string - File extension (default: "").
+)
+
+  - Initialize a new temporary file. Creates and opens the file.
+        --------------------------------------------------
+path()
+
+  - Get the full path to the temporary file.
+        --------------------------------------------------
+read()
+
+  - Read all data from the temporary file.
+        --------------------------------------------------
+write()
+
+  - Write data to the temporary file.
+        --------------------------------------------------
+
+
+==================================================
 Object: webserver.http_server
 ==================================================
 
@@ -26618,14 +26663,3 @@ save(
   - Save zip file to specified path
         --------------------------------------------------
 
-warning: internal type 'nanogui.context' does not implement a 'create_new' function.
-warning: internal type 'nanogui.widget_solid' does not implement a 'create_new' function.
-warning: internal type 'nanogui.window' does not implement a 'create_new' function.
-warning: internal type 'nanogui.button_popup' does not implement a 'create_new' function.
-warning: internal type 'nanogui.button_popup_menu' does not implement a 'create_new' function.
-warning: internal type 'nanogui.midicontrolslider' does not implement a 'create_new' function.
-warning: internal type 'nanogui.midicontrolint' does not implement a 'create_new' function.
-warning: internal type 'nanogui.midicontrolfloat' does not implement a 'create_new' function.
-warning: internal type 'nanogui.midicontrolcombo' does not implement a 'create_new' function.
-warning: internal type 'nanogui.screen' does not implement a 'create_new' function.
-warning: internal type 'nanogui.layout_base' does not implement a 'create_new' function.

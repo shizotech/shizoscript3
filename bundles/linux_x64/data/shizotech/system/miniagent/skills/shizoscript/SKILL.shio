@@ -1,4 +1,6 @@
 
+import tempfile;
+
 add_tools(agt)
 {
 	agt.add_tool(
@@ -52,6 +54,28 @@ add_tools(agt)
 		[](agt, args)
 		{		
 			return std.resolve_source_file(args.path);
+		}
+	);
+	
+	agt.add_tool(
+		"shizoscript_debug_file",
+		"Resolve standard include files",
+		[
+			path = "&string(): Path of the script file to check",
+			run_duration = "&int(0,60): Duration that the script should run for this test (set to 0 to disable this and check syntax only)",
+		],
+		[](agt, args)
+		{
+			captured_out = "";
+			
+			managed tmp = tempfile.tempfile();
+			
+			if(args.run_duration == 0)		
+				std.system("shz --check " + args.path + " > " + tmp.path());
+			else
+				std.system("shz --testrun " + args.run_duration + " " + args.path + " > " + tmp.path());
+		
+			return tmp.read();
 		}
 	);
 }
