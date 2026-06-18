@@ -571,6 +571,10 @@ Namespace: nanogui
 nanogui.context() -> nanogui.context
 
         --------------------------------------------------
+nanogui.current_context()
+
+  - Get the current nanogui context.
+        --------------------------------------------------
 nanogui.deserialize_controls()
 
   - Deserialize modmatrix nodes from JSON.
@@ -2735,6 +2739,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -3434,6 +3450,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -4126,6 +4154,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -4840,6 +4880,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear()
 
   - Clear codebox text.
@@ -5511,6 +5563,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -6171,6 +6235,18 @@ caption(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -6957,6 +7033,10 @@ nvgTranslate(
 
   - Translate the current transform.
         --------------------------------------------------
+real_fps()
+
+  - Get the current real FPS (frames per second) being rendered.
+        --------------------------------------------------
 screen(
     caption: Window title (default "test").,
     width: Window width in pixels (default primary monitor width).,
@@ -7050,6 +7130,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -7739,6 +7831,18 @@ caption(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -8430,6 +8534,18 @@ caption(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -9154,6 +9270,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -9839,6 +9967,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -10278,6 +10418,12 @@ tabwidget(
 
   - Create a child tab widget.
         --------------------------------------------------
+text(
+    value - string
+)
+
+  - Get or set label caption (convenience function).
+        --------------------------------------------------
 text_color(
     value - vec4f
 )
@@ -10535,6 +10681,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -10741,6 +10899,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -11065,7 +11229,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -11201,6 +11367,18 @@ callback(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -11408,6 +11586,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -11738,7 +11922,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -11874,6 +12060,18 @@ callback(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -12081,6 +12279,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -12417,7 +12621,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -12554,6 +12760,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -12760,6 +12978,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -13096,7 +13320,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -13233,6 +13459,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -13439,6 +13677,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -13775,7 +14019,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -13912,6 +14158,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -14118,6 +14376,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -14442,7 +14706,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -14578,6 +14844,18 @@ callback(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -14785,6 +15063,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -15121,7 +15405,9 @@ unlink_from(
   - Unlink this control from another control.
         --------------------------------------------------
 value(
-    value - can be any type depending on derived class
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
 )
 
   - Get or set control value.
@@ -15257,6 +15543,18 @@ callback(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -15470,6 +15768,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
         --------------------------------------------------
 incoming_links()
 
@@ -15942,6 +16246,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -16589,6 +16905,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -17250,6 +17578,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -17486,6 +17826,12 @@ layout(
 )
 
   - Get current layout or set layout by name.
+        --------------------------------------------------
+lock_controls(
+    value - bool
+)
+
+  - Enable or disable panning and zooming controls.
         --------------------------------------------------
 matrixnode(
     name - string,
@@ -17900,6 +18246,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -18662,6 +19020,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -19307,6 +19677,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -19994,6 +20376,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear()
 
   - Clear textarea contents.
@@ -20666,6 +21060,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -21415,6 +21821,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -22082,6 +22500,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -22715,6 +23145,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -23330,6 +23772,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -23939,6 +24393,18 @@ child_count()
 
   - Get number of child widgets.
         --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
 clear_anchor_bottom()
 
   - Clear bottom anchor.
@@ -24541,6 +25007,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -25158,6 +25636,18 @@ button_popup(
 child_count()
 
   - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
