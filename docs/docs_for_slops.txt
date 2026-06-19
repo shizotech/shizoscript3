@@ -53,8 +53,10 @@
   - Object Type: nanogui.midicontrolint
   - Object Type: nanogui.midicontrollo
   - Object Type: nanogui.midicontrolslider
+  - Object Type: nanogui.midicontroltext
   - Object Type: nanogui.midicontrolvector
   - Object Type: nanogui.modmatrixnode
+  - Object Type: nanogui.permanent_tab
   - Object Type: nanogui.screen
   - Object Type: nanogui.scrollarea
   - Object Type: nanogui.shader
@@ -2845,6 +2847,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -3560,6 +3569,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -4260,6 +4276,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -4994,6 +5017,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -5668,6 +5698,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -6349,6 +6386,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -7033,6 +7077,12 @@ nvgTranslate(
 
   - Translate the current transform.
         --------------------------------------------------
+on_fps_update(
+    callback - function(fps)
+)
+
+  - Set or clear FPS update callback.
+        --------------------------------------------------
 real_fps()
 
   - Get the current real FPS (frames per second) being rendered.
@@ -7240,6 +7290,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -7937,6 +7994,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -8640,6 +8704,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -9376,6 +9447,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -10072,6 +10150,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -10795,6 +10880,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -11481,6 +11573,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -12174,6 +12273,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -12874,6 +12980,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -13572,6 +13685,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -14272,6 +14392,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -14959,6 +15086,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -15471,6 +15605,700 @@ y(
 
 
 ==================================================
+Object: nanogui.midicontroltext
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+callback(
+    callback - function to call on value change
+)
+
+  - Get or set the value change callback function.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+clear_incoming_links()
+
+  - Clear all incoming links.
+        --------------------------------------------------
+clear_links()
+
+  - Clear all outgoing links.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrollo
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+group()
+
+  - Get control group.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+hide_config_menu(
+    hide - whether to hide the config menu button (default: true)
+)
+
+  - Hide or show the config menu button.
+        --------------------------------------------------
+incoming_links()
+
+  - Get list of incoming linked controls.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+link_count()
+
+  - Get number of outgoing links.
+        --------------------------------------------------
+link_to(
+    control - The midicontrol_base to link to.
+)
+
+  - Link this control to another control.
+        --------------------------------------------------
+links()
+
+  - Get list of linked controls (outgoing links).
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+name()
+
+  - Get control name.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_link(
+    on_link - function to call on link creation
+)
+
+  - Get or set the callback function called when a link is created.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+on_unlink(
+    on_unlink - function to call on link removal
+)
+
+  - Get or set the callback function called when a link is removed.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_parent_layout()
+
+  - Mark parent widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+unlink_from(
+    control - The midicontrol_base to unlink from.
+)
+
+  - Unlink this control from another control.
+        --------------------------------------------------
+value(
+    value - can be any type depending on derived class,
+    notify_callback - whether to notify the value change callback,
+    notify_links - whether to notify linked controls
+)
+
+  - Get or set control value.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
 Object: nanogui.midicontrolvector
 ==================================================
 
@@ -15657,6 +16485,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -16353,6 +17188,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -16829,6 +17671,628 @@ y(
 
 
 ==================================================
+Object: nanogui.permanent_tab
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrollo
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_parent_layout()
+
+  - Mark parent widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
 Object: nanogui.screen
 ==================================================
 
@@ -17011,6 +18475,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -17683,6 +19154,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -18357,6 +19835,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -18817,6 +20302,18 @@ source_file(
 
   - Get or set fragment source file path.
         --------------------------------------------------
+spout_enabled(
+    enabled - bool
+)
+
+  - Get or set Spout sender enabled state.
+        --------------------------------------------------
+spout_sender_name(
+    name - string
+)
+
+  - Get or set the name of the Spout sender.
+        --------------------------------------------------
 swapchain(
     toggle - bool (optional, triggers toggle if present)
 )
@@ -19125,6 +20622,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -19614,6 +21118,13 @@ absolute_position()
 
   - Get the absolute widget position.
         --------------------------------------------------
+add_permanent_tab(
+    name - string,
+    switch_to - bool
+) -> nanogui.permanent_tab
+
+  - Create and append a new permanent tab page (cannot be closed by user).
+        --------------------------------------------------
 add_tab(
     name - string,
     switch_to - bool
@@ -19790,6 +21301,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -19884,6 +21402,10 @@ graph(
 has_font_size()
 
   - Check if custom font size is set.
+        --------------------------------------------------
+header_height()
+
+  - Get or set header height.
         --------------------------------------------------
 height(
     value - int
@@ -20485,6 +22007,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -21166,6 +22695,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -21927,6 +23463,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -22606,6 +24149,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -23251,6 +24801,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -23878,6 +25435,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -24499,6 +26063,13 @@ controlslider(
 
   - Create a child MIDI control slider.
         --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
 controlvector(
     name - string,
     group - string
@@ -25113,6 +26684,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
@@ -25742,6 +27320,13 @@ controlslider(
 ) -> nanogui.midicontrolslider
 
   - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
         --------------------------------------------------
 controlvector(
     name - string,
