@@ -41,6 +41,7 @@
   - Object Type: nanogui.filebrowser
   - Object Type: nanogui.floatbox
   - Object Type: nanogui.graph
+  - Object Type: nanogui.image
   - Object Type: nanogui.intbox
   - Object Type: nanogui.label
   - Object Type: nanogui.layout_base
@@ -61,6 +62,7 @@
   - Object Type: nanogui.scrollarea
   - Object Type: nanogui.shader
   - Object Type: nanogui.slider
+  - Object Type: nanogui.spout_receiver
   - Object Type: nanogui.tabwidget
   - Object Type: nanogui.textarea
   - Object Type: nanogui.textbox
@@ -922,6 +924,13 @@ std.load_config(
 )
 
   - Load JSON config from user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+        --------------------------------------------------
+std.local_app_path(
+    Vendorname: string - Vendor name (safe token),
+    Productname: string - Product name (safe token)
+)
+
+  - Get the file path for App data (Windows: %USERPROFILE%/Documents/Shizoscript/Apps, Linux: $XDG_CONFIG_HOME/shizoscript/apps or ~/.config/shizoscript/apps)
         --------------------------------------------------
 std.local_executable()
 
@@ -2548,6 +2557,12 @@ get(
 
   - Get value from LevelDB by key with optional default return
         --------------------------------------------------
+has(
+    key: string - The key to check for existence in the database
+)
+
+  - Check if a key exists in the database
+        --------------------------------------------------
 import_json(
     json_string: string - Valid json from export_json()
 )
@@ -2973,6 +2988,12 @@ icon_position(
 
   - Get or set icon position.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -3252,6 +3273,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -3695,6 +3722,12 @@ icon_position(
 
   - Get or set icon position.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -3990,6 +4023,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -4389,6 +4428,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -4680,6 +4725,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -5143,6 +5194,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -5410,6 +5467,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -5819,6 +5882,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -6056,6 +6125,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -6513,6 +6588,12 @@ icon_position(
 
   - Get or set icon position.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -6824,6 +6905,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -7409,6 +7496,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -7702,6 +7795,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -8121,6 +8220,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -8392,6 +8497,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 step(
     value - float
@@ -8873,6 +8984,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -9135,6 +9252,12 @@ slider(
 
   - Create a child slider widget.
         --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
 tabwidget(
     first_tab_name - string
 ) -> nanogui.tabwidget
@@ -9240,6 +9363,656 @@ width(
 )
 
   - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.image
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrollo
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+filename(
+    filename - string
+)
+
+  - Get or set the image filename.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height()
+
+  - Get the image height.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+load(
+    json - object
+)
+
+  - Load image state from a JSON object.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_parent_layout()
+
+  - Mark parent widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+save()
+
+  - Save current image state to a JSON object.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+valid()
+
+  - Check if the image is valid.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width()
+
+  - Get the image width.
         --------------------------------------------------
 window(
     title - string
@@ -9573,6 +10346,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -9844,6 +10623,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 step(
     value - int
@@ -10259,6 +11044,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -10496,6 +11287,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -10998,6 +11795,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -11269,6 +12072,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -11692,6 +12501,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -11969,6 +12784,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -12392,6 +13213,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -12675,6 +13502,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -13098,6 +13931,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -13381,6 +14220,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -13804,6 +14649,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -14087,6 +14938,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -14510,6 +15367,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -14781,6 +15644,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -15204,6 +16073,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -15487,6 +16362,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -15910,6 +16791,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -16181,6 +17068,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -16610,6 +17503,12 @@ hide_config_menu(
 
   - Hide or show the config menu button.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 incoming_links()
 
   - Get list of incoming linked controls.
@@ -16881,6 +17780,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -17324,6 +18229,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -17567,6 +18478,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -17952,6 +18869,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -18189,6 +19112,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -18594,6 +19523,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -18878,6 +19813,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -19263,6 +20204,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -19530,6 +20477,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -19955,6 +20908,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 input(
     name - string,
     shader - shader|none
@@ -20307,6 +21266,12 @@ spout_enabled(
 )
 
   - Get or set Spout sender enabled state.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 spout_sender_name(
     name - string
@@ -20737,6 +21702,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -20987,6 +21958,12 @@ slider(
 
   - Create a child slider widget.
         --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
 tabwidget(
     first_tab_name - string
 ) -> nanogui.tabwidget
@@ -21086,6 +22063,678 @@ width(
 )
 
   - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.spout_receiver
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+connect(
+    return - bool
+)
+
+  - Connect to the Spout sender.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrollo
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+disconnect(
+    return - self
+)
+
+  - Disconnect from the current Spout sender.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height()
+
+  - Get the height of the received texture.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+is_connected(
+    return - bool
+)
+
+  - Check if connected to a sender.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_parent_layout()
+
+  - Mark parent widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+sender_name(
+    return - string
+)
+
+  - Get the current sender name.
+        --------------------------------------------------
+set_sender_name(
+    sender_name - string
+)
+
+  - Set the sender name to connect to.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+size(
+    return - vec2
+)
+
+  - Get the size of the received texture.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+texture(
+    return - texture
+)
+
+  - Get the local texture.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+valid(
+    return - bool
+)
+
+  - Check if the receiver is valid.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width()
+
+  - Get the width of the received texture.
         --------------------------------------------------
 window(
     title - string
@@ -21413,6 +23062,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -21686,6 +23341,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tab(
     index - int
@@ -22140,6 +23801,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -22401,6 +24068,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -22822,6 +24495,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -23081,6 +24760,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -23577,6 +25262,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -23848,6 +25539,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -24263,6 +25960,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -24518,6 +26221,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -24909,6 +26618,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -25158,6 +26873,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -25543,6 +27264,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -25780,6 +27507,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -26171,6 +27904,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -26408,6 +28147,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -26799,6 +28544,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -27040,6 +28791,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -27433,6 +29190,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -27724,6 +29487,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string

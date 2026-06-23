@@ -145,10 +145,8 @@ function saveCurrentConversationHTML() {
   // Convert each bubble to HTML string
   const messagesHTML = [];
   messageBubbles.forEach(bubble => {
-    // Only save assistant bubbles (not user bubbles)
-    if (bubble.classList.contains('role-assistant')) {
-      messagesHTML.push(bubble.outerHTML);
-    }
+    // Save all bubbles (both user and assistant)
+    messagesHTML.push(bubble.outerHTML);
   });
   
   // Save the HTML to conversation data
@@ -176,42 +174,97 @@ function loadConversationHTML(conv) {
   emptyState.style.display = 'none';
   
   // Append each saved HTML bubble
-  conv.messagesHTML.forEach(html => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    const bubble = tempDiv.firstElementChild;
-    if (bubble) {
-      // Ensure the bubble has the correct role class
-      if (!bubble.classList.contains('role-assistant')) {
-        bubble.classList.add('role-assistant');
-      }
-      
-      // Reinitialize any necessary event listeners or state for the bubble
-      // For example, reattach copy buttons
-      const copyBtn = bubble.querySelector('.copy-btn');
-      if (copyBtn) {
-        copyBtn.addEventListener('click', () => navigator.clipboard.writeText(bubble.querySelector('.msg-content')?.innerText || ''));
-      }
-      
-      messagesInner.appendChild(bubble);
-    }
-  });
-  
-  // Reinitialize any global state needed for the conversation
-  // For example, reset agent bubbles since we're loading a conversation
-  agentBubbles = {
-    currentPlannerBubble: null,
-    plannerBuffer: '',
-    currentWorkerGroupBubble: null,
-    workerGroupBubbles: [],
-    workerBuffers: {},
-    workerSubBubbles: {}
-  };
-  
-  // Reset tracking flags
-  knownWorkerIds.clear();
-  hasCreatedWorkerGroup = false;
-  inWorkerMode = false;
+   conv.messagesHTML.forEach(html => {
+     const tempDiv = document.createElement('div');
+     tempDiv.innerHTML = html;
+     const bubble = tempDiv.firstElementChild;
+     if (bubble) {
+       // Reinitialize any necessary event listeners or state for the bubble
+       // For example, reattach copy buttons for assistant messages
+       if (bubble.classList.contains('role-assistant')) {
+         const copyBtn = bubble.querySelector('.copy-btn');
+         if (copyBtn) {
+           copyBtn.addEventListener('click', () => navigator.clipboard.writeText(bubble.querySelector('.msg-content')?.innerText || ''));
+         }
+       }
+       
+       messagesInner.appendChild(bubble);
+     }
+   });
+   
+   // ── RECONSTRUCT AGENT FLOW STATE FROM DOM ──
+   // Extract all worker sub-bubbles from loaded DOM
+   const allWorkerSubBubbles = messagesInner.querySelectorAll('[id^="worker-"]');
+   const loadedWorkerGroupBubbles = Array.from(messagesInner.querySelectorAll('.bubble.role-assistant'));
+   
+   // Extract worker IDs from DOM element IDs
+   const extractedWorkerIds = new Set();
+   const reconstructedWorkerSubBubbles = {};
+   const reconstructedWorkerBuffers = {};
+   
+   allWorkerSubBubbles.forEach(workerBubble => {
+     try {
+       // Extract worker ID from element ID (format: worker-XXX)
+       const elementId = workerBubble.id;
+       if (!elementId.startsWith('worker-')) return;
+       
+       const workerId = elementId.slice(7); // Remove 'worker-' prefix
+       extractedWorkerIds.add(workerId);
+       
+       // Extract buffer content from DOM text
+       const workerContent = workerBubble.querySelector('.worker-content');
+       const bufferContent = workerContent ? workerContent.innerHTML || '' : '';
+       
+       // Store reference to worker sub-bubble with text buffer reference
+       reconstructedWorkerSubBubbles[workerId] = {
+         content: workerContent,
+         buffer: bufferContent,
+         finished: workerBubble.classList.contains('completed'),
+         bubble: workerBubble,
+         statusBar: workerBubble.querySelector('.worker-status-bar')
+       };
+       
+       // Store buffer content
+       reconstructedWorkerBuffers[workerId] = bufferContent;
+       
+       console.log('Reconstructed worker sub-bubble:', {
+         workerId: workerId,
+         hasContent: !!workerContent,
+         bufferLength: bufferContent.length,
+         isFinished: workerBubble.classList.contains('completed')
+       });
+     } catch (err) {
+       console.error('Error reconstructing worker sub-bubble:', err);
+     }
+   });
+   
+   // Restore the agent bubbles state with loaded worker group bubbles
+   agentBubbles = {
+     currentPlannerBubble: null,
+     plannerBuffer: '',
+     currentWorkerGroupBubble: null,
+     workerGroupBubbles: loadedWorkerGroupBubbles, // Use loaded worker group bubbles
+     workerBuffers: reconstructedWorkerBuffers,
+     workerSubBubbles: reconstructedWorkerSubBubbles
+   };
+   
+   // Set flags based on actual loaded state
+   hasCreatedWorkerGroup = loadedWorkerGroupBubbles.length > 0;
+   inWorkerMode = extractedWorkerIds.size > 0 && loadedWorkerGroupBubbles.some(group => {
+     // Check if any worker group has active workers (not all completed)
+     const workers = group.querySelectorAll('.worker-sub-bubble');
+     return workers.length > 0 && !Array.from(workers).every(w => w.classList.contains('completed'));
+   });
+   knownWorkerIds.clear();
+   knownWorkerIds.addAll(extractedWorkerIds);
+   
+   console.log('Agent flow state restored from conversation:', {
+     workerGroupBubblesCount: loadedWorkerGroupBubbles.length,
+     knownWorkerIds: Array.from(extractedWorkerIds),
+     workerSubBubblesCount: Object.keys(reconstructedWorkerSubBubbles).length,
+     inWorkerMode: inWorkerMode,
+     hasCreatedWorkerGroup: hasCreatedWorkerGroup
+   });
   
   // Scroll to bottom
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -412,6 +465,13 @@ function renderMessages(conv) {
       tempDiv.innerHTML = html;
       const bubble = tempDiv.firstElementChild;
       if (bubble) {
+        // Reattach copy button listener for assistant messages
+        if (bubble.classList.contains('role-assistant')) {
+          const copyBtn = bubble.querySelector('.copy-btn');
+          if (copyBtn) {
+            copyBtn.addEventListener('click', () => navigator.clipboard.writeText(bubble.querySelector('.msg-content')?.innerText || ''));
+          }
+        }
         messagesInner.appendChild(bubble);
       }
     });
@@ -767,6 +827,18 @@ let knownWorkerIds = new Set();
 
 // Track if we're in worker mode (to prevent creating duplicate worker groups)
 let inWorkerMode = false;
+
+// ════════════════════════════════════════════
+//  Set Polyfill for addAll method
+// ════════════════════════════════════════════
+if (!Set.prototype.addAll) {
+  Set.prototype.addAll = function(iterable) {
+    for (const item of iterable) {
+      this.add(item);
+    }
+    return this;
+  };
+}
 
 // ════════════════════════════════════════════
 //  DEBUGGING CONSOLE LOGS

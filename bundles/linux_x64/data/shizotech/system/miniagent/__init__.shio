@@ -89,7 +89,7 @@ for(!cfg)
 	}
 }
 
-#include "dashboard_api.shio"
+#include "web_api.shio"
 
 //Initialize agent
 planner = miniagent(cfg.api, None, "planner", cfg.token); //So that the local agent.space aswell as the global agent.space are visible

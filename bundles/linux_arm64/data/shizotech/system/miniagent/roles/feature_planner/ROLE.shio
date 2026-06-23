@@ -1,0 +1,257 @@
+
+#include "../../miniagent"
+#include "../SHARED"
+
+search_tool_desc = R"(
+Search for semantically related feature requests and bug reports.
+
+Use this before creating new items.
+
+This tool helps determine whether:
+- a request already exists
+- a request should be updated
+- a new item should be created
+
+Prefer updating existing items when the user is clearly referring to prior work.
+
+Prefer creating new items when the intent is distinct or unrelated.
+)";
+
+//FEATURES
+create_feature_request_tool_desc = R"(
+Create a new Feature Request.
+
+Use this when the user requests:
+- new functionality
+- UI changes
+- enhancements
+- styling changes
+- workflow modifications
+
+Do NOT use this for broken behavior or bugs.
+
+Feature requests should:
+- represent a single coherent intent
+- remain concise
+- stay implementation-agnostic
+)";
+
+update_feature_request_tool_desc = R"(
+Update an existing Feature Request.
+
+Use this when the user:
+- modifies a previous request
+- changes requirements
+- clarifies intent
+- continues discussing the same feature
+
+Do NOT use this to merge unrelated requests.
+)";
+
+add_tools(agt)
+{
+	//This is needed because some models tend to loop forever without an exit...
+	agt.add_finalize_tool(false);
+
+	add_read_tools(agt);
+	add_code_read_tools(agt);
+	//add_skill_tools(agt);
+
+	agt.add_tool(
+		"create_plan",
+		"Create a new plan",
+		[
+			manifest = "&string(): Plan manifest",
+			//working_directory = "&string(): The working directory for the downstream agent.", 
+		],
+		[](agt, args)
+		{				
+			//std.print(args.manifest);
+			agt.env.current_plan = args.manifest;
+		
+			return [
+				ok=true,
+				status="Plan created."
+			];
+		}
+	);
+
+	agt.add_tool(
+		"execute_plan",
+		"Execute plan immediately without creating a feature request.",
+		None,
+		[](agt, args)
+		{				
+			if(!agt.env.current_plan) {
+				return [
+					ok=false,
+					error="No plan created. Use 'create_plan' before calling this tool."
+				];
+			}
+		
+			//std.print(args.manifest);
+		
+			task_prompt = "<global_task>\n" + agt.env.task + "\n</global_task>\n\n**HERE IS YOUR SPECIFIC SUBTASK**\n";
+			task_prompt += "<your_task>\n" + agt.env.current_plan + "\n</your_task>";
+			
+			//global_file_lock = std.global("agent_file_lock");
+			managed sub_agt = agt.subagent("planner");
+			
+			if(agt.on_action)
+				agt.on_action([start_agent=sub_agt.agent_id]);	
+			
+			res = sub_agt.task(task_prompt);
+			
+			if(agt.on_action)
+				agt.on_action([stop_agent=sub_agt.agent_id]);
+
+			agt.env.current_plan = "";
+
+			return res;
+		}
+	);
+
+	agt.add_tool(
+		"search_items",
+		search_tool_desc,
+		[
+			query = "&string(): What to search for",
+		],
+		[](agt, args)
+		{
+			features_db = leveldb.db(agt.env.agent_space + "dashboard/features.db");
+
+			//Export whole bug / features db as json and let AI do simplest RAG
+			feats = features_db.dump();
+
+			res = "<NOT_FOUND>";
+			
+			if(feats) {
+				res = agt.simple_rag(args.query, feats).strip();
+				if(!res.starts("<NOT_FOUND>"))
+					return res;
+			}
+			
+			return res;
+		}
+	);
+	
+	agt.add_tool(
+		"create_feature",
+		create_feature_request_tool_desc,
+		[
+			title = "&string(): Title of the new feature",
+			description = "&string(): Detailed description of the new feature",
+			category = "&string(): Category of the new feature",
+			priority = ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+		],
+		[](agt, args)
+	{
+		if(!args.title || !args.description) {
+			return "Error: title and description are required fields";
+		}
+		
+		if(!agt.env.current_plan) {
+			return [
+				ok=false,
+				error="No plan created. Use 'create_plan' before calling this tool."
+			];
+		}
+		
+		features_db = leveldb.db(agt.env.agent_space + "dashboard/features.db");
+		
+		try {
+			// Generate new feature ID
+			feature_id = "feature_" + std.timestamp() + "_" + std.random_hash();
+			
+			// Create new feature with defaults
+			feature = [
+				id = feature_id,
+				createdAt = std.millis(),
+				updatedAt = std.millis(),
+				progress = 0,
+				status = "planned",
+			];
+			
+			// Copy provided fields
+			if(args.title)
+				feature.title = args.title;
+			if(args.description)
+				feature.description = args.description;
+			if(args.priority)
+				feature.priority = args.priority;
+			if(args.category)
+				feature.category = args.category;
+			if(agt.env.current_plan)
+				feature.plan = agt.env.current_plan;
+			
+			// Save to database
+			features_db.put(feature_id, feature);
+
+			agt.env.current_plan = "";
+			
+			return "Feature request created successfully: " + feature_id;
+		}
+		catch(e) {
+			return "Error creating feature request: " + std.string(e);
+		}
+	}
+	);
+	
+	agt.add_tool(
+		"update_feature",
+		update_feature_request_tool_desc,
+		[
+			feature_id = "&string(): Exact ID of the feature to update",
+			status = "&string(): Updated status of the feature",
+			progress = "int(0,100): Updated progress of the feature",
+			title = "string(): Updated title of the feature",
+			description = "string(): Updated description of the feature",
+			category = "string(): Updated category of the feature",
+		],
+		[](agt, args)
+	{
+		if(!args.feature_id) {
+			return "Error: feature_id is required";
+		}
+		
+		features_db = leveldb.db(agt.env.agent_space + "dashboard/features.db");
+		
+		if(!features_db.exists(args.feature_id)) {
+			return "Error: Feature not found: " + args.feature_id;
+		}
+		
+		try {
+			value = features_db.get(args.feature_id);
+			feature = std.json(value);
+			
+			// Update fields
+			feature.updatedAt = std.millis();
+			
+			if(args.title)
+				feature.title = args.title;
+			if(args.description)
+				feature.description = args.description;
+			if(args.category)
+				feature.category = args.category;
+			if(args.status)
+				feature.status = args.status;
+			if(args.progress)
+				feature.progress = args.progress;
+			if(agt.env.current_plan)
+				feature.plan = agt.env.current_plan;
+			
+			// Save updated feature
+			features_db.put(args.feature_id, feature);
+			
+			agt.env.current_plan = "";
+			
+			return "Feature request updated successfully: " + args.feature_id;
+		}
+		catch(e) {
+			return "Error updating feature request: " + std.string(e);
+		}
+	}
+	);
+	
+}

@@ -234,6 +234,17 @@ class toolset
 		
 		tool_callbacks[name] = callback;
 	}
+
+	find_tool(name) {
+		for(i = 0; i < tools.size(); i++)
+		{
+			if(tools[i].function.name == name) {
+				return tools[i].function;
+			}
+		}
+		
+		return None;
+	}
 }
 
 class openai_api
@@ -596,9 +607,9 @@ class openai_api
 								}
 							}
 							catch(e) {
-								std.error("Tool error: ", e);
+								//std.error("Tool error: ", e);
 								if(this.ts.tool_callbacks.has(tool_name))
-									tool_result = "The tool encountered an unexpected error. Maybe check the arguments and try again. If this persists fail and stop.\n\nError: " + e;
+									tool_result = "The tool encountered an unexpected error.\nMaybe check your arguments and try again.\nTool definition:\n" + this.ts.find_tool(tool_name);
 								else
 								{
 									tool_result = [

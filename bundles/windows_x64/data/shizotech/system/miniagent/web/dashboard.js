@@ -16,10 +16,7 @@ const DashboardState = {
   init() {
     this.modules.set('chat', { title: 'Chat', active: true });
     this.modules.set('features', { title: 'Features', active: false });
-    this.modules.set('bugs', { title: 'Bug Tracker', active: false });
-    this.modules.set('history', { title: 'History', active: false });
-    this.modules.set('expertgroups', { title: 'Expert Groups', active: false });
-    
+    this.modules.set('history', { title: 'History', active: false }); 
     this.modules.set('settings', { title: 'Settings', active: false });
   },
 
@@ -425,10 +422,6 @@ const NavigationManager = {
     // Clear history data
     localStorage.removeItem('dashboard_history');
     
-    // Clear expert groups data
-    localStorage.removeItem('expertgroups_data');
-    localStorage.removeItem('expertgroups_active');
-    
     // Clear settings
     localStorage.removeItem('dashboard_theme');
     
@@ -483,41 +476,11 @@ const ModuleEvents = {
     }
   },
 
-  // Listen for bugs events
-  bugs: {
-    onBugAdded(bug) {
-      // Sync with dashboard-wide bug manager
-      window.DashboardUtils.BugManager.register(bug.id, bug);
-    },
-
-    onBugUpdated(bug) {
-      window.DashboardUtils.BugManager.update(bug.id, bug);
-    },
-
-    onBugDeleted(id) {
-      window.DashboardUtils.BugManager.delete(id);
-    }
-  },
-
   // Listen for history events
   history: {
     onActionAdded(action) {
       // Sync with dashboard-wide history manager
       window.DashboardUtils.HistoryManager.add(action);
-    }
-  },
-
-  // Listen for expert groups events
-  expertgroups: {
-    onGroupSwitch(data) {
-      console.log('Expert Groups: Group switched to', data?.groupId);
-    },
-    
-    onMessageReceived(data) {
-      // Sync with dashboard-wide notification system
-      if (data?.count !== undefined) {
-        DashboardState.updateNotifications(data.count);
-      }
     }
   },
 
@@ -563,10 +526,7 @@ const Dashboard = {
     // Initialize module manager
     ModuleManager.register('chat', { iframeSrc: 'chat/index.html' });
     ModuleManager.register('features', { iframeSrc: 'features/index.html' });
-    ModuleManager.register('bugs', { iframeSrc: 'bugs/index.html' });
     ModuleManager.register('history', { iframeSrc: 'history/index.html' });
-    ModuleManager.register('expertgroups', { iframeSrc: 'expertgroups/index.html' });
-    
     ModuleManager.register('settings', { iframeSrc: 'settings/index.html' });
     
     ModuleManager.init();
@@ -641,39 +601,9 @@ window.addEventListener('message', (e) => {
           ModuleEvents.features.onFeatureUpdated(e.data.payload);
         }
         break;
-      case 'bugAdded':
-        if (e.data.module === 'bugs') {
-          ModuleEvents.bugs.onBugAdded(e.data.payload);
-        }
-        break;
-      case 'bugUpdated':
-        if (e.data.module === 'bugs') {
-          ModuleEvents.bugs.onBugUpdated(e.data.payload);
-        }
-        break;
-      case 'bugDeleted':
-        if (e.data.module === 'bugs') {
-          ModuleEvents.bugs.onBugDeleted(e.data.payload?.id);
-        }
-        break;
       case 'actionAdded':
         if (e.data.module === 'history') {
           ModuleEvents.history.onActionAdded(e.data.payload);
-        }
-        break;
-      case 'expertgroups:switch':
-        if (e.data.module === 'expertgroups') {
-          ModuleEvents.expertgroups.onGroupSwitch(e.data.payload);
-        }
-        break;
-      case 'expertgroups:message':
-        if (e.data.module === 'expertgroups') {
-          ModuleEvents.expertgroups.onMessageReceived(e.data.payload);
-        }
-        break;
-      case 'expertgroups:ready':
-        if (e.data.module === 'expertgroups') {
-          console.log('Expert Groups module initialized');
         }
         break;
     }
