@@ -788,6 +788,13 @@ std.cout()
 
   - Print to terminal directly
         --------------------------------------------------
+std.critical_section(
+    string - optional, create a named critical section, if no name specified, creates a code-local critical section.
+For explanation: named critical section can be across different code sections, while non-named critical sections are bound to the scope in which they are in.
+) -> std.critical_section
+
+  - Create a critical section object (locked state). This can be used to lock parts of the code so that only one task can execute it at a time.
+        --------------------------------------------------
 std.date(
     format: string - Format string (e.g. "%Y-%m-%d %H:%M:%S")
 )
