@@ -30576,11 +30576,19 @@ wait()
 Object: telegram.bot
 ==================================================
 
-    on_added_to_group -> variable
-    on_any_message    -> variable
-    on_member_join    -> variable
-    on_member_leave   -> variable
+    on_added_to_group    -> variable
+    on_any_message       -> variable
+    on_chat_join_request -> variable
+    on_member_join       -> variable
+    on_member_leave      -> variable
 
+        --------------------------------------------------
+approve_chat_join_request(
+    chatid: int - Chat ID,
+    userid: int - User ID to approve
+)
+
+  - Approve a chat join request
         --------------------------------------------------
 ban_chat_member(
     chatid: int - Chat ID,
@@ -30598,6 +30606,13 @@ copy_message(
 )
 
   - Copy a message without forwarding tag
+        --------------------------------------------------
+decline_chat_join_request(
+    chatid: int - Chat ID,
+    userid: int - User ID to deny
+)
+
+  - Deny a chat join request
         --------------------------------------------------
 delete_message(
     chatdata: object - Contains chatid and msgid, or chatid: int - Chat ID,
