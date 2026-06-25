@@ -10,7 +10,7 @@ add_tools(agt)
 	//add_skill_tools(agt);
 
 	agt.add_tool(
-		"plan_next",
+		"plan_continue",
 		"Set the next steps for the plan",
 		[
 			next_steps = "&string(): Plan for the next steps",

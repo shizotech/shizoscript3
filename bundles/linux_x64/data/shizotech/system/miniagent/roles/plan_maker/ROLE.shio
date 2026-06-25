@@ -38,10 +38,8 @@ add_tools(agt)
 			managed executor = agt.subagent("plan_executor");
 			managed reviewer = agt.subagent("plan_reviewer");
 			
-			if(agt.on_action)
-			{
-				agt.on_action([start_agent=executor.agent_id]);
-				
+			if(agt.on_action) {
+				agt.on_action([start_agent=executor.agent_id]);	
 				executor.on_action = [agt](act) {
 					agt.on_action(act);
 				};
@@ -54,15 +52,17 @@ add_tools(agt)
 			
 			for(true) {			
 				last_handover = fileio.read_string(".plan/handover.md");
-				std.print("\n\n---EXECUTOR---\n\n");
+				std.print("\n\n---RUN EXECUTOR---\n\n");
+				
 				exec_result = executor.task(prompt_executor);
+				
 				if(last_handover == fileio.read_string(".plan/handover.md"))
 					fileio.write_string(".plan/handover.md", "# Important notices to future agents");
 				fileio.remove(".plan/next_steps.md");
 				
 				last_report = exec_result.reports ? exec_result.reports[0].report : "<no report>";
 				
-				std.print("\n\n---REVIEWER---\n\n");
+				std.print("\n\n---RUN REVIEWER---\n\n");
 				reviewer.env.plan_finished = true;
 				review_result = reviewer.task(prompt_reviewer + last_report);
 				

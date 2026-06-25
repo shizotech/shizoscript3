@@ -595,11 +595,11 @@ Decision must be binary and final.
 		"replace_string_in_file",
 		"Replace one or multiple occurences of a given string within a text file\nMake sure to NOT include any line numbers returned by read functions.",
 		[
-			path = "&string(): Name or path of the file",
-			intention = "&string(): Intention of the operation",
-			original_code = "&string(): byte-to-byte copy of the original text to replace",
-			new_code = "&string(): The new code that should replace original_code",
+			path = "&string(): Name or path of the file.",
+			target_text = "&string(): Exact text to locate. Must be copied byte-for-byte from the file.",
+			replacement_text = "&string(): Text that will replace target_text.",
 			replace_all = ["true", "false"],
+			intention = "&string(): Intention of the operation.",
 		],
 		[](agt, args)
 		{
@@ -630,36 +630,40 @@ Decision must be binary and final.
 				];
 			}
 			
-			if(!args.original_code)
-				args.original_code = "";
+			if(!args.target_text)
+				args.target_text = "";
 			
-			if(!args.new_code)
-				args.new_code = ""; //Suppose the AI meant that?
+			if(!args.replacement_text)
+				args.replacement_text = ""; //Suppose the AI meant that?
 			
-			original = args.original_code.strip();
-			edit = args.new_code.strip();
+			original = args.target_text.strip();
+			edit = args.replacement_text.strip();
 			
 			agt.report_back("original\n```\n" + original + "\n```\nedit\n```\n" + edit + "\n```\n");
 
 			if(original.empty()){
+				std.print(args);
+				std.print("\nNO_target_text");
 				return [
 					ok = false,
-					error = "No 'original_code' specified, nothing to replace.",
+					error = "No 'target_text' argument given, make sure to use correct argument names.",
 				];
 			}
 			
 			if(args.replace_all == "false" && old_content.count(original) > 1)
 			{
+				std.print("\nMULTIPLE_CONTENTS");
 				return [
 					ok = false,
-					error = "replace_all was set to false but there are more than one occurences to replace.\nEmit a bigger piece of the original code to replace and make it less ambigious.",
+					error = "replace_all was set to false but there are more than one occurences to replace.\nEmit a bigger piece of the target text to replace and make it less ambigious.",
 				];
 			}
 			
 			if(!old_content.contains_ignoring_whitespaces(original)) {
+				std.print("\nORIGINAL_NOT_FOUND");
 				return [
 					ok = false,
-					error = "The original code provided was not found in the file.\nMake sure to copy the source code you want to replace exactly as it is, without line numbers, so the replace function can find it.",
+					error = "The original code provided was not found in the file.\nMake sure to copy the target text you want to replace exactly as it is, without any line numbers.",
 				];
 			}
 			//Evaluate possible changes
@@ -671,7 +675,7 @@ You are a Patch Confirming Agent. Your responsibility is to determine whether a 
 
 You will receive:
 
-- <ORIGINAL_CODE> – the full content before modification
+- <target_text> – the full content before modification
 - <REPLACE_CODE> – the exact chunk that should be replaced
 - <REPLACE_WITH> – the new chunk that should substitute it
 - <TASK> – a description of the required change
@@ -746,7 +750,7 @@ Rules:
 				agt.report_back("evaluating... ");
 				
 				managed tmp_agt = agt.simple_agent(confirm_agent);
-				eval_result = tmp_agt.text("<ORIGINAL_CODE>\n" + old_content + "\n\n\n<REPLACE_CODE>\n" + original + "\n\n\n<REPLACE_WITH>\n" + edit + "\n\n\n<TASK>\n" + current_task + "\n\n\n<INTENTION>\n" + args.intention);
+				eval_result = tmp_agt.text("<target_text>\n" + old_content + "\n\n\n<REPLACE_CODE>\n" + original + "\n\n\n<REPLACE_WITH>\n" + edit + "\n\n\n<TASK>\n" + current_task + "\n\n\n<INTENTION>\n" + args.intention);
 				
 				eval = eval_result.extract("<evaluation>", "</evaluation>").strip();
 				approve = eval_result.extract("<statement>", "</statement>").strip();
