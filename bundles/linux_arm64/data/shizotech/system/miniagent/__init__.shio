@@ -92,7 +92,7 @@ for(!cfg)
 #include "web_api.shio"
 
 //Initialize agent
-planner = miniagent(cfg.api, None, "planner", cfg.token); //So that the local agent.space aswell as the global agent.space are visible
+planner = miniagent(cfg.api, None, "plan_maker", cfg.token); //So that the local agent.space aswell as the global agent.space are visible
 
 last_state = "";
 

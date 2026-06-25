@@ -145,16 +145,22 @@ function saveCurrentConversationHTML() {
   // Convert each bubble to HTML string
   const messagesHTML = [];
   messageBubbles.forEach(bubble => {
-    // Save all bubbles (both user and assistant)
     messagesHTML.push(bubble.outerHTML);
   });
   
-  // Save the HTML to conversation data
+  // Update conversation data
   conv.messagesHTML = messagesHTML;
   conv.updatedAt = Date.now();
   
-  // Update conversations in storage
-  saveConversations(loadConversations());
+  // Save updated conversations
+  const convs = loadConversations();
+  const idx = convs.findIndex(c => c.id === activeId);
+  if (idx !== -1) {
+    convs[idx] = conv;
+  } else {
+    convs.push(conv);
+  }
+  saveConversations(convs);
 }
 
 function loadConversationHTML(conv) {
