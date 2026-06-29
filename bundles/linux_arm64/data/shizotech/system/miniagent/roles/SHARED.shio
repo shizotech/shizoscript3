@@ -479,6 +479,7 @@ IMPORTANT:
 
 - Code, configuration files, JSON, YAML, or other structured data must be checked for correctness, syntax, logical consistency, and task compliance.
 - Text-based artifacts such as task reports, logs, markdown summaries, or documentation should always be APPROVED regardless of their content (even if they indicate failure), as they are not “executable” code.
+- For reports or failure reports, do not verify state. Always approve reports of any kind.
 
 Evaluation Rules for Code/Data:
 
@@ -592,7 +593,7 @@ Decision must be binary and final.
 	);
 	
 	agt.add_tool(
-		"replace_string_in_file",
+		"replace_string",
 		"Replace one or multiple occurences of a given string within a text file\nMake sure to NOT include any line numbers returned by read functions.",
 		[
 			path = "&string(): Name or path of the file.",

@@ -52,10 +52,11 @@
   - Object Type: nanogui.midicontrolcombo
   - Object Type: nanogui.midicontrolfloat
   - Object Type: nanogui.midicontrolint
-  - Object Type: nanogui.midicontrollo
+  - Object Type: nanogui.midicontrolio
   - Object Type: nanogui.midicontrolslider
   - Object Type: nanogui.midicontroltext
   - Object Type: nanogui.midicontrolvector
+  - Object Type: nanogui.mididevice
   - Object Type: nanogui.modmatrixnode
   - Object Type: nanogui.permanent_tab
   - Object Type: nanogui.screen
@@ -583,10 +584,27 @@ nanogui.deserialize_controls()
 
   - Deserialize modmatrix nodes from JSON.
         --------------------------------------------------
+nanogui.enumerate_midi_devices()
+
+  - Get list of available MIDI devices.
+        --------------------------------------------------
 nanogui.layout_horizontal() -> nanogui.layout_horizontal
 
         --------------------------------------------------
 nanogui.layout_vertical() -> nanogui.layout_vertical
+
+        --------------------------------------------------
+nanogui.midi_device_count()
+
+  - Get number of available MIDI devices.
+        --------------------------------------------------
+nanogui.midi_device_name(
+    device_id - device index
+)
+
+  - Get name of a MIDI device by ID.
+        --------------------------------------------------
+nanogui.mididevice() -> nanogui.mididevice
 
         --------------------------------------------------
 nanogui.serialize_controls()
@@ -2584,6 +2602,13 @@ put()
 
   - put(key, value)
         --------------------------------------------------
+update(
+    key: string - Key in the database,
+    delta: json object - Delta JSON to merge into the existing value
+)
+
+  - Atomically update a JSON value at key by recursively merging a delta JSON.
+        --------------------------------------------------
 
 
 ==================================================
@@ -2830,7 +2855,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -3564,7 +3589,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -4284,7 +4309,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -5036,7 +5061,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -5730,7 +5755,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -6430,7 +6455,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -7346,7 +7371,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -8062,7 +8087,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -8784,7 +8809,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -9526,7 +9551,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -10188,7 +10213,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -10904,7 +10929,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -11645,7 +11670,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -12351,7 +12376,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -13063,7 +13088,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -13781,7 +13806,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -14499,7 +14524,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -15069,7 +15094,7 @@ y(
 
 
 ==================================================
-Object: nanogui.midicontrollo
+Object: nanogui.midicontrolio
 ==================================================
 
     attr -> variable
@@ -15217,7 +15242,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -15923,7 +15948,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -16641,7 +16666,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -17347,7 +17372,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -17913,6 +17938,68 @@ y(
 
 
 ==================================================
+Object: nanogui.mididevice
+==================================================
+
+        --------------------------------------------------
+close()
+
+  - Close MIDI device. Returns true on success.
+        --------------------------------------------------
+device_id()
+
+  - Get device ID.
+        --------------------------------------------------
+device_name()
+
+  - Get device name.
+        --------------------------------------------------
+is_open()
+
+  - Check if device is open. Returns true if open.
+        --------------------------------------------------
+open(
+    device_id - device index (default: first available),
+    type - 'input', 'output', or 'input_output' (default: 'input')
+)
+
+  - Open MIDI device. Returns true on success.
+        --------------------------------------------------
+send_control_change(
+    control - control number (0-127),
+    value - control value (0-127),
+    channel - MIDI channel (0-15, default: 0)
+)
+
+  - Send a control change message.
+        --------------------------------------------------
+send_message(
+    status - MIDI status byte,
+    data1 - first data byte,
+    data2 - second data byte
+)
+
+  - Send a raw MIDI message.
+        --------------------------------------------------
+send_note_off(
+    note - MIDI note number (0-127),
+    velocity - note velocity (0-127),
+    channel - MIDI channel (0-15, default: 0)
+)
+
+  - Send a note off message.
+        --------------------------------------------------
+send_note_on(
+    note - MIDI note number (0-127),
+    velocity - note velocity (0-127),
+    channel - MIDI channel (0-15, default: 0)
+)
+
+  - Send a note on message.
+        --------------------------------------------------
+
+
+==================================================
 Object: nanogui.modmatrixnode
 ==================================================
 
@@ -18061,7 +18148,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -18729,7 +18816,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -19373,7 +19460,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -20064,7 +20151,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -20756,7 +20843,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -21556,7 +21643,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -22232,7 +22319,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -22918,7 +23005,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -23637,7 +23724,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -24337,7 +24424,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -25116,7 +25203,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -25814,7 +25901,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -26478,7 +26565,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -27124,7 +27211,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -27764,7 +27851,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -28398,7 +28485,7 @@ content() -> nanogui.widget
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------
@@ -29046,7 +29133,7 @@ content()
 control(
     name - string,
     group - string
-) -> nanogui.midicontrollo
+) -> nanogui.midicontrolio
 
   - Create a child MIDI control IO (generic value holder).
         --------------------------------------------------

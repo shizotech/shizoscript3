@@ -141,13 +141,17 @@ Used for debugging and auditing.
 
 Each run MUST follow this sequence exactly:
 
-Step 1 — Load State
-Read all files in .plan/.
+Step 1 — Load State and Skills
+1.1 Read all files in .plan/.
 
 If .plan/ is missing or incomplete:
 - initialize it
 - create minimal valid structure
 - stop or proceed cautiously
+
+1.2 Check out available skills via 'list_skills'.
+
+Read all required skills for the task.
 
 
 Step 2 — Interpret Project State

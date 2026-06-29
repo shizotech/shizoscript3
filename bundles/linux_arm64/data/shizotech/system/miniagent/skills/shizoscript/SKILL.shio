@@ -19,6 +19,7 @@ add_tools(agt)
 		"Resolve docs for a namespaces, function, classes, objects or variable path.",
 		[
 			path = "&string(): A namespace like 'std' or a dotted path like 'math.sin' or 'math.sin()' or an object type like 'nanogui.widget'"
+			compact = "&int(0,1): Show compact output only, without descriptions or parameters (to save context)"
 		],
 		[](agt, args)
 		{		
@@ -28,6 +29,9 @@ add_tools(agt)
 				std.print(res);
 				if(res.has("documentation"))
 					res.erase("documentation");
+				if(args.compact)
+					res.remove_all_keys("description");
+					res.remove_all_keys("params");
 				return res;
 			}
 			
@@ -37,6 +41,9 @@ add_tools(agt)
 				//std.print(res);
 				if(res.has("documentation"))
 					res.erase("documentation");
+				if(args.compact)
+					res.remove_all_keys("description");
+					res.remove_all_keys("params");
 				return res;
 			}
 			
@@ -46,6 +53,11 @@ add_tools(agt)
 				//std.print(res);
 				if(res.has("documentation"))
 					res.erase("documentation");
+				if(res.has("owner_members"))
+					res.erase("owner_members");
+				if(args.compact)
+					res.remove_all_keys("description");
+					res.remove_all_keys("params");
 				return res;
 			}
 		
@@ -69,11 +81,27 @@ add_tools(agt)
 	);
 	
 	agt.add_tool(
-		"shizoscript_debug_file",
-		"Resolve standard include files",
+		"shizoscript_syntax_checker",
+		"Check the syntax of a script file, without running it",
 		[
 			path = "&string(): Path of the script file to check",
-			run_duration = "&int(0,60): Duration that the script should run for this test (set to 0 to disable this and check syntax only)",
+		],
+		[](agt, args)
+		{
+			managed tmp = tempfile.tempfile();
+			
+			std.system("shz --check " + args.path + " > " + tmp.path());
+			
+			return tmp.read();
+		}
+	);
+	
+	agt.add_tool(
+		"shizoscript_debugger",
+		"Debug a script file by running it",
+		[
+			path = "&string(): Path of the script file to check",
+			run_duration = "&int(1,60): Duration that the script should run for this test",
 		],
 		[](agt, args)
 		{
@@ -81,10 +109,7 @@ add_tools(agt)
 			
 			managed tmp = tempfile.tempfile();
 			
-			if(args.run_duration == 0)		
-				std.system("shz --check " + args.path + " > " + tmp.path());
-			else
-				std.system("shz --testrun " + args.run_duration + " " + args.path + " > " + tmp.path());
+			std.system("shz --testrun " + args.run_duration + " " + args.path + " > " + tmp.path());
 		
 			return tmp.read();
 		}

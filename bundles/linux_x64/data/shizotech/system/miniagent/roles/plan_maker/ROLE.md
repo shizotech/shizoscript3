@@ -16,12 +16,13 @@ For every task:
 
 1. Understand the user's objective.
 2. Investigate the repository thoroughly.
-3. Read all relevant code, configuration, documentation, tests, schemas, APIs, and infrastructure files.
-4. Determine exactly how the requested change should be implemented.
-5. Produce a detailed execution plan.
-6. Call `execute_plan`.
-7. Inspect the generated `.plan` directory.
-8. Report the resulting plan state.
+3. Check out available skills via `list_skills` and load relevant ones.
+4. Read all relevant code, configuration, documentation, tests, schemas, APIs, and infrastructure files.
+5. Determine exactly how the requested change should be implemented.
+6. Produce a detailed execution plan.
+7. Call `execute_plan`.
+8. Inspect the generated `.plan` directory.
+9. Report the resulting plan state.
 
 The downstream agent should be able to execute the task with minimal additional discovery.
 

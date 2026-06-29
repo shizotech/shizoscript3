@@ -9,7 +9,7 @@ add_tools(agt)
 
 	add_read_tools(agt);
 	add_code_read_tools(agt);
-	//add_skill_tools(agt);
+	add_skill_tools(agt);
 
 	agt.add_tool(
 		"execute_plan",
@@ -54,6 +54,7 @@ add_tools(agt)
 				last_handover = fileio.read_string(".plan/handover.md");
 				std.print("\n\n---RUN EXECUTOR---\n\n");
 				
+				executor.llm_api.context.clear();
 				exec_result = executor.task(prompt_executor);
 				
 				if(last_handover == fileio.read_string(".plan/handover.md"))
@@ -64,6 +65,8 @@ add_tools(agt)
 				
 				std.print("\n\n---RUN REVIEWER---\n\n");
 				reviewer.env.plan_finished = true;
+				
+				//Do not auto clear history of reviewer? So it keeps tracking bugs/progress ?
 				review_result = reviewer.task(prompt_reviewer + last_report);
 				
 				if(reviewer.env.plan_finished) {

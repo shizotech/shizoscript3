@@ -123,6 +123,7 @@ class openai_stream
 				if(chunk.choices[0].delta.reasoning) // ??? idk when they changed that
 					stream_reasoning += chunk.choices[0].delta.reasoning;
 					check_reasoning = true;
+					std.cout(chunk.choices[0].delta.reasoning);
 				if(chunk.choices[0].delta.content)
 					stream_content += chunk.choices[0].delta.content;
 					check_content = true;
@@ -376,6 +377,8 @@ class openai_api
 			delta = &chunk.choices[0].delta;
 			if(delta.reasoning_content && std.is_function(on_reason))
 				on_reason(delta.reasoning_content);
+			else if(delta.reasoning && std.is_function(on_reason))
+				on_reason(delta.reasoning);
 			if(delta.content && std.is_function(on_text))
 				on_text(delta.content);
 			
@@ -510,6 +513,8 @@ class openai_api
 			
 			if(delta.reasoning_content && std.is_function(on_reason))
 				on_reason(delta.reasoning_content);
+			else if(delta.reasoning && std.is_function(on_reason))
+				on_reason(delta.reasoning);
 			if(delta.content && std.is_function(on_text))
 				on_text(delta.content);
 					
@@ -736,6 +741,7 @@ class openai_api
 		
 		// Try up to 2 times without structured output
 		temperature = 0.0;
+		old_temperature = body.temperature;
 		
 		for(max_cc = 2; max_cc > 0; max_cc--)
 		{
@@ -809,6 +815,7 @@ class openai_api
 				body.messages.push_back(
 					["role" = "assistant", "content" = answer.content]
 				);
+				body.temperature = old_temperature;
 				return result_json;
 			}
 			
@@ -838,6 +845,8 @@ class openai_api
 		);
 		
 		body.remove("response_format");
+		
+		body.temperature = old_temperature;
 		
 		return result_json;
 	}

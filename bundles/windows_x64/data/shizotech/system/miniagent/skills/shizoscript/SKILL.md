@@ -65,6 +65,17 @@ Absolutely no assumptions are allowed.
 
 ---
 
+### STEP 5 — DEBUGGING
+
+Make sure the script compiles and runs correctly.
+
+1. Use `shizoscript_syntax_checker` until all compile errors are resolved.
+
+2. After that use `shizoscript_debugger` to catch any runtime errors and fix them.
+
+
+---
+
 # HARD RULE: NO PRIOR KNOWLEDGE
 
 You are STRICTLY FORBIDDEN from using:
@@ -305,14 +316,12 @@ NEVER use `{}` for data.
 
 ---
 
-## 11. Namespaces
+## 11. Builtin Namespaces
 
 ```
 std.print("Hello");
 math.sqrt(2);
 ```
-
-(!) NEVER use `using` in generated code
 
 ---
 

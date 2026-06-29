@@ -83,6 +83,15 @@ class miniagent
 			}
 		};
 		
+		llm_api.on_analysis = [this](txt)
+		{
+			if(std.is_function(on_action)) {
+				on_action([
+					text = txt,
+				]);
+			}
+		};
+		
 		llm_api.on_tool = [this](toolname, toolargs)
 		{
 			if(std.is_function(on_action)) {
