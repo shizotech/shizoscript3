@@ -1,0 +1,7 @@
+
+for(1) {
+	str = std.input();
+	old = fileio.read_string("C:/Users/neu/source/repos/shizoscript3/release/shizotech/system/mcp/test.txt");
+	fileio.write_string("C:/Users/neu/source/repos/shizoscript3/release/shizotech/system/mcp/test.txt", old + "\n" + str);
+	std.print(str);
+}

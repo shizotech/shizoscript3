@@ -247,6 +247,24 @@ config = [key="val"];
 
 ---
 
+## 4.1 Type Conversions
+
+Type conversions are implicit and dynamic in shizoscript.
+There are only a few standard conversions available:
+
+```
+str_value = std.string(123); // Or any other type/json/object.
+int_value = std.int("123");
+float_value = std.float("42.0");
+json_value = std.json("..."); //A valid JSON string
+```
+
+WRONG:
+- Do NOT assume that every type has standard conversion functions like `type.int()` or `type.string()`
+- Only SOME types (like JSON variables) have builtin `string()` and `compact_string()` functions (check the docs!)
+
+---
+
 ## 5. References
 
 ```
@@ -307,12 +325,33 @@ class Player
 
 ## 10. JSON Objects
 
+JSON Notation is much simpler in shizoscript.
+
 ```
 list = [1,2,3];
 map = [key="value"];
+complex_json = [name="Root", children=[[name="Child 1", age=24], [name="Child 2", age=22], [name="Child 3", age=20]]];
+
+//Access via
+
+std.print(complex_json.name); // -> "Root"
+std.print(complex_json["name"]); // -> "Root"
+
+name_str = "name";
+
+std.print(complex_json[name_str]) // -> Also "Root"
+
+std.print(complex_json.children[0].name) // -> "Child 1"
+
 ```
 
 NEVER use `{}` for data.
+
+Checklist:
+- `{}` becomes `[]`
+- Keys do not need to be escaped with quotes ("") but they are still treated like key-strings internally and do NOT refer to local variables.
+- Shizoscript JSONS do not differentiate between objects and lists syntactically. 
+- However, when converted to a string (or constructed from a string) it produces and accepts the official JSON syntax to keep compatibility.
 
 ---
 

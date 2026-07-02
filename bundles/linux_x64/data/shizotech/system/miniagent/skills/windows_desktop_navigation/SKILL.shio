@@ -1,0 +1,283 @@
+
+import tempfile;
+
+//This is specifically for qwen models
+output_format = R"(
+Output the result(s) in the following JSON format and write nothing else:
+```json
+[
+  {"bbox_2d": [x1, y1, x2, y2], "label": "type_of_component", "sub_label": "Reference_designator"},
+  ...
+]
+```
+)";
+
+transform_bbox(img, bbox) {
+	x1 = bbox[0] / 1000.0 * img.width();
+	x2 = bbox[2] / 1000.0 * img.width();
+	y1 = bbox[1] / 1000.0 * img.height();
+	y2 = bbox[3] / 1000.0 * img.height();
+	return [x1,y1,x2,y2];
+}
+
+get_screenshot() {
+	return "screenshot_ds.png";
+}
+
+take_screenshot() {
+	win32.screenshot("screenshot.bmp");	
+	tmp = bitmap.load("screenshot.bmp");
+	//tmp.downsample();
+	tmp.save(get_screenshot());
+}
+
+remove_screenshot() {
+	fileio.remove("screenshot.bmp");
+	fileio.remove(get_screenshot());
+}
+
+class tmp_screenshot
+{
+	__init__() {
+		take_screenshot();
+	}
+	__deinit__() {
+		remove_screenshot();
+	}
+}
+
+//Expects args.where
+move_mouse(agt, &args) {
+	managed tmp = tmp_screenshot();
+	managed cva = agt.simple_agent(None);
+	managed cva_review = agt.simple_agent(None);
+	
+	cva.add_image(get_screenshot());
+	
+	cva.on_text = [](txt)
+	{
+		std.cout(txt);
+	};
+	
+	cva.on_analysis = [](txt)
+	{
+		std.cout("\nANALYSIS\n");
+		std.cout(txt);
+	};
+	
+	cva.set_temperature(0.0);
+	
+	cva.context.body.default_chat_template_kwargs = [
+		enable_thinking = false
+	];
+	cva.context.body.extra_body.chat_template_kwargs = [
+		enable_thinking = false
+	];
+	cva.context.body.reasoning_effort = "none";
+	cva.context.body.enable_thinking = false;
+	
+	//res = cva.task("Task:\n" + args.what + "\n\nContext:\n" + args.context + "\n\nResponse Format:\n" + output_format + "\n\nAnswer quickly and precise.\nDo not explain the image, do not think about it.\nJust locate the bounding box and answer directly.");
+	res = cva.task("Here is a task which tells you where to move the cursor to.\nIdentify the correct UI element and return its bounding box.\n\nTask:\n" + args.where + "\n\nResponse Format:\n" + output_format + "\n\nAnswer quickly and precise.\nDo not explain the image, do not think about it, do not analyze it further.\nLocate the bounding box and answer directly as fast as possible.");
+	
+	bbox = std.json(res.extract("```json","```"));
+	
+	if(bbox.size() == 0) { return [ok = false, error = "UI element was not found."]; }
+	else if(bbox.size() > 1) { return [ok = false, error = "Multiple UI elements found, make your request less ambigious."]; }
+	
+	bmp = bitmap.load(get_screenshot());
+	
+	transformed = transform_bbox(bmp, bbox[0].bbox_2d);
+
+	bmp.draw_rectangle(transformed[0],transformed[1],transformed[2],transformed[3],bitmap.rgb(255, 0, 0));
+	bmp.save("screenshot_loc.png");
+	
+	for(1 && false) {
+		cva_review.add_image("screenshot_loc.png");
+		res = cva_review.task("Here is an instruction to detect an UI element:\n\n<inst>\n" + args.where + "\n</inst>\n\nYour task now is to check if the red rectangle correctly captures that UI element now (yes) or if the detection is off (no).\nFormat your answer exactly like this:\n<answer>yes|no</answer>");
+		rev = res.extract("<answer>", "</answer>").strip();
+
+		if(rev != "no") {
+			break;
+		}
+		
+		cva.add_image("screenshot_loc.png");
+		res = cva.task("Your coordinates were off.\nCheck where the red rectangle bbox landed and correct your coordinates.\n\n" + output_format);
+		bbox = std.json(res.extract("```json","```"));
+		
+		bmp = bitmap.load(get_screenshot());
+		transformed = transform_bbox(bmp, bbox[0].bbox_2d);
+		bmp.draw_rectangle(transformed[0],transformed[1],transformed[2],transformed[3],bitmap.rgb(255, 0, 0));
+		bmp.save("screenshot_loc.png");
+	}
+		
+	mid_x = (transformed[0] + transformed[2]) / 2.0;
+	mid_y = (transformed[1] + transformed[3]) / 2.0;
+	
+	win32.set_cursor_pos(mid_x /** 2*/, mid_y /** 2*/); // * 2 because image was downsampled
+	
+	std.sleep(100);
+}
+
+add_tools(agt)
+{
+	local_dir = fileio.file_dir(std.local_executable());
+
+	pkgs = fileio.dirs(local_dir + "/shizotech/packages", 0);
+
+	for(i = 0; i < pkgs.size(); i++)
+	{
+		std.import(pkgs[i]);
+	}
+
+	shzdocs.load_all_modules();
+
+	agt.add_tool(
+		"desktop_state",
+		"Get information about the desktop (state, elements, visibility) using a prompt",
+		[
+			question = "&string(): What to look for",
+			context = "&string(): Context for this action",
+			response_format = "&string(): How and what the agent should respond",
+		],
+		[](agt, args)
+		{		
+			managed tmp = tmp_screenshot();
+			managed cva = agt.simple_agent(None);
+			
+			cva.add_image(get_screenshot());
+			
+			cva.on_text = [](txt)
+			{
+				std.cout(txt);
+			};
+			
+			cva.on_analysis = [](txt)
+			{
+				std.cout(txt);
+			};
+			
+			cva.set_temperature(0.5);
+			
+			cva.context.body.default_chat_template_kwargs = [
+				enable_thinking = false
+			];
+			cva.context.body.extra_body.chat_template_kwargs = [
+				enable_thinking = false
+			];
+			cva.context.body.reasoning_effort = "none";
+			cva.context.body.enable_thinking = false;
+			
+			return cva.task("# Task\n" + args.question + "\n\n# Context\n" + args.context + "\n\n# Response Format\n" + args.response_format + "\n\nAnswer short and precise as fast as possible.\nFocus on the question only, do not analyze the image further.");
+		}
+	);
+	
+	agt.add_tool(
+		"mouse_hover",
+		"Move the mouse to a new position on the screen.\nThis function uses bounding boxes to detect UI elements internally.\nUse it to inspect tooltips and autocompletes.",
+		[
+			where = "&string(): Where to move to",
+			//context = "&string(): Context for this action",
+		],
+		[](agt, args)
+		{		
+			move_mouse(agt, args);
+			
+			return [
+				ok = true,
+				status = "Mouse moved.",
+			];
+		}
+	);
+	
+	agt.add_tool(
+		"mouse_button",
+		"Perform a mouse action",
+		[
+			where = "&string(): Where to move to before performing the action",
+			button = ["left", "right", "middle"],
+			action = ["click", "doubleclick", "start_drag", "release_drag"],
+		],
+		[](agt, args)
+		{		
+			move_mouse(agt, args);
+
+			status = "Mouse event was sent.";
+			
+			if(args.action == "start_drag")
+				win32.mouse_down(args.button);
+				status = "Drag started, now call this tool again with 'release_drag'";
+			else if(args.action == "release_drag")
+				win32.mouse_up(args.button);
+				status = "Drag complete";
+			else if(args.action == "click")
+				win32.mouse_click(args.button, 1);
+			else if(args.action == "doubleclick")
+				win32.mouse_click(args.button, 1);
+				std.sleep(11);
+				win32.mouse_click(args.button, 2);
+
+			std.sleep(1000 * 2);
+
+			return [
+				ok = true,
+				status = status,
+			];
+		}
+	);
+	
+	agt.add_tool(
+		"type_text",
+		"Send a string as text input to the desktop",
+		[
+			//where = "&string(): Where to move to before performing the action",
+			text = "&string(): Text to perform"
+		],
+		[](agt, args)
+		{		
+			//move_mouse(agt, args);
+			
+			//Force focusing on the element
+			//win32.mouse_click("left", 1);
+		
+			win32.type_text(args.text, 101);
+
+			std.sleep(1000);
+
+			return [
+				ok = true,
+				status = "Text was sent",
+			];
+		}
+	);
+	
+	agt.add_tool(
+		"send_keys",
+		"Send a key combination using human-readable string syntax.",
+		[
+			//where = "&string(): Where to move to before performing the action",
+			combo = "&string(): Combination like 'ctrl+s', 'ctrl+shift+t', 'alt+f4', 'win+e', 'a', 'enter', 'backspace', 'f5' etc.",
+			repeat = "int(): Repeat N times (optional).",
+		],
+		[](agt, args)
+		{		
+			//move_mouse(agt, args);
+		
+			//Force focusing on the element
+			//win32.mouse_click("left", 1);
+		
+			args.repeat = math.max(args.repeat, 1);
+			
+			success = false;
+			for(i = 0; i < args.repeat; i++) {
+				success = win32.send_keys(args.combo);
+			}
+			
+			std.sleep(1000);
+			
+			return [
+				ok = success,
+			];
+		}
+	);
+}
+	

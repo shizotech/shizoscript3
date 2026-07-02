@@ -16,10 +16,10 @@ add_tools(agt)
 
 	agt.add_tool(
 		"shizoscript_docs",
-		"Resolve docs for a namespaces, function, classes, objects or variable path.",
+		"Resolve docs for a namespaces, function, classes, objects or variable path (exact).",
 		[
-			path = "&string(): A namespace like 'std' or a dotted path like 'math.sin' or 'math.sin()' or an object type like 'nanogui.widget'"
-			compact = "&int(0,1): Show compact output only, without descriptions or parameters (to save context)"
+			path = "&string(): A namespace like 'std' or a dotted path like 'math.sin' or 'math.sin()' or an object type like 'nanogui.widget'",
+			compact = "&int(0,1): Show compact output only, without descriptions or parameters (to save context on unspecific lookups)"
 		],
 		[](agt, args)
 		{		
@@ -67,6 +67,29 @@ add_tools(agt)
 			];
 		}
 	);
+	
+	agt.add_tool(
+		"shizoscript_search_keywords",
+		"Find namespaces|functions|variables|types and docs by keywords.",
+		[
+			keywords = "&string(): A comma separated list of keywords to seach for",
+			require_all = "&int(0,1): Requires all keywords to be present in a type's description to be listed"
+		],
+		[](agt, args)
+		{		
+			res = shzdocs.search_keywords(args.keywords, args.require_all);
+			
+			res.erase("query");
+			
+			for(res.results && res.results.size() > 20) {
+				res.results.erase(res.results.size()-1);
+				res.truncated_results = true;
+			}
+			
+			return res;
+		}
+	);
+	
 	
 	agt.add_tool(
 		"shizoscript_resolve_include",

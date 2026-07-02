@@ -192,7 +192,7 @@ server.route("POST", "^/api/adminagent", [this](req, res) {
 	
 	prompt = body.prompt;
 	
-	new_agent = miniagent(cfg.api, None, "plan_maker", cfg.token);
+	new_agent = miniagent(cfg.api, None, "planner/orchestrator", cfg.token);
 	new_agent.env.agent_space = agent_space;
 	
 	new_token = body.session_id ?? std.random_hash();
@@ -830,4 +830,4 @@ server.start();
 			
 std.print("Webinterface: " + "http://localhost:13337\n");
 
-std.system("start http://localhost:13337");
+//std.system("start http://localhost:13337");

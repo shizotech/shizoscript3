@@ -1,4 +1,5 @@
 === TABLE OF CONTENTS ===
+  - Namespace: bitmap
   - Namespace: curl
   - Namespace: eigen
   - Namespace: fileio
@@ -17,6 +18,7 @@
   - Namespace: webserver
   - Namespace: win32
   - Namespace: zip
+  - Object Type: bitmap.bitmap
   - Object Type: curl.curl
   - Object Type: eigen.vec2d
   - Object Type: eigen.vec2f
@@ -92,6 +94,34 @@
   - Object Type: webserver.stream_writer
   - Object Type: zip.file
 
+
+
+==================================================
+Namespace: bitmap
+==================================================
+
+        --------------------------------------------------
+bitmap.bitmap(
+    width: int,
+    height: int
+) -> bitmap.bitmap
+
+  - Create bitmap with width and height
+        --------------------------------------------------
+bitmap.load(
+    filename: string
+)
+
+  - Load an image from disk into a bitmap object
+        --------------------------------------------------
+bitmap.rgb(
+    r: int,
+    g: int,
+    b: int
+)
+
+  - Convert R G B to a single integer
+        --------------------------------------------------
 
 
 ==================================================
@@ -193,6 +223,12 @@ fileio.file_ext(
 )
 
   - Extracts the file extension from a given path string
+        --------------------------------------------------
+fileio.file_info(
+    path: string - File or directory path
+)
+
+  - Get file/directory info as JSON object (size, exists, is_directory, is_file, last_write_time, path)
         --------------------------------------------------
 fileio.file_name(
     path: string - File path to extract filename from
@@ -1246,6 +1282,12 @@ win32.screenshot(
 
   - Capture the monitor under the current cursor and save it as a BMP image.
         --------------------------------------------------
+win32.send_keys(
+    combo: string - Combination like 'ctrl+s', 'ctrl+shift+t', 'alt+f4', 'win+e', 'a', 'enter', 'f5'.
+)
+
+  - Send a key combination using human-readable string syntax.
+        --------------------------------------------------
 win32.set_cursor_pos(
     x: int - Screen X coordinate,
     y: int - Screen Y coordinate
@@ -1270,6 +1312,208 @@ Namespace: zip
 zip.file() -> zip.file
 
   - Instantiate a new zip object
+        --------------------------------------------------
+
+
+==================================================
+Object: bitmap.bitmap
+==================================================
+
+        --------------------------------------------------
+bytes_per_pixel()
+
+  - Get bytes per pixel
+        --------------------------------------------------
+clear(
+    r: int,
+    g: int,
+    b: int
+)
+
+  - Clear bitmap with RGB color
+        --------------------------------------------------
+copy_region(
+    x1: int,
+    y1: int,
+    w: int,
+    h: int,
+    x2: int,
+    y2: int,
+    dest: bitmap
+)
+
+  - Copy a region from source to destination
+        --------------------------------------------------
+downsample(
+    
+)
+
+  - Halve the bitmap dimensions using subsample
+        --------------------------------------------------
+draw_circle(
+    cx: int,
+    cy: int,
+    radius: int,
+    color: int
+)
+
+  - Draw a circle outline
+        --------------------------------------------------
+draw_ellipse(
+    cx: int,
+    cy: int,
+    a: int,
+    b: int,
+    color: int
+)
+
+  - Draw an ellipse outline
+        --------------------------------------------------
+draw_filled_rectangle(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    color: int
+)
+
+  - Draw a filled rectangle
+        --------------------------------------------------
+draw_horizontal_line(
+    x1: int,
+    x2: int,
+    y: int,
+    color: int
+)
+
+  - Draw a horizontal line
+        --------------------------------------------------
+draw_line(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    r: int,
+    g: int,
+    b: int
+)
+
+  - Draw a line from (x1,y1) to (x2,y2) with RGB color
+        --------------------------------------------------
+draw_rectangle(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    color: int
+)
+
+  - Draw a rectangle outline
+        --------------------------------------------------
+draw_triangle(
+    x1: int,
+    y1: int,
+    x2: int,
+    y2: int,
+    x3: int,
+    y3: int,
+    color: int
+)
+
+  - Draw a triangle outline
+        --------------------------------------------------
+draw_vertical_line(
+    y1: int,
+    y2: int,
+    x: int,
+    color: int
+)
+
+  - Draw a vertical line
+        --------------------------------------------------
+get_pixel(
+    x: int,
+    y: int
+)
+
+  - Get pixel color at (x, y) as RGB integer
+        --------------------------------------------------
+get_pixel_rgb(
+    x: int,
+    y: int
+)
+
+  - Get pixel color at (x, y) as RGB integer
+        --------------------------------------------------
+height()
+
+  - Get bitmap height
+        --------------------------------------------------
+load(
+    filename: string
+)
+
+  - Load an image from disk into this bitmap
+        --------------------------------------------------
+pixel_count()
+
+  - Get total pixel count
+        --------------------------------------------------
+resize(
+    width: int,
+    height: int
+)
+
+  - Resize bitmap
+        --------------------------------------------------
+resize_lanczos(
+    width: int,
+    height: int
+)
+
+  - Resize bitmap using Lanczos-3 interpolation for high-quality scaling
+        --------------------------------------------------
+save(
+    filename: string
+)
+
+  - Save bitmap to file
+        --------------------------------------------------
+set_pixel(
+    x: int,
+    y: int,
+    r: int,
+    g: int,
+    b: int
+)
+
+  - Set a pixel at (x, y) with RGB values
+        --------------------------------------------------
+set_pixel_rgb(
+    x: int,
+    y: int,
+    color: int
+)
+
+  - Set pixel color at (x, y) as RGB integer
+        --------------------------------------------------
+stamp(
+    src: bitmap,
+    x: int,
+    y: int
+)
+
+  - Stamp (copy) a source bitmap onto this bitmap
+        --------------------------------------------------
+upsample(
+    
+)
+
+  - Double the bitmap dimensions using 2x upsample
+        --------------------------------------------------
+width()
+
+  - Get bitmap width
         --------------------------------------------------
 
 
@@ -2361,6 +2605,12 @@ file_ext(
 )
 
   - Extracts the file extension from a given path string
+        --------------------------------------------------
+file_info(
+    path: string - Path relative to local root
+)
+
+  - Get file/directory info as JSON object (size, exists, is_directory, is_file, last_write_time, path)
         --------------------------------------------------
 file_name(
     path: string - File path to extract filename from
@@ -30134,6 +30384,13 @@ hasi(
 
   - Check if JSON object contains a key (case-insensitive)
         --------------------------------------------------
+insert(
+    index: int - Zero-based index at which to insert; negative values count from the end
+value: object - Value to insert
+)
+
+  - Inserts a value at the specified index in the JSON container, shifting existing elements. Negative indices count from the end.
+        --------------------------------------------------
 key(
     index: int - Zero-based index of the key; negative values count from the end
 )
@@ -31008,7 +31265,9 @@ init(
 route(
     method: string - HTTP method (GET, POST, PUT, DELETE, *),
     path: string - URL path pattern (regex),
-    callback: function - Handler function that receives request object
+    callback: function(request_object, writer) - Handler function with two parameters:
+  1. request_object: JSON table with keys: method, path, query, body, client_ip, client_port, is_secure (0/1), timestamp, host, user_agent, content_type, content_length, headers (json), cookies (json), query_params (json), matches (json), multipart (json) with is_multipart, parsed, error, fields, parts
+  2. writer: shz_stream_writer - Stream writer for chunked/streaming responses. Use write_header(), write(), and end() to send data incrementally. If the writer is used, do not return a result table - the function returns void.
 )
 
   - Register a route handler for HTTP requests
@@ -31020,7 +31279,24 @@ start()
 static(
     url_pattern: string - URL pattern (e.g. '/static' or '/files'),
     file_or_directory: string - Path to file or directory to serve (will be protected against directory traversal),
-    protect_callback: function - Optional, called before the file is served and should return true or false.
+    protect_callback: function(request_object) -> bool - Optional protection callback. The request_object is a JSON table with the following keys:
+  method: string - HTTP method
+  path: string - Request URL path
+  query: string - Raw query string
+  body: string - Request body
+  client_ip: string - Client IP address
+  client_port: int - Client port
+  is_secure: int - Whether connection is secure (0/1)
+  timestamp: int - Unix timestamp in milliseconds
+  host: string - Host header value
+  user_agent: string - User-Agent header
+  content_type: string - Content-Type header
+  content_length: int - Content-Length value
+  headers: json - All request headers
+  cookies: json - Parsed cookies
+  query_params: json - Parsed query parameters
+  multipart: json - Multipart form data info with is_multipart, parsed, error, fields, parts
+  The callback must return true (shzvar true) to allow serving the file, or false/nil to deny access (returns 404).
 )
 
   - Register a static file route
@@ -31065,10 +31341,12 @@ init(
 route(
     method: string - HTTP method (GET, POST, PUT, DELETE, *),
     path: string - URL path pattern (regex),
-    callback: function - Handler function that receives request object
+    callback: function(request_object, writer) - Handler function with two parameters:
+  1. request_object: JSON table with keys: method, path, query, body, client_ip, client_port, is_secure (always 1 for HTTPS), timestamp, host, user_agent, content_type, content_length, headers (json), cookies (json), query_params (json), matches (json), multipart (json) with is_multipart, parsed, error, fields, parts
+  2. writer: shz_stream_writer - Stream writer for chunked/streaming responses. Use write_header(), write(), and end() to send data incrementally. If the writer is used, do not return a result table - the function returns void.
 )
 
-  - Register a route handler for HTTP requests
+  - Register a route handler for HTTPS requests
         --------------------------------------------------
 start()
 
@@ -31077,7 +31355,24 @@ start()
 static(
     url_pattern: string - URL pattern (e.g. '/static' or '/files'),
     file_or_directory: string - Path to file or directory to serve (will be protected against directory traversal),
-    protect_callback: function - Optional, called before the file is served and should return true or false.
+    protect_callback: function(request_object) -> bool - Optional protection callback. The request_object is a JSON table with the following keys:
+  method: string - HTTP method
+  path: string - Request URL path
+  query: string - Raw query string
+  body: string - Request body
+  client_ip: string - Client IP address
+  client_port: int - Client port
+  is_secure: int - Whether connection is secure (always 1 for HTTPS)
+  timestamp: int - Unix timestamp in milliseconds
+  host: string - Host header value
+  user_agent: string - User-Agent header
+  content_type: string - Content-Type header
+  content_length: int - Content-Length value
+  headers: json - All request headers
+  cookies: json - Parsed cookies
+  query_params: json - Parsed query parameters
+  multipart: json - Multipart form data info with is_multipart, parsed, error, fields, parts
+  The callback must return true (shzvar true) to allow serving the file, or false/nil to deny access (returns 404).
 )
 
   - Register a static file route
@@ -31099,13 +31394,22 @@ verify_password(
 Object: webserver.stream_writer
 ==================================================
 
-    ended        -> variable
-    headers_sent -> variable
-
         --------------------------------------------------
 end()
 
   - End the response stream (sends final chunk)
+        --------------------------------------------------
+is_client_alive()
+
+  - Check if the client connection is still alive (uses socket probe, no data sent)
+        --------------------------------------------------
+is_ended()
+
+  - Check if the stream has ended (explicitly ended or client disconnected)
+        --------------------------------------------------
+is_headers_sent()
+
+  - Check if HTTP headers have been sent
         --------------------------------------------------
 write(
     data: string - Data to send

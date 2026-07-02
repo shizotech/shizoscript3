@@ -123,7 +123,6 @@ class openai_stream
 				if(chunk.choices[0].delta.reasoning) // ??? idk when they changed that
 					stream_reasoning += chunk.choices[0].delta.reasoning;
 					check_reasoning = true;
-					std.cout(chunk.choices[0].delta.reasoning);
 				if(chunk.choices[0].delta.content)
 					stream_content += chunk.choices[0].delta.content;
 					check_content = true;
@@ -298,16 +297,59 @@ class openai_api
 		}
 	}
 	
+	set_tools(_toolset) {
+		if(std.is_class(_toolset, toolset))
+			body.tools = _toolset.tools;
+			ts = _toolset;
+	}
+	
+	add_image_url(img_url) {
+		if(body.messages && body.messages[-1].role == "user") {
+			body.messages[-1].content.push_back([
+				type="image_url",
+				image_url=[url=img_url]
+			]);
+		}
+		else {
+			body.messages.push_back(
+				["role" = "user", "content" = [
+						[
+							type="text",
+							text=""
+						],
+						[
+							type="image_url",
+							image_url=[url=img_url]
+						]
+					]
+				]);
+		}
+	}
+	
+	add_image_raw(raw_image_data, img_type = "png") {
+		add_image_url("data:image/"+img_type+";base64,"+std.base64_encode(raw_image_data));
+	}
+	
+	add_image(path) {
+		ext = fileio.file_ext(path);
+		add_image_raw(fileio.read_file(path), ext);
+	}
+	
 	ask(prompt)
 	{
 		if(_force_stop)
 			return None;
 		
 		prompt = prompt.rstrip_lines();
-	
-		body.messages.push_back(
-			["role" = "user", "content" = prompt]
-		);
+		
+		if(body.messages && body.messages[-1].role == "user") {
+			body.messages[-1].content[0].text = prompt;
+		}
+		else {
+			body.messages.push_back(
+				["role" = "user", "content" = prompt]
+			);
+		}
 		
 		//First, get token count
 		token_count_info = token_count_body(body);
@@ -316,6 +358,9 @@ class openai_api
 		
 		if(max_total_tokens == 0)
 			std.error("Cannot get max tokens!");
+			body.messages.push_back(
+				["role" = "assistant", "content" = pre_answer]
+			);
 			return None;
 		
 		//Truncate history if necessary
@@ -399,12 +444,6 @@ class openai_api
 		
 		return content;
 	}
-	
-	set_tools(_toolset) {
-		if(std.is_class(_toolset, toolset))
-			body.tools = _toolset.tools;
-			ts = _toolset;
-	}
 
 	task(prompt, _toolset = None)
 	{	
@@ -415,10 +454,15 @@ class openai_api
 	
 		set_tools(_toolset);
 		
-		body.messages.push_back(
-			["role" = "user", "content" = prompt]
-		);
-	
+		if(body.messages && body.messages[-1].role == "user") {
+			body.messages[-1].content[0].text = prompt;
+		}
+		else {
+			body.messages.push_back(
+				["role" = "user", "content" = prompt]
+			);
+		}
+		
 		//First, get token count
 		token_count_info = token_count_body(body);
 		current_tokens = token_count_info.tokens;
@@ -428,6 +472,9 @@ class openai_api
 			std.error("Cannot get max tokens!");
 			std.print(body.tools);
 			std.print(_toolset.tools);
+			body.messages.push_back(
+				["role" = "assistant", "content" = pre_answer]
+			);
 			return None;
 		
 		//Truncate history if necessary

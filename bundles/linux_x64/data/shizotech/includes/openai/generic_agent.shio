@@ -42,6 +42,10 @@ class generic_agent
 		};
 	}
 	
+	add_image_url(img_url) { return context.add_image_url(img_url); }
+	add_image_raw(raw_image_data, img_type = "png") { return context.add_image_raw(raw_image_data, img_type); }
+	add_image(path) { return context.add_image(path); }
+	
 	text(prompt)
 	{
 		return context.ask(prompt);

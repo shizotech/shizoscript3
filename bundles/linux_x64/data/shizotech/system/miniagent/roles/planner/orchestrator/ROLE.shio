@@ -1,0 +1,112 @@
+
+#include "../../../miniagent"
+#include "../../SHARED"
+
+add_tools(agt)
+{
+	//This is needed because some models tend to loop forever without an exit...
+	agt.add_finalize_tool(true);
+
+	add_read_tools(agt);
+	add_code_read_tools(agt);
+	add_skill_tools(agt);
+
+	agt.add_tool(
+		"execute_plan",
+		"Execute a plan",
+		[
+			manifest = "&string(): Plan manifest",
+			state = "&string(): Initial state",
+			taskboard = "&string(): Taskboard manifest",
+			//working_directory = "&string(): The working directory for the downstream agent.", 
+		],
+		[](agt, args)
+		{	
+			fileio.remove(".plan");
+		
+			fileio.write_string(".plan/goal.md", args.manifest);
+			fileio.write_string(".plan/state.md", args.state);
+			fileio.write_string(".plan/task_board.md", args.taskboard);
+			fileio.write_string(".plan/handover.md", "# Important notices to future agents");
+			fileio.write_string(".plan/failures.md", "# No failures reported yet");
+			fileio.write_string(".plan/activity.log", "# No activity yet");
+		
+			prompt_executor = "Read and achieve the goal set in '.plan/' like an intelligent senior software developer.";
+			prompt_reviewer = "Read the goal set in '.plan/' like an intelligent senior software developer and confirm the progress of the plan in the repo.\nEspecially look out for half-finished implementations, wrong implementations, syntax errors, unused and redundant code and variables, bugs, performance and general integration.\n\n\nHere is the official report from the last running agent:\n\n";
+			
+			managed executor = agt.subagent("planner/executor");
+			managed reviewer = agt.subagent("planner/reviewer");
+			
+			if(agt.on_action) {
+				agt.on_action([start_agent=executor.agent_id]);	
+				executor.on_action = [agt](act) {
+					agt.on_action(act);
+				};
+				reviewer.on_action = [agt](act) {
+					agt.on_action(act);
+				};
+			}
+			
+			steps = 1;
+			
+			for(true) {			
+				last_handover = fileio.read_string(".plan/handover.md");
+				std.print("\n\n---RUN EXECUTOR---\n\n");
+				
+				executor.llm_api.context.clear();
+				executor.action_history = [];
+				exec_result = executor.task(prompt_executor);
+				
+				if(last_handover == fileio.read_string(".plan/handover.md"))
+					fileio.write_string(".plan/handover.md", "# Important notices to future agents");
+				fileio.remove(".plan/next_steps.md");
+				
+				last_report = exec_result.reports ? exec_result.reports[0].report : "<no report>";
+				
+				std.print("\n\n---RUN REVIEWER---\n\n");
+				reviewer.env.plan_finished = true;
+				
+				
+				reviewer.env.plan_failed = false;
+				reviewer.env.plan_finished = false;
+				reviewer.env.plan_revert = false;
+				
+				//Do not auto clear history of reviewer? So it keeps tracking bugs/progress ?
+				reviewer.llm_api.context.clear();
+				reviewer.action_history = [];
+				
+				review_result = reviewer.task(prompt_reviewer + last_report);
+				
+				if(reviewer.env.plan_revert) {
+					acts = executor.action_history;
+					for(i = acts.size() - 1; i >= 0; i--) {
+						act = acts[i];
+						
+						if(act.name == "edit")
+							if(!act.content.prev_content)
+								agt.filesystem.remove(act.content.path);
+							else
+								agt.filesystem.write_string(act.content.path, act.content.prev_content);
+						else
+							std.error("Implement revert act in orchestrator ROLE.shio: " + act);
+					}
+				}
+				
+				if(reviewer.env.plan_finished) {
+					if(agt.on_action)
+						agt.on_action([stop_agent=executor.agent_id]);
+					
+					ok = !reviewer.env.plan_failed;
+					status = reviewer.env.plan_failed ? "Plan failed." : "Plan run successfully.";
+					
+					return [
+						ok=ok,
+						status=status,
+					];
+				}
+				
+				steps++;
+			}
+		}
+	);
+}
