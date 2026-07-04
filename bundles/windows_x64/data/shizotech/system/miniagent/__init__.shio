@@ -23,6 +23,15 @@ planner.on_action = [&last_state](action) {
 		std.cout(action.text);
 	}
 	
+	if(action.reasoning) {
+		if(*last_state != "reasoning")
+			*last_state = "reasoning";
+			std.cout("\n");
+		
+		stdfcol("yellow");
+		std.cout(action.reasoning);
+	}
+	
 	if(action.tool) {
 		if(*last_state != "tool")
 			*last_state = "tool";

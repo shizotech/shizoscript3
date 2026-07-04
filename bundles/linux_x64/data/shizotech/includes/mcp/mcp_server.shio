@@ -118,7 +118,7 @@ class mcpserver
 		}
 		catch(e) {}
 		
-		error_resp = create_jsonrpc_error(rpc_id, JSONRPC_TOOL_NOT_FOUND, "Internal server error.");
+		error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INTERNAL_ERROR, "Internal server error.");
 		return error_resp;
 	}
 
@@ -129,7 +129,7 @@ class mcpserver
 	// ============================================================================
 	mcp_handler(request_object, writer)
 	{
-		//std.print(request_object);
+		std.print(request_object);
 		
 		// Guard: reject empty or null body before calling std.json()
 		body_str = std.string(request_object.body);
@@ -194,16 +194,7 @@ class mcpserver
 		}
 		else if (method == TOOLS_CALL_METHOD)
 		{
-			// Fix #1: null check for params before calling handle_tools_call
-			if (!params)
-			{
-				error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INVALID_PARAMS, "Missing params");
-				response = error_resp;
-			}
-			else
-			{
-				response = handle_tools_call(params, rpc_id);
-			}
+			response = handle_tools_call(params, rpc_id);
 		}
 		else if (method == PING_METHOD)
 		{

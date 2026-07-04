@@ -192,6 +192,10 @@ class miniagent
 		return final_skills;
 	}
 	
+	add_image_url(img_url) { return llm_api.add_image_url(img_url); }
+	add_image_raw(raw_image_data, img_type = "png") { return llm_api.add_image_raw(raw_image_data, img_type); }
+	add_image(path) { return llm_api.add_image(path); }
+	
 	task(prompt)
 	{
 		env["task"] = prompt;

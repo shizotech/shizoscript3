@@ -108,9 +108,9 @@ server.tools.add_tool(
 
 server.tools.add_tool(
 	"shizoscript_resolve_include",
-	"Resolve standard include files",
+	"Input a file with include directives, outputs the complete file with all include directives replaced with their respective include files.",
 	[
-		path = "&string(): Path of the included file"
+		path = "&string(): Path of the file"
 	],
 	[](svr, args)
 	{		
@@ -150,6 +150,25 @@ server.tools.add_tool(
 		std.system("shz --testrun " + args.run_duration + " " + args.path + " > " + tmp.path());
 	
 		return tmp.read();
+	}
+);
+
+server.tools.add_tool(
+	"shizoscript_system_paths",
+	"Returns the paths for standard include files, system modules and project directories.",
+	None,
+	[](svr, args)
+	{
+		return [
+			[
+				system_path = std.path(),
+				description = "Root path of the shizoscript installation.\nThis path includes the standard include files '.../includes', the default system modules like 'shz docs' in '.../system', and native importable packages in '.../packages'.", 
+			],
+			[
+				user_path = std.user_path(),
+				description = "This path points to user-specific app and script configurations, custom installed apps and user projects.", 
+			],
+		];
 	}
 );
 

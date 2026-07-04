@@ -1025,6 +1025,10 @@ std.os_platform()
 
   - Get current operating system/platform name
         --------------------------------------------------
+std.path()
+
+  - Get shizotech root path, which is the directory where the shizotech installation is located
+        --------------------------------------------------
 std.print()
 
   - Print to console output
@@ -1119,6 +1123,13 @@ std.thread(
 std.timestamp()
 
   - Get current date and time in DD-MM-YYYY HH:MM:SS format
+        --------------------------------------------------
+std.user_path(
+    package: string - Config package/folder name (safe token),
+    key: string - Config key/file name without extension (safe token)
+)
+
+  - Get the user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
         --------------------------------------------------
 std.vtype(
     value: Variable to inspect
@@ -30409,6 +30420,14 @@ overwrite: bool - Replace existing keys (default true)
 )
 
   - Merge another JSON object into this one. If overwrite is true, existing keys will be replaced.
+        --------------------------------------------------
+pop()
+
+  - Removes the last element from the JSON container and returns it.
+        --------------------------------------------------
+pop_back()
+
+  - Removes the last element from the JSON container and returns it.
         --------------------------------------------------
 push(
     value: object - Value to insert into the JSON container
