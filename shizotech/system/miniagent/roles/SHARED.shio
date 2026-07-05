@@ -386,9 +386,18 @@ add_read_tools(agt) {
 		[](agt, args)
 		{
 			res = agt.filesystem.grep(args.query, args.path ?? ".", false, args.recursive == "true", args.extensions ?? []);
-			for(res.size() > 100) {
+			res_truncated = false;
+			for(res.size() > 10) {
 				res.erase(res.size()-1);
+				res_truncated = true;
 			}	
+
+			if(res_truncated) {
+				return [
+					result = res,
+					truncated = true,
+				];
+			}
 
 			return res;
 		}
@@ -468,7 +477,6 @@ add_write_tools(agt) {
 		"DANGEROUS Write or overwrite a file",
 		[
 			path = "&string(): Target file",
-			operation = ["new", "overwrite"],
 			intention = "&string(): Intention for the file operation",
 			content = "&string(): Content of the file",
 		],
@@ -623,13 +631,13 @@ Decision must be binary and final.
 	);
 	
 	agt.add_tool(
-		"edit_file",
+		"append_text",
 		"Append text at the end or insert text at the beginning of a file",
 		[
 			path = "&string(): Target file",
-			position = ["start", "end"],
+			insert_at = ["start", "end"],
 			intention = "&string(): Intention for the file operation",
-			content = "&string(): Content of the file",
+			content = "&string(): Content to insert",
 		],
 		[](agt, args)
 		{
@@ -646,7 +654,7 @@ Decision must be binary and final.
 				
 			new_content = old_content;
 			
-			if(args.position == "start")
+			if(args.insert_at == "start")
 				new_content = args.content + new_content;
 			else
 				new_content += args.content;

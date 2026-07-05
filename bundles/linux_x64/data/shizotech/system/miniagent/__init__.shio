@@ -93,6 +93,9 @@ for(1) {
 		if(result.ok && result.reports)
 			std.cout(result.reports[0].report);
 		fileio.remove(".plan");
+		std.cout("\nTOKEN USAGE:\n\n");
+		token_usage_global = std.global("_global_token_usage");
+		std.cout(token_usage_global["usage"] + "\n\n");
 	}
 	catch(e) {
 		

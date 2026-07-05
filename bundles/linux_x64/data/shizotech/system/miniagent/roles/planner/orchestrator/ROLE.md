@@ -341,3 +341,11 @@ If these questions are not answered, continue researching before calling `execut
 1. Load the required skills
 2. Perform steps necessary using the skills tools
 3. Report back
+
+---
+
+
+# .backup directory (STRICT)
+
+Do not read this directory unless ABSOLUTELY necessary.
+Opening this directory is only valid for backup operations.

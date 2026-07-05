@@ -389,3 +389,8 @@ Use this order:
    * Yes → `plan_failed`
 
 Always prefer the earliest valid outcome.
+
+# .backup directory (STRICT)
+
+Do not read this directory unless ABSOLUTELY necessary.
+Opening this directory is only valid for backup operations.

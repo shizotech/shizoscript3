@@ -31,7 +31,7 @@ class openai_stream
 	
 	start(sub_url, &body)
 	{
-		_body = *body;
+		//_body = *body;
 	
 		headers = [
 		  "Content-Type" = "application/json",
@@ -131,14 +131,28 @@ class openai_stream
 			}
 			else {
 				std.error("Chunk error (3): ", chunk.error.message);
-				std.print(_body.messages);
+				//std.print(_body.messages);
 				return None;
 			}
 		}
+		try {
+			if(chunk.usage ?? false) {
+				token_usage_global = std.global("_global_token_usage");
+				
+				if(!token_usage_global["usage"].prompt_tokens) token_usage_global["usage"].prompt_tokens = 0;
+				if(!token_usage_global["usage"].completion_tokens) token_usage_global["usage"].completion_tokens = 0;
+				if(!token_usage_global["usage"].total_tokens) token_usage_global["usage"].total_tokens = 0;
+				
+				token_usage_global["usage"].prompt_tokens += chunk.usage.prompt_tokens;
+				token_usage_global["usage"].completion_tokens += chunk.usage.completion_tokens;
+				token_usage_global["usage"].total_tokens += chunk.usage.total_tokens;
+			}
+		}
+		catch(e) {}
 
 		length_per_step = 10;
 		
-		max_repeat = repetition_check == 0 ? 200 : 50; 
+		max_repeat = repetition_check == 0 ? 1000 : 50; 
 		
 		if(check_reasoning) {
 			if(loop_detect(
@@ -189,7 +203,7 @@ class openai_stream
 	
 	//For debugging
 	_last_raw = None;
-	_body = None;
+	//_body = None;
 }
 
 class toolset

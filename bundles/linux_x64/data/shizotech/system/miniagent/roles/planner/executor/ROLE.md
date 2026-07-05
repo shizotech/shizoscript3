@@ -309,3 +309,11 @@ Never forget to log what you have done and changed, truthfully!
 Always update relevant checkboxes in task_board.md
 
 ---
+
+.backup directory (STRICT)
+--------------------
+
+Do not read this directory unless ABSOLUTELY necessary.
+Opening this directory is only valid for backup operations.
+
+---
