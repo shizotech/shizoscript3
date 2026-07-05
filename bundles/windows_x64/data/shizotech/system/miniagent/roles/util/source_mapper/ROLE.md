@@ -418,7 +418,7 @@ You MUST NOT:
 # Syntax errors and irregularities
 
 Always note when you spot errors or irregularities in the file.
-That includes missing braces, invalid indentation and language specific errors.
+That includes missing braces, problematic indentation and other language specific errors.
 
 # SUMMARY BEHAVIOR
 

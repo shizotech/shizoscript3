@@ -11,10 +11,22 @@ Create and maintain a clear project structure, for example:
 ```text
 index.html
 tsconfig.json
+assets/
+    images/
+    textures/
+    models/
+    audio/
+    fonts/
+    shaders/
+    data/
+    levels/
+	...
 styles/
     main.css
+	...
 scripts/
     main.ts
+	...
 ```
 
 Additional CSS or TypeScript files may be created as needed.
@@ -124,6 +136,112 @@ The HTML entry point MUST reference only the bundled output:
 
 ---
 
+## Source Organization
+
+The agent must organize the project into small, focused modules.
+
+Do NOT place unrelated systems into a single `main.ts`.
+
+`main.ts` should primarily:
+
+- create the application
+- initialize systems
+- wire modules together
+- start the application
+
+Business logic belongs in separate modules.
+
+Typical project structure:
+
+scripts/
+    main.ts
+
+    core/
+        Application.ts
+        Game.ts
+        EventBus.ts
+
+    engine/
+        Renderer.ts
+        Camera.ts
+        Input.ts
+        Audio.ts
+
+    gameplay/
+        Player.ts
+        Enemy.ts
+        Weapon.ts
+        Projectile.ts
+        World.ts
+
+    ui/
+        HUD.ts
+        Menu.ts
+
+    util/
+        Math.ts
+        Random.ts
+
+The exact structure should be adapted to the project rather than copied literally.
+
+---
+
+## Mandatory Modularization
+
+Projects larger than approximately 300 lines of TypeScript or containing multiple independent systems MUST be split into multiple files.
+
+Examples of independent systems include:
+
+- rendering
+- input
+- physics
+- AI
+- audio
+- networking
+- UI
+- save/load
+- animation
+- asset loading
+- world generation
+
+Each system belongs in its own module or directory.
+
+Creating one very large `main.ts` is considered a design failure.
+
+---
+
+## Game Architecture
+
+For games, separate the following responsibilities whenever they exist:
+
+- game loop
+- renderer
+- input
+- asset loading
+- scene management
+- entities
+- player
+- enemies
+- physics
+- collision
+- weapons
+- UI
+- audio
+
+Each should normally reside in its own file or small group of related files.
+
+Avoid files that grow beyond roughly 200–400 lines unless they represent a naturally cohesive abstraction.
+
+---
+
+## Single Responsibility Rule
+
+Every source file should have one primary responsibility.
+
+If implementing a feature causes a file to take on multiple unrelated responsibilities, create additional modules instead of expanding the existing one.
+
+Large monolithic files are discouraged even if they compile successfully.
+
 ## Prohibited Behaviors
 
 The agent MUST NOT:
@@ -133,6 +251,7 @@ The agent MUST NOT:
 - Use CDN imports for packages when bundling is enabled
 - Mix CDN-based scripts with ES module imports
 - Modify any files inside `dist/`
+- Read large bundled files inside `dist/` unless absolutely necessary, as they can be big and clutter context.
 
 If a dependency is missing or unresolved, the correct fix is ALWAYS:
 → ensure `bundle_build` is executed correctly
@@ -159,21 +278,26 @@ NOT:
 
 ## Workflow
 
-1. Create or modify project files in:
+1. Determine the required project architecture.
+   - create empty modules for each major subsystem
+   - prepare the project by turning large multi purpose files into multiple modular ones.
+   - prepare readme's and architecture documentations
+   
+2. Create or modify project files in:
    - `scripts/`
    - `styles/`
    - `index.html`
 
-2. Ensure `tsconfig.json` exists and is valid.
+3. Ensure `tsconfig.json` exists and is valid.
 
-3. If any external dependencies are used:
+4. If any external dependencies are used:
    - Call `bundle_build` BEFORE compilation or execution.
 
-4. Run `tsc_compile` to perform TypeScript compilation and validation.
+5. Run `tsc_compile` to perform TypeScript compilation and validation.
 
-5. If needed, run `web_debug` for runtime verification.
+6. If needed, run `web_debug` for runtime verification.
 
-6. Iterate until both build and runtime checks succeed.
+7. Iterate until both build and runtime checks succeed.
 
 ---
 
@@ -196,5 +320,57 @@ If runtime errors are detected during `web_debug`:
 - Re-run `tsc_compile` and `web_debug` in sequence
 
 Continue iteration until both build and runtime validation succeed.
+
+---
+
+## TypeScript Safety Rules (STRICT)
+
+The project enforces strict type safety.
+
+### Forbidden Types
+
+The following are NOT allowed:
+
+- `any` (explicit or implicit usage)
+- `as any` type assertions
+- `@ts-ignore`
+- `@ts-expect-error` unless accompanied by a detailed justification and only as a last resort
+- unsafe type assertions such as `as unknown as T` (type forcing)
+- non-null assertions (`!`) unless absolutely unavoidable and justified
+- implicit `any` (must not occur; must be explicitly typed)
+
+### Required Practices
+
+- Always define explicit types for function parameters and return values
+- Prefer `unknown` over `any` when type is not known
+- Use type guards to narrow `unknown` safely
+- Use interfaces or type aliases for structured data
+- Prefer composition of types over type casting
+- Ensure all exported APIs are fully typed
+
+### Type Safety Principle
+
+If the type system cannot express a value safely, the design must be refactored rather than weakened.
+
+### Error Handling Rule
+
+If a TypeScript error arises due to missing or complex types:
+
+- DO NOT use `any` to bypass it
+- DO refactor types, interfaces, or module boundaries instead
+
+---
+
+## Loop Protection
+
+Do NOT get stuck in thought loops circling between the same thoughts multiple times.
+If you detect that you are stuck, it is better to log progress so far, report and exit.
+Do NOT circle between the same thoughts forever.
+
+## Before exit
+
+Make sure to run `bundle_build` and `tsc_compile` after you have commited your code changes.
+If only a few simple errors occur, try to fix them directly.
+If the errors are more complex, report them and leave them for the next run, then exit.
 
 ---

@@ -996,6 +996,7 @@ Rules:
 		}
 	);
 	
+	/* sounds good on paper, somewhat fails spectaculary
 	agt.add_tool(
 		"apply_patch",
 		"Apply structured edits to a file with line ranges",
@@ -1031,7 +1032,7 @@ Rules:
 			
 			old_content = agt.filesystem.read_text(args.path);
 			
-			old_content = old_content.replace("\r\n", "\n").replace("\r", "\n");
+			old_content = old_content.replace("\r\n", "\n").replace("\r", "");
 			
 			if(!old_content) {
 				return [
@@ -1062,7 +1063,7 @@ Rules:
 				if(i < args.start_line || i > args.end_line)
 					new_content += old_content_lines[i] + "\n";
 				else if(i == args.start_line)
-					new_content += args.new_content.strip() + "\n";
+					new_content += args.new_content + "\n";
 			}
 			
 			confirm_agent = R"(
@@ -1187,6 +1188,7 @@ Rules:
 				];
 		}
 	);
+	*/
 	
 	agt.add_tool(
 		"mkdir",
@@ -1395,10 +1397,7 @@ add_skill_tools(agt) {
 				];
 			}
 			
-			return [
-				ok = true,
-				skills = skills,
-			];
+			return skills;
 		}
 	);
 	
