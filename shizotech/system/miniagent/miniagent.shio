@@ -183,7 +183,7 @@ class miniagent
 		for(i = 0; i < local_skills.size(); i++) {
 			final_skills.push_back([name=local_skills[i]]);
 			
-			sum_path = fileio.exists(AGENT_DIR + "skills/" + local_skills[i] + "/summary.md";
+			sum_path = fileio.exists(AGENT_DIR + "skills/" + local_skills[i] + "/summary.md");
 			if(fileio.exists(sum_path))
 				final_skills[-1].summary = fileio.read_string(sum_path);
 		}
@@ -192,7 +192,7 @@ class miniagent
 			if(!final_skills.has_value(root_skills[i]))
 				final_skills.push_back(root_skills[i]);
 			
-			sum_path = fileio.exists(AGENT_DIR + "skills/" + root_skills[i] + "/summary.md";
+			sum_path = fileio.exists(AGENT_DIR + "skills/" + root_skills[i] + "/summary.md");
 			if(fileio.exists(sum_path))
 				final_skills[-1].summary = fileio.read_string(sum_path);
 		}
