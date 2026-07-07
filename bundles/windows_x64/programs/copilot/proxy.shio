@@ -1,0 +1,47 @@
+
+import webserver;
+import leveldb;
+import curl;
+
+server = webserver.http_server(1337);
+
+server.route("POST", "^/.*$", [this](req, res) {
+	
+	//std.print(req);
+	
+	endpoint = req.path;
+	upstream = "http://shizo:8000" + endpoint;
+
+	body = std.json(req.body);
+	body.erase("model");
+	body_str = std.string(body);
+
+	//std.print(body);
+
+	stream_curl = curl.curl();
+	stream_curl.start_stream("POST", upstream, body_str, ["Content-Length" = body_str.size(), "Accept" = "text/event-stream", "Content-Type" = "application/json"], 0);
+
+	start_time = std.millis();
+
+	for(1) {
+		chunk = stream_curl.poll_stream();
+		std.print(chunk);
+		if(!chunk) {
+			break;
+		}
+
+		// Important: write() returns false on socket/write failure
+		// (client disconnected / TLS write failed).
+		if(!res.write(chunk)) {
+			stream_curl.stop_stream();
+			break;
+		}
+	}
+
+	stream_curl.stop_stream();
+	res.end();
+});
+
+server.start();
+
+std.input();

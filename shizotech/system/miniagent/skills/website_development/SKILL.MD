@@ -6,7 +6,7 @@ When creating or modifying a website, always develop it as a TypeScript project 
 
 ## Project Structure
 
-Create and maintain a clear project structure, for example:
+Create and maintain a clear project structure, follow exactly this schema:
 
 ```text
 index.html
@@ -27,6 +27,8 @@ styles/
 scripts/
     main.ts
 	...
+dist/
+    bundle.js
 ```
 
 Additional CSS or TypeScript files may be created as needed.
@@ -128,11 +130,11 @@ All projects that use external imports MUST call `bundle_build` before running:
 
 The bundler MUST produce a single browser-ready entry file:
 
-    dist/app.js
+    dist/bundle.js
 
 The HTML entry point MUST reference only the bundled output:
 
-    <script type="module" src="dist/app.js"></script>
+    <script type="module" src="dist/bundle.js"></script>
 
 ---
 
@@ -286,14 +288,14 @@ NOT:
 2. Create or modify project files in:
    - `scripts/`
    - `styles/`
+   - `assets/`
    - `index.html`
 
 3. Ensure `tsconfig.json` exists and is valid.
 
-4. If any external dependencies are used:
-   - Call `bundle_build` BEFORE compilation or execution.
+4. Run `tsc_compile` to perform TypeScript compilation and validation.
 
-5. Run `tsc_compile` to perform TypeScript compilation and validation.
+5. Build the final `dist/bundle.js` by running `bundle_build`, make sure the bundle file is in the right directory and up-to-date!
 
 6. If needed, run `web_debug` for runtime verification.
 

@@ -1235,7 +1235,7 @@ Rules:
 				agt._log_action("move", [
 					src_path = args.src_path,
 					dst_path = args.dst_path,
-					prev_content = agt.filesystem.read_text(args.dst_path),
+					existed_before = agt.filesystem.exists(args.dst_path),
 				]);
 				
 				return "Success";
@@ -1261,7 +1261,7 @@ Rules:
 				agt._log_action("copy", [
 					src_path = args.src_path,
 					dst_path = args.dst_path,
-					prev_content = agt.filesystem.read_text(args.dst_path),
+					existed_before = agt.filesystem.exists(args.dst_path),
 				]);
 				
 				return "Success";
@@ -1287,7 +1287,6 @@ Rules:
 				agt._log_action("rename", [
 					src_path = args.src_path,
 					dst_path = args.dst_path,
-					prev_content = agt.filesystem.read_text(args.dst_path),
 				]);
 				
 				return "Success";
@@ -1348,31 +1347,41 @@ Rules:
 - Decision must be binary and final.			
 )";
 			
-			agt.report_back("evaluating... ");
-			
-			current_task = agt.env["task"];
-			old_content = agt.filesystem.read_text(args.path);
-			if(old_content.empty())
-				old_content = "<empty file>";
-			
-			tmp_agt = agt.simple_agent(confirm_agent);
-			eval_result = tmp_agt.text("<TASK>\n" + current_task + "\n\n\n<INTENTION>\n" + args.intention + "\n\n\n<ORIGINAL_FILE>\n" + old_content);
-			
-			eval = eval_result.extract("<evaluation>", "</evaluation>").strip();
-			approve = eval_result.extract("<statement>", "</statement>").strip();
-			
-			agt.report_back(approve + "\n");
-			
-			if(approve == "DECLINED")
-			{
-				return "The remove request could not be approved because:\n\n" + eval;
+			if(!agt.filesystem.is_directory(args.path)) {
+				agt.report_back("evaluating... ");
+				
+				current_task = agt.env["task"];
+				old_content = agt.filesystem.read_text(args.path);
+				if(old_content.empty())
+					old_content = "<empty file>";
+				
+				tmp_agt = agt.simple_agent(confirm_agent);
+				eval_result = tmp_agt.text("<TASK>\n" + current_task + "\n\n\n<INTENTION>\n" + args.intention + "\n\n\n<ORIGINAL_FILE>\n" + old_content);
+				
+				eval = eval_result.extract("<evaluation>", "</evaluation>").strip();
+				approve = eval_result.extract("<statement>", "</statement>").strip();
+				
+				agt.report_back(approve + "\n");
+				
+				if(approve == "DECLINED")
+				{
+					return "The remove request could not be approved because:\n\n" + eval;
+				}
+			}
+			else {
+				if(agt.env.last_remove_check != args.path) {
+					agt.env.last_remove_check = args.path;					
+					return "Warning: a security check has been triggered. Please confirm that the removal of the directory is a required action and does not harm the integrity of the repo. Confirm that this action is legit and if so, call this function AGAIN with the exact same parameters to confirm this operation.";
+				}				
 			}
 				
 			if(agt.filesystem.remove(args.path)) {
-				agt._log_action("remove", [
-					path = args.path,
-					prev_content = agt.filesystem.read_text(args.path),
-				]);
+				if(!agt.filesystem.is_directory(args.path)) {
+					agt._log_action("remove_file", [
+						path = args.path,
+						prev_content = agt.filesystem.read_file(args.path),
+					]);
+				}
 				
 				return "Success";
 			}

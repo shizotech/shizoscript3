@@ -11,6 +11,7 @@ class generic_agent
 	
 	//Callbacks
 	on_analysis = None;
+	on_reason = None;
 	on_text = None;
 	on_tool = None;
 	
@@ -29,6 +30,8 @@ class generic_agent
 		{
 			if(std.is_function(on_analysis))
 				return on_analysis(txt);
+			if(std.is_function(on_reason))
+				return on_reason(txt);
 		};
 		context.on_text = [this](txt)
 		{

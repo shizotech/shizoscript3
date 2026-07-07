@@ -18,14 +18,15 @@ class miniagent
 	managed llm_api = None;
 	managed skills = [];
 	
+	agent_id = std.random_hash();
 	role = "";
 	filesystem = None;
 	env = [];
 	action_history = [];
+	modified_files = [];
 
+	//Callbacks
 	on_action = None;
-	
-	agent_id = std.random_hash();
 	
 	//helper
 	added_tools = [];
@@ -473,11 +474,17 @@ class miniagent
 			content=content,
 			time=std.timestamp(),
 		];
-	
-		action_history.push_back(entry);
+		
+		if(content.path)
+			modified_files.push_back(content.path);
+		if(content.src_path)
+			modified_files.push_back([source=content.src_path, destination=content.dst_path]);
 		
 		base_path = fileio.exists(AGENT_DIR) ? AGENT_DIR : ".backup/";
 		base_path += "action_logs/";
+		
+		backup_file_path = "";
+		
 		for(1) {
 			ts = std.timestamp();
 			ts = ts.replace("-", "_");
@@ -487,10 +494,13 @@ class miniagent
 			if(fileio.exists(base_path + ts + ".json"))
 				std.sleep(10);
 				continue;
-				
-			fileio.write_json(base_path + ts + ".json", entry);
+			backup_file_path = base_path + ts + ".json";
+			fileio.write_json(backup_file_path, entry);
 			break;
 		}
+		
+		entry.backup_file_path = backup_file_path;
+		action_history.push_back(entry);
 	}
 	
 	_child_agents = [];

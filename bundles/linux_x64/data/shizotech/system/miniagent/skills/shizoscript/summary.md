@@ -1,1 +1,0 @@
-Explanation what shizoscript is, documentation, how to write shizoscript code etc.

@@ -805,6 +805,12 @@ std.argv(
 
   - Return argv
         --------------------------------------------------
+std.base64_decode(
+    data: string - Base64-encoded input string
+)
+
+  - Decode a Base64-encoded string to binary
+        --------------------------------------------------
 std.base64_encode(
     data: string|binary - Input data to encode
 )
