@@ -19,6 +19,7 @@ add_tools(agt)
 			state = "&string(): State manifest",
 			taskboard = "&string(): Taskboard manifest",
 			context = "&string(): Context manifest",
+			git_message = "&string(): Short description what this is about, use words only, no symbols or quotes.",
 			skills = "array(string): List of required or useful skills that are needed or helpful to complete the task (if non are applicable, this is OPTIONAL)",
 			//working_directory = "&string(): The working directory for the downstream agent.", 
 		],
@@ -29,6 +30,9 @@ add_tools(agt)
 			//Maybe just use git? Or something simple. Must capture all files and directories
 		
 			fileio.remove(".plan");
+			
+			std.system("git add -A");
+			std.system("git commit -m \"before checkpoint: " + args.git_message.replace("\"", "'") + "\"");
 		
 			fileio.write_string(".plan/goal.md", args.goal);
 			fileio.write_string(".plan/state.md", args.state);
@@ -43,137 +47,151 @@ add_tools(agt)
 				
 			steps = 1;
 			
-			for(true) {
-
-				managed executor = agt.subagent("planner/executor");				
-				if(agt.on_action) {
-					executor.on_action = [agt](act) {
-						agt.on_action(act);
-					};
-				}
-				
-				last_handover = fileio.read_string(".plan/handover.md");
-				std.print("\n\n---RUN EXECUTOR---\n");
-				
-				exec_result = None;
-				
-				task_prompt = prompt_executor;
-				
-				if(fileio.exists(".plan/handover.md"))
-					task_prompt += "\n- Read the handover file '.plan/handover.md'.";
-				if(fileio.exists(".plan/next_steps.md"))
-					task_prompt += "\n- Read the next suggested steps in '.plan/next_steps.md'.";
-				
-				if(std.is_json(args.skills) && args.skills)
-					task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
-				
-				try {
-					exec_result = executor.task(task_prompt);
-				}
-				catch(e) {}
-				
-				last_report = exec_result.reports ? exec_result.reports[0].report : "<no_report> The agent might have crashed during its run.";
-				
-				if(exec_result.reports)
-					if(last_handover == fileio.read_string(".plan/handover.md"))
-						fileio.write_string(".plan/handover.md", "# Important notices to future agents");
-					fileio.remove(".plan/next_steps.md");
-				
-				std.print("\n\n---RUN REVIEWER---\n");
-				
-				review_result = None;
-				
-				max_fails = 0;
-				
-				modified_files = executor.modified_files;
-				
+			try {
 				for(true) {
-					
-					managed reviewer = agt.subagent("planner/reviewer");	
+
+					managed executor = agt.subagent("planner/executor");				
 					if(agt.on_action) {
-						reviewer.on_action = [agt](act) {
+						executor.on_action = [agt](act) {
 							agt.on_action(act);
 						};
 					}
 					
+					last_handover = fileio.read_string(".plan/handover.md");
+					std.print("\n\n---RUN EXECUTOR---\n");
+					
+					exec_result = None;
+					
+					task_prompt = prompt_executor;
+					
+					if(fileio.exists(".plan/handover.md"))
+						task_prompt += "\n- Read the handover file '.plan/handover.md'.";
+					if(fileio.exists(".plan/next_steps.md"))
+						task_prompt += "\n- Read the next suggested steps in '.plan/next_steps.md'.";
+					
+					if(std.is_json(args.skills) && args.skills)
+						task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
+					
 					try {
-						
-						task_prompt = prompt_reviewer + last_report;
-						
-						if(std.is_json(modified_files) && modified_files)
-							task_prompt += "\n\nList of modified files: " + modified_files.compact_string();
-						
-						if(std.is_json(args.skills) && args.skills)
-							task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
-				
-						review_result = reviewer.task(task_prompt);
-						max_fails = 0;
+						exec_result = executor.task(task_prompt);
 					}
-					catch(e) { 
-						max_fails++;
-						if(max_fails > 3) {
-							return [
-								ok=false,
-								error="The reviewer agent crashed 3 times in a row.",
-							];
-						}					
-						continue; 
-					}
-								
-					if(reviewer.env.plan_revert) {
-						acts = executor.action_history;
+					catch(e) {}
+					
+					last_report = exec_result.reports ? exec_result.reports[0].report : "<no_report> The agent might have crashed during its run.";
+					
+					if(exec_result.reports)
+						if(last_handover == fileio.read_string(".plan/handover.md"))
+							fileio.write_string(".plan/handover.md", "# Important notices to future agents");
+						fileio.remove(".plan/next_steps.md");
+					
+					std.print("\n\n---RUN REVIEWER---\n");
+					
+					review_result = None;
+					
+					max_fails = 0;
+					
+					modified_files = executor.modified_files;
+					
+					for(true) {
 						
-						if(!acts)
-							modified_files = None;
-							last_report = "The previous review agent has issued to revert the last run, however there are no reverts to be made.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
-							continue;
-										
-						for(i = acts.size() - 1; i >= 0; i--) {
-							act = acts[i];
-							
-							if(act.name == "edit" || act.name == "write")
-								if(!act.content.prev_content)
-									agt.filesystem.remove(act.content.path);
-								else
-									agt.filesystem.write_string(act.content.path, act.content.prev_content);
-							else if(act.name == "mkdir" && !act.content.existed_before)
-								agt.filesystem.remove(act.content.path);
-							else if(act.name == "move")
-								agt.filesystem.move(act.content.dst_path, act.content.src_path);
-								if(!act.content.existed_before)
-									agt.filesystem.remove(act.content.dst_path);
-							else if(act.name == "rename")
-								agt.filesystem.rename(act.content.dst_path, act.content.src_path);
-							else if(act.name == "remove_file")
-								agt.filesystem.write_file(act.content.path, act.content.prev_content);
-							else
-								std.error("Implement revert act in orchestrator ROLE.shio: " + act);
-							
-							fileio.remove(act.content.backup_file_path);
+						managed reviewer = agt.subagent("planner/reviewer");	
+						if(agt.on_action) {
+							reviewer.on_action = [agt](act) {
+								agt.on_action(act);
+							};
 						}
 						
-						executor.action_history = [];
+						try {
+							
+							task_prompt = prompt_reviewer + last_report;
+							
+							if(std.is_json(modified_files) && modified_files)
+								task_prompt += "\n\nList of modified files: " + modified_files.compact_string();
+							
+							if(std.is_json(args.skills) && args.skills)
+								task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
+					
+							review_result = reviewer.task(task_prompt);
+							max_fails = 0;
+						}
+						catch(e) { 
+							max_fails++;
+							if(max_fails > 3) {
+								
+								std.system("git add -A");
+								std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
+								
+								return [
+									ok=false,
+									error="The reviewer agent crashed 3 times in a row.",
+								];
+							}					
+							continue; 
+						}
+									
+						if(reviewer.env.plan_revert) {
+							acts = executor.action_history;
+							
+							if(!acts)
+								modified_files = None;
+								last_report = "The previous review agent has issued to revert the last run, however there are no reverts to be made.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
+								continue;
+											
+							for(i = acts.size() - 1; i >= 0; i--) {
+								act = acts[i];
+								
+								if(act.name == "edit" || act.name == "write")
+									if(!act.content.prev_content)
+										agt.filesystem.remove(act.content.path);
+									else
+										agt.filesystem.write_string(act.content.path, act.content.prev_content);
+								else if(act.name == "mkdir" && !act.content.existed_before)
+									agt.filesystem.remove(act.content.path);
+								else if(act.name == "move")
+									agt.filesystem.move(act.content.dst_path, act.content.src_path);
+									if(!act.content.existed_before)
+										agt.filesystem.remove(act.content.dst_path);
+								else if(act.name == "rename")
+									agt.filesystem.rename(act.content.dst_path, act.content.src_path);
+								else if(act.name == "remove_file")
+									agt.filesystem.write_file(act.content.path, act.content.prev_content);
+								else
+									std.error("Implement revert act in orchestrator ROLE.shio: " + act);
+								
+								fileio.remove(act.content.backup_file_path);
+							}
+							
+							executor.action_history = [];
+							
+							last_report = "The previous review agent has issued to revert the last run.\nAll changes (from the last run only) have been reverted.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
+							
+							continue;
+						}
 						
-						last_report = "The previous review agent has issued to revert the last run.\nAll changes (from the last run only) have been reverted.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
+						if(reviewer.env.plan_finished) {
+							ok = !reviewer.env.plan_failed;
+							status = reviewer.env.plan_failed ? "Plan failed." : "Plan finished in " + steps + " steps.";
+							
+							std.system("git add -A");
+							std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
+	
+							
+							return [
+								ok=ok,
+								status=status,
+							];
+						}
 						
-						continue;
+						break;
 					}
 					
-					if(reviewer.env.plan_finished) {
-						ok = !reviewer.env.plan_failed;
-						status = reviewer.env.plan_failed ? "Plan failed." : "Plan finished in " + steps + " steps.";
-						
-						return [
-							ok=ok,
-							status=status,
-						];
-					}
-					
-					break;
+					steps++;
 				}
-				
-				steps++;
 			}
+			catch(e) {}
+	
+			std.system("git add -A");
+			std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
 	
 			return [
 				ok=false,
