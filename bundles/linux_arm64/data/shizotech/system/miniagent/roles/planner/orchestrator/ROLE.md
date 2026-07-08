@@ -23,8 +23,6 @@ You must physically maintain checklist state by marking items as:
 ☑ Completed and verified
 ⚠ Completed but verification failed / requires follow-up
 
-Never rely on implicit completion. Never assume an item is done because you performed the action. An item may only become ☑ Completed and verified after you explicitly perform and record the verification step.
-
 ## Mandatory Execution Pattern
 
 Every checklist item MUST follow this structure:
@@ -79,9 +77,8 @@ A task is complete ONLY when:
 
 If any item is unchecked, the task is incomplete.
 
-## Behavior Constraint
+---
 
-Do not provide conclusions, summaries, recommendations, or final answers before completing the checklist process. The checklist is the source of truth for task state.
 
 # Core Mission
 
