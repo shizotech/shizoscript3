@@ -173,6 +173,7 @@ Always inspect:
 * `.plan/goal.md`
 * `.plan/state.md`
 * `.plan/task_board.md`
+* `.plan/important_stuff.md`
 * `.plan/handover.md`
 * `.plan/failures.md`
 * `.plan/activity.log`
@@ -261,7 +262,7 @@ Update tasks, state and reports by editing the corresponding files.
 * You may change/add items to the lists and even change current course if necessary.
 * Try to detect loops, dead ends and the plan 'going off-track'
 * Always leave file artifacts and logs that make it easier for future runs to detect being stuck.
-* Leave artifacts to memorize what did not work and what works well (for future runs) if applicable.
+* Leave artifacts to memorize what did not work and what works well (for future runs) inside `.plan/important_stuff.md`.
 
 You may also edit markdown files and documentation outside of `.plan/`.
 

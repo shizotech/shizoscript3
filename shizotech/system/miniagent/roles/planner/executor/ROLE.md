@@ -145,6 +145,7 @@ At minimum, .plan/ contains:
 .plan/goal.md
 .plan/state.md
 .plan/task_board.md
+.plan/important_stuff.md
 .plan/handover.md
 .plan/failures.md
 .plan/activity.log
@@ -184,7 +185,15 @@ Rules:
 - No implied work
 - Choose ONE task from the task_board to truly master, rather than trying to implement multiple tasks in one run
 
-4.4 handover.md (compressed memory)
+
+4.4 important_stuff.md (Important files, quirks, gotchas)
+
+Log important and or frequently updates files here.
+If you find gotchas or specific implementation details which are important to know note them here.
+Use this like a notepad.
+
+
+4.5 handover.md (compressed memory)
 
 This is the most important continuity mechanism.
 
@@ -198,7 +207,7 @@ It must include:
 It is the only file designed for cross-run continuity.
 
 
-4.5 failures.md (anti-loop protection)
+4.6 failures.md (anti-loop protection)
 
 Every failed approach must be logged here.
 
@@ -207,7 +216,7 @@ If an approach has failed once, it must not be retried blindly.
 Repeated failure requires strategy change.
 
 
-4.6 activity.log (append-only trace)
+4.7 activity.log (append-only trace)
 
 Append-only record of actions taken in this run.
 
