@@ -1,0 +1,31 @@
+====================================================
+CRASH REPORT - 2026-07-08 13:45:39
+====================================================
+
+CRASH TYPE:  ACCESS_VIOLATION
+ADDRESS:     0x7ff918547ae2
+THREAD ID:   480
+
+MODULE:      C:\Users\neu\AppData\Local\Shizoscript\shizotech\packages\curl\native\windows_x64\shzmodule_curl.dll
+
+STACK TRACE:
+[0]  shizoglue_entry [0x7ff918547ae2]
+[1]  <unknown> [0x7ff918544bf8]
+[2]  shizoglue_entry [0x7ff918563498]
+[3]  <unknown> [0x7ff91853efa8]
+[4]  shizoglue_entry [0x7ff9185b631c]
+[5]  _sys_nerr [0x7ff98a203a93]
+[6]  o_free [0x7ff98a1d042e]
+[7]  execute_onexit_table [0x7ff98a1cdddd]
+[8]  shizoglue_entry [0x7ff9185ad146]
+[9]  shizoglue_entry [0x7ff9185ad28d]
+[10]  RtlActivateActivationContextUnsafeFast [0x7ff98caf8c0f]
+[11]  LdrShutdownProcess [0x7ff98cb21616]
+[12]  RtlExitUserProcess [0x7ff98cb2120d]
+[13]  CtrlRoutine [0x7ff989e0c440]
+[14]  CtrlRoutine [0x7ff989e0c2a7]
+[15]  BaseThreadInitThunk [0x7ff98c57259d]
+[16]  RtlUserThreadStart [0x7ff98cb2afb8]
+====================================================
+END OF CRASH REPORT
+====================================================

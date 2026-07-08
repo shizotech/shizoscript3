@@ -64,6 +64,21 @@ check_command(planner, cmd) {
 	if(cmd == "/clear")
 		planner.llm_api.context.clear();
 		std.print("Cleared history.");
+	else if(cmd == "/dream")
+		dreamer = planner.subagent("dreamer");
+		dreamer.on_action = planner.on_action;
+		fileio.write_string("mindmap.json", "{}");
+		
+		mindmap = fileio.read_json("mindmap.json");
+		result = dreamer.task("Current mindmap:\n\n<mindmap>\n" + mindmap);
+		txt = result.reports[0].report;
+		entries = txt.extract_all("<new_entry>", "</new_entry>");		
+		for(i = 0; i < entries.size(); i++) {
+			new_entry = std.json(entries[i]);
+			mindmap[new_entry.id] = new_entry;
+		}
+		fileio.write_json("mindmap.json", mindmap);
+		std.print(mindmap);
 	else
 		std.print("unknown command.");
 }
