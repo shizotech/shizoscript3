@@ -391,14 +391,16 @@ add_read_tools(agt) {
 				res.erase(res.size()-1);
 				res_truncated = true;
 			}	
-
+			for(i = 0; i < res.size(); i++) {
+				
+			}
 			if(res_truncated) {
 				return [
 					result = res,
 					truncated = true,
 				];
 			}
-
+			std.print(res);
 			return res;
 		}
 	);
@@ -919,6 +921,28 @@ Evaluation Rules for Code/Data:
 5. No Clear Regressions
    - Previously valid functionality is not broken unless explicitly required by the Task.
 
+6. VERY IMPORTANT: Full replacement required
+   - <REPLACE_WITH> MUST include every part of <TARGET_TEXT> that remains unchanged.
+   - Only the intended modification may differ.
+   - Do NOT output only the changed line(s), field(s), or token(s) unless the entire <TARGET_TEXT> is intentionally being replaced.
+   - Before producing <REPLACE_WITH>, compare it against <TARGET_TEXT> and verify that no surrounding text, function calls, variables, arguments, attributes, imports, fields, formatting, or delimiters were accidentally removed.
+   - Treat <REPLACE_WITH> as the final text that will overwrite <TARGET_TEXT> verbatim. The output will not be merged with <TARGET_TEXT> automatically.
+   - If <TARGET_TEXT> is:
+       foo(
+           bar="x",
+           status="open",
+           baz="y"
+       )
+     and only `status` changes, then <REPLACE_WITH> must be:
+       foo(
+           bar="x",
+           status="closed",
+           baz="y"
+       )
+     NOT:
+       status="closed"
+
+	
 Evaluation Rules for Text/Reports:
 
 - Always APPROVE textual artifacts unless they break structural formatting.

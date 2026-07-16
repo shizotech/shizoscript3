@@ -365,6 +365,14 @@ General context, important files, gotchas, key findings.
 
 ---
 
+### git_message
+
+A short git commit message for this action.
+
+### skills (OPTIONAL)
+
+A list of required or useful skills for the task.
+
 ## Tool Usage Rules
 
 You must eventually call `execute_plan` unless:

@@ -2869,6 +2869,12 @@ put()
 
   - put(key, value)
         --------------------------------------------------
+remove(
+    key: string - The key to delete from the database
+)
+
+  - Delete a key-value pair from the database
+        --------------------------------------------------
 update(
     key: string - Key in the database,
     delta: json object - Delta JSON to merge into the existing value

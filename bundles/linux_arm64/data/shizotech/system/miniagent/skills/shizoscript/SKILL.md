@@ -185,6 +185,18 @@ main_app = App();
 std.sleep(-1);
 ```
 
+Strings are copy-on-assign.
+JSONs, objects, classes are reference counted.
+
+```
+a = [name="Alice"];
+b = a;
+b.name = "Bob";
+std.print(a.name); // Is now Bob
+
+c = a.copy(); //Creates an actual real copy and not a reference to the same underlying json object.
+```
+
 ---
 
 # Code Style & General Syntax
@@ -461,7 +473,6 @@ fn = [local_var]() {
 };
 ```
 
-- Captures a COPY of `local_var`
 - Safe to use even if the original variable goes out of scope
 - This is the DEFAULT and safest approach
 
@@ -479,9 +490,7 @@ fn = [&local_var]() {
 
 - Captures a REFERENCE to `local_var`
 - Modifications affect the original variable
-- MUST ONLY be used if:
-  - The lambda is guaranteed to execute within the lifetime of the parent scope
-- Using references outside valid scope → UNDEFINED BEHAVIOR
+- Since references are also ref-counted in shizoscript, the original scoped value is kept alive as long as the lambda lives, even if it goes out of scope.
 
 ---
 

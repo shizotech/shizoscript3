@@ -31,6 +31,9 @@ add_tools(agt)
 		
 			fileio.remove(".plan");
 			
+			if(!args.git_message)
+				args.git_message = "dreamer commit";
+			
 			std.system("git add -A");
 			std.system("git commit -m \"before checkpoint: " + args.git_message.replace("\"", "'") + "\"");
 		

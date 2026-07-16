@@ -170,8 +170,19 @@ Primitive variables automatically convert to JSON objects when you assign member
 
 ### 4.3 Copy and Reference Semantics
 
-- JSON and string variables are **copied by value** on assignment.
-- External objects (from built-in namespaces) and class instances are **passed by reference** and are reference-counted.
+- JSONs, External objects (from built-in namespaces) and class instances are **passed by reference** and are reference-counted.
+
+So 
+
+```
+a = [name="Alice"];
+b = a;
+b.name = "Bob";
+std.print(a.name); //Is now bob
+c = a.copy(); //Creates an actual copy and does not share the underlying json object with 'a'
+```
+
+- The ONLY exception are string variables, which are **copied by value** on assignment.
 
 ### 4.4 Explicit lifetime management ('managed' keyword)
 
@@ -555,7 +566,7 @@ Classes are declared with the `class` keyword. They support constructors (`__ini
 
 ## 10. JSON Objects (Lists & Maps)
 
-JSON objects are the primary compound data type. Both arrays and key-value maps use `[]` brackets. There are NO `{}` braces for object/map/dict literals.
+JSON objects are the primary compound data type. Both arrays and key-value maps use `[]` brackets. There are NO `{}` brackets for object/map/dict literals, in shizoscript, its all one.
 
 ### 10.1 Array (list)
 

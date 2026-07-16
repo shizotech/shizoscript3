@@ -64,21 +64,56 @@ check_command(planner, cmd) {
 	if(cmd == "/clear")
 		planner.llm_api.context.clear();
 		std.print("Cleared history.");
-	else if(cmd == "/dream")
-		dreamer = planner.subagent("dreamer");
-		dreamer.on_action = planner.on_action;
-		fileio.write_string("mindmap.json", "{}");
+	else if(cmd.starts("/dream"))
+		cmd = cmd.removeprefix("/dream");
+	
+		loop_count = std.int(cmd.strip());
+		loop_count = math.max(1, loop_count);
 		
-		mindmap = fileio.read_json("mindmap.json");
-		result = dreamer.task("Current mindmap:\n\n<mindmap>\n" + mindmap);
-		txt = result.reports[0].report;
-		entries = txt.extract_all("<new_entry>", "</new_entry>");		
-		for(i = 0; i < entries.size(); i++) {
-			new_entry = std.json(entries[i]);
-			mindmap[new_entry.id] = new_entry;
+		std.print("Dreaming " + loop_count + " times.");
+	
+		for(dream_step = 0; dream_step < loop_count; dream_step++) {
+	
+			dreamer = planner.subagent("dreamer");
+			dreamer.on_action = planner.on_action;
+			fileio.write_string("mindmap.json", "{}");
+			
+			mindmap = fileio.read_json("mindmap.json");
+			result = dreamer.task("Current mindmap:\n\n<mindmap>\n" + mindmap + "\n</mindmap>");
+			txt = result.reports[0].report;
+			entries = txt.extract_all("<new_entry>", "</new_entry>");		
+			
+			for(i = 0; i < entries.size(); i++) {
+				new_entry = std.json(entries[i]);
+				new_entry.status = "open";
+				mindmap[new_entry.id] = new_entry;
+			}
+			
+			fileio.write_json("mindmap.json", mindmap);
+			
+			fail_count = 0;
+			for(fail_count < 3) {			
+				try {
+					result = planner.task("1. ***Read*** mindmap.json.\n\n2. Choose ***ONE OPEN*** task and execute it.\n\n3. ***Update*** mindmap.json by setting the task's status to either 'closed', 'failed' or 'disqualified' if the task would break structure.\n\nAlways check which step you are currently at.");
+					if(!result.ok)
+						std.print("ABORTED");
+						break;
+					fail_count = 0;
+				}
+				catch(e) { fail_count++; }
+				
+				still_open = false;
+				for(i = 0; i < mindmap.size(); i++) {
+					if(mindmap[i].status == "open")
+						still_open = true;
+						break;
+				}
+				
+				if(!still_open)
+					break;
+			}
 		}
-		fileio.write_json("mindmap.json", mindmap);
-		std.print(mindmap);
+		
 	else
 		std.print("unknown command.");
 }

@@ -1,5 +1,0 @@
-
-
-std.print(fileio.grep(".*agt.*", "planner"));
-
-std.input();

@@ -339,8 +339,8 @@ class openai_api
 	
 	set_tools(_toolset) {
 		if(std.is_class(_toolset, toolset))
-			body.tools = _toolset.tools;
 			ts = _toolset;
+			body.tools = ts.tools; //Dont copy json, can edit in toolset directly without updating body
 	}
 	
 	add_image_url(img_url) {
@@ -955,7 +955,7 @@ class openai_api
 		return result_json;
 	}
 
-	token_count_body(&_body) {
+	token_count_body(_body) {
 		_body.stream = false;
 		_body.include_usage = true;
 		_body.stream_options.include_usage = true;
@@ -993,13 +993,13 @@ class openai_api
 		txt = "Answer ONLY in valid JSON. Do not include explanations.\n";
 		txt += "The JSON must follow this structure:\n";
 
-		props = &schema.properties;
-		req = &schema.required;
+		props = schema.properties;
+		req = schema.required;
 
 		for(i = 0; i < req.size(); i++)
 		{
 			key = req[i];
-			prop = &props[key];
+			prop = props[key];
 
 			txt += "- \"" + key + "\": ";
 

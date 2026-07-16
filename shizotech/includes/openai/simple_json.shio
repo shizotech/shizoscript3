@@ -1,4 +1,4 @@
-simple_json(&json)
+simple_json(json)
 {
 	if(!std.is_json(json))
 		return [];
@@ -11,7 +11,7 @@ simple_json(&json)
 		
 		if(std.is_string(json[i]))
 		{
-			json_prop = &json_schema.properties[json_key];
+			json_prop = json_schema.properties[json_key];
 			
 			json_value = &json[i];
 			
@@ -80,7 +80,7 @@ simple_json(&json)
 			else(paramdef_str.starts("enum"))
 			{
 				json_prop.type = "string";
-				json_prop.enum = param_defs;
+				json_prop.enum = param_defs; //Dont need to copy since this is a new variable
 			}
 			else
 				std.print("Unknown: " + paramdef_str);
@@ -89,7 +89,7 @@ simple_json(&json)
 		{
 			json_schema.required.push(json_key);
 			json_schema.properties[json_key].type = "string";
-			json_schema.properties[json_key].enum = json[i];
+			json_schema.properties[json_key].enum = json[i].copy(); //Need to copy
 		}
 		else(std.is_json(json[i]))
 		{
