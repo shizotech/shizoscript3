@@ -620,9 +620,11 @@ nanogui.deserialize_controls()
 
   - Deserialize modmatrix nodes from JSON.
         --------------------------------------------------
-nanogui.enumerate_midi_devices()
+nanogui.enumerate_midi_devices(
+    bool - open device handles.
+)
 
-  - Get list of available MIDI devices.
+  - Get list of available MIDI devices and open them if possible.
         --------------------------------------------------
 nanogui.layout_horizontal() -> nanogui.layout_horizontal
 
@@ -639,6 +641,10 @@ nanogui.midi_device_name(
 )
 
   - Get name of a MIDI device by ID.
+        --------------------------------------------------
+nanogui.midi_learn()
+
+  - Enable midi learn.
         --------------------------------------------------
 nanogui.mididevice() -> nanogui.mididevice
 
@@ -3530,10 +3536,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -4274,10 +4276,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -4526,6 +4524,12 @@ children_visible(
 )
 
   - Get list of visible child widgets.
+        --------------------------------------------------
+clamp_move(
+    value - bool
+)
+
+  - Get or set clamp move enabled.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -4852,7 +4856,25 @@ movable(
     value - bool
 )
 
-  - Get or set movable state.
+  - Get or set header drag enabled.
+        --------------------------------------------------
+movable_mask(
+    value - int|bool
+)
+
+  - Get movable mask or enable/disable all move axes.
+        --------------------------------------------------
+movable_x(
+    value - bool
+)
+
+  - Get or set X-axis move.
+        --------------------------------------------------
+movable_y(
+    value - bool
+)
+
+  - Get or set Y-axis move.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -4920,6 +4942,12 @@ on_mouse_motion(
 
   - Set or clear the mouse motion callback.
         --------------------------------------------------
+on_move(
+    callback - function(new_position, old_position)
+)
+
+  - Set or clear the move callback.
+        --------------------------------------------------
 on_resize(
     callback - function(new_size, old_size)
 )
@@ -4951,10 +4979,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -5718,10 +5742,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -6381,10 +6401,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -7145,10 +7161,6 @@ pushed(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -8042,10 +8054,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -8749,10 +8757,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -9508,10 +9512,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -10175,10 +10175,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -10876,10 +10872,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -11543,10 +11535,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -12329,10 +12317,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -13041,10 +13025,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -13752,10 +13732,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -14477,10 +14453,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -15195,10 +15167,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -15900,10 +15868,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -16619,10 +16583,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -17324,10 +17284,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -18037,10 +17993,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -18230,6 +18182,14 @@ device_name()
 is_open()
 
   - Check if device is open. Returns true if open.
+        --------------------------------------------------
+midi_learn()
+
+  - Make this device the active MIDI learn device.
+        --------------------------------------------------
+midi_type()
+
+  - Get device type: 'input', 'output', or 'input_output'.
         --------------------------------------------------
 open(
     device_id - device index (default: first available),
@@ -18786,10 +18746,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -19430,10 +19386,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -20114,10 +20066,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_rate(
     return - float
 )
@@ -20789,10 +20737,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -21559,10 +21503,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -22276,10 +22216,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -22943,10 +22879,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -23641,10 +23573,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -24369,10 +24297,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -25074,10 +24998,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -25840,10 +25760,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -26540,10 +26456,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -27179,10 +27091,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -27826,10 +27734,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -28465,10 +28369,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
@@ -29106,10 +29006,6 @@ refresh_layout()
 
   - Mark this widget for layout refresh.
         --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
-        --------------------------------------------------
 refresh_size()
 
   - Mark this widget for size refresh.
@@ -29350,6 +29246,12 @@ children_visible(
 )
 
   - Get list of visible child widgets.
+        --------------------------------------------------
+clamp_move(
+    value - bool
+)
+
+  - Get or set clamp move enabled.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -29676,7 +29578,25 @@ movable(
     value - bool
 )
 
-  - Get or set movable state.
+  - Get or set header drag enabled.
+        --------------------------------------------------
+movable_mask(
+    value - int|bool
+)
+
+  - Get movable mask or enable/disable all move axes.
+        --------------------------------------------------
+movable_x(
+    value - bool
+)
+
+  - Get or set X-axis move.
+        --------------------------------------------------
+movable_y(
+    value - bool
+)
+
+  - Get or set Y-axis move.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -29744,6 +29664,12 @@ on_mouse_motion(
 
   - Set or clear the mouse motion callback.
         --------------------------------------------------
+on_move(
+    callback - function(new_position, old_position)
+)
+
+  - Set or clear the move callback.
+        --------------------------------------------------
 on_resize(
     callback - function(new_size, old_size)
 )
@@ -29775,10 +29701,6 @@ pushbutton(
 refresh_layout()
 
   - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_parent_layout()
-
-  - Mark parent widget for layout refresh.
         --------------------------------------------------
 refresh_size()
 
