@@ -49,6 +49,7 @@
   - Object Type: nanogui.layout_base
   - Object Type: nanogui.layout_horizontal
   - Object Type: nanogui.layout_vertical
+  - Object Type: nanogui.midi_learn_button
   - Object Type: nanogui.midicontrol_base
   - Object Type: nanogui.midicontrolbutton
   - Object Type: nanogui.midicontrolcombo
@@ -59,6 +60,7 @@
   - Object Type: nanogui.midicontroltext
   - Object Type: nanogui.midicontrolvector
   - Object Type: nanogui.mididevice
+  - Object Type: nanogui.mididevicehandler
   - Object Type: nanogui.modmatrixnode
   - Object Type: nanogui.permanent_tab
   - Object Type: nanogui.screen
@@ -620,12 +622,6 @@ nanogui.deserialize_controls()
 
   - Deserialize modmatrix nodes from JSON.
         --------------------------------------------------
-nanogui.enumerate_midi_devices(
-    bool - open device handles.
-)
-
-  - Get list of available MIDI devices and open them if possible.
-        --------------------------------------------------
 nanogui.layout_horizontal() -> nanogui.layout_horizontal
 
         --------------------------------------------------
@@ -648,6 +644,12 @@ nanogui.midi_learn()
         --------------------------------------------------
 nanogui.mididevice() -> nanogui.mididevice
 
+        --------------------------------------------------
+nanogui.mididevicehandler(
+    callback - function to call when a MIDI device is connected
+) -> nanogui.mididevicehandler
+
+  - Start a new midi handler and set callback for when a MIDI device is connected.
         --------------------------------------------------
 nanogui.serialize_controls()
 
@@ -7114,6 +7116,12 @@ on_mouse_motion(
 
   - Set or clear the mouse motion callback.
         --------------------------------------------------
+on_open(
+    callback - function()
+)
+
+  - Set or clear open callback.
+        --------------------------------------------------
 on_scroll(
     callback - function
 )
@@ -7345,6 +7353,24 @@ Object: nanogui.context
 fps()
 
   - Get/set FPS for non-fullscreen windows
+        --------------------------------------------------
+fullscreen(
+    monitor_id: Monitor index to use for fullscreen (default primary monitor).,
+    caption: Window title (default "test").,
+    is_true_fullscreen: Whether to create a true fullscreen mode (default true) or borderless window.
+) -> nanogui.screen
+
+  - Create a screen with optional parameters
+        --------------------------------------------------
+monitor_count()
+
+  - Get the number of monitors connected.
+        --------------------------------------------------
+monitor_info(
+    monitor_index: Index of the monitor to get information for (optional).
+)
+
+  - Get information about all connected monitors.
         --------------------------------------------------
 nvgArc(
     center - vec2f Center,
@@ -11783,6 +11809,726 @@ spacing(
 
 
 ==================================================
+Object: nanogui.midi_learn_button
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+alignment(
+    value - string
+)
+
+  - Get or set caption alignment (left, center, right).
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+background_color(
+    value - vec4f
+)
+
+  - Get or set background color.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_group(
+    value - json
+)
+
+  - Get or set button group.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+caption(
+    value - string
+)
+
+  - Get or set button caption.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Get list of visible child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrolio
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+flags(
+    value - int
+)
+
+  - Get or set button flags.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+icon(
+    value - int
+)
+
+  - Get or set button icon.
+        --------------------------------------------------
+icon_position(
+    value - int
+)
+
+  - Get or set icon position.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+on_change(
+    callback - function
+)
+
+  - Set or clear pushed-state callback.
+        --------------------------------------------------
+on_click(
+    callback - function
+)
+
+  - Set or clear click callback.
+        --------------------------------------------------
+on_drag_change(
+    callback - function
+)
+
+  - Set or clear drag change callback (called with relative movement vec2f).
+        --------------------------------------------------
+on_drag_end(
+    callback - function
+)
+
+  - Set or clear drag end callback.
+        --------------------------------------------------
+on_drag_start(
+    callback - function
+)
+
+  - Set or clear drag start callback.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+padding(
+    value - vec2f
+)
+
+  - Get or set button padding.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+pushed(
+    value - bool
+)
+
+  - Get or set pushed state.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+text_color(
+    value - vec4f
+)
+
+  - Get or set text color.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
 Object: nanogui.midicontrol_base
 ==================================================
 
@@ -12160,6 +12906,10 @@ matrixnode(
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
+        --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
@@ -12862,6 +13612,10 @@ matrixnode(
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
+        --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
@@ -13577,6 +14331,10 @@ matrixnode(
 
   - Create a child modmatrix node.
         --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
+        --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
 )
@@ -13628,6 +14386,12 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+on_change(
+    callback - function(index, text)
+)
+
+  - Set or clear selection callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -13700,6 +14464,12 @@ on_mouse_motion(
 )
 
   - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_open(
+    callback - function()
+)
+
+  - Set or clear open callback.
         --------------------------------------------------
 on_scroll(
     callback - function
@@ -14290,6 +15060,10 @@ max(
 )
 
   - Get or set maximum value.
+        --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
         --------------------------------------------------
 min(
     value - float
@@ -15005,6 +15779,10 @@ max(
 
   - Get or set maximum value.
         --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
+        --------------------------------------------------
 min(
     value - int
 )
@@ -15712,6 +16490,10 @@ matrixnode(
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
+        --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
@@ -16421,6 +17203,10 @@ max(
 
   - Get or set maximum value.
         --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
+        --------------------------------------------------
 min(
     value - float
 )
@@ -17128,6 +17914,10 @@ matrixnode(
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
+        --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
@@ -17837,6 +18627,10 @@ matrixnode(
 
   - Create a child modmatrix node.
         --------------------------------------------------
+midi_learn_button() -> nanogui.midi_learn_button
+
+  - Get the midi learn button widget.
+        --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
 )
@@ -18167,17 +18961,25 @@ Object: nanogui.mididevice
 ==================================================
 
         --------------------------------------------------
-close()
+device_input_id()
 
-  - Close MIDI device. Returns true on success.
-        --------------------------------------------------
-device_id()
-
-  - Get device ID.
+  - Get device input ID.
         --------------------------------------------------
 device_name()
 
   - Get device name.
+        --------------------------------------------------
+device_output_id()
+
+  - Get device output ID.
+        --------------------------------------------------
+has_input()
+
+  - Check if device has input capability.
+        --------------------------------------------------
+has_output()
+
+  - Check if device has output capability.
         --------------------------------------------------
 is_open()
 
@@ -18191,12 +18993,17 @@ midi_type()
 
   - Get device type: 'input', 'output', or 'input_output'.
         --------------------------------------------------
-open(
-    device_id - device index (default: first available),
-    type - 'input', 'output', or 'input_output' (default: 'input')
+on_close(
+    callback - function to call on close
 )
 
-  - Open MIDI device. Returns true on success.
+  - Set a callback function to be called when the device is closed.
+        --------------------------------------------------
+on_open(
+    callback - function to call on open
+)
+
+  - Set a callback function to be called when the device is opened.
         --------------------------------------------------
 send_control_change(
     control - control number (0-127),
@@ -18229,6 +19036,23 @@ send_note_on(
 )
 
   - Send a note on message.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.mididevicehandler
+==================================================
+
+        --------------------------------------------------
+device_count()
+
+  - Get the number of available MIDI devices.
+        --------------------------------------------------
+device_name(
+    device_id - index of the MIDI device
+)
+
+  - Get the name of a MIDI device by its ID.
         --------------------------------------------------
 
 
@@ -22675,9 +23499,11 @@ has_font_size()
 
   - Check if custom font size is set.
         --------------------------------------------------
-height()
+height(
+    value - int
+)
 
-  - Get the height of the received texture.
+  - Get or set widget height.
         --------------------------------------------------
 image(
     path - string
@@ -22690,6 +23516,12 @@ intbox(
 ) -> nanogui.intbox
 
   - Create a child integer box.
+        --------------------------------------------------
+invert(
+    invert_y - bool
+)
+
+  - Set whether to invert the Y-axis of the received texture.
         --------------------------------------------------
 is_connected(
     return - bool
@@ -22906,11 +23738,25 @@ scrollarea(
 
   - Create a child scroll area widget.
         --------------------------------------------------
+sender_height()
+
+  - Get the height of the received texture.
+        --------------------------------------------------
 sender_name(
     return - string
 )
 
   - Get the current sender name.
+        --------------------------------------------------
+sender_size(
+    return - vec2
+)
+
+  - Get the size of the received texture.
+        --------------------------------------------------
+sender_width()
+
+  - Get the width of the received texture.
         --------------------------------------------------
 set_sender_name(
     sender_name - string
@@ -22926,10 +23772,10 @@ shader(
   - Create a child GLSL shader widget.
         --------------------------------------------------
 size(
-    return - vec2
+    value - vec2i Size
 )
 
-  - Get the size of the received texture.
+  - Get or set the widget size.
         --------------------------------------------------
 slider(
     caption - string
@@ -23031,9 +23877,11 @@ widget_unique(
 
   - Create a child unique widget.
         --------------------------------------------------
-width()
+width(
+    value - int
+)
 
-  - Get the width of the received texture.
+  - Get or set widget width.
         --------------------------------------------------
 window(
     title - string
@@ -30869,6 +31717,10 @@ stop()
 terminate()
 
   - Request process termination (SIGTERM / TerminateProcess).
+        --------------------------------------------------
+terminate_on_destroy()
+
+  - Set whether the process should be terminated when the object is destroyed.
         --------------------------------------------------
 wait()
 
