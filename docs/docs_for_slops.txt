@@ -1123,10 +1123,6 @@ std.system_path(
 
   - Expand environment variables and normalize a filesystem path
         --------------------------------------------------
-std.testcrash()
-
-  - Force a crash by dereferencing a null pointer (for testing purposes)
-        --------------------------------------------------
 std.thread(
     Create a new thread object with optional callback function,
     callback: function - The function to be executed in the new thread
@@ -20959,6 +20955,12 @@ spout_receiver(
 
   - Create a child Spout receiver widget.
         --------------------------------------------------
+status_overlay(
+    message - string
+)
+
+  - Show a blocking overlay with a status message (e.g. 'Loading...'). Pass an empty string to close.
+        --------------------------------------------------
 tabwidget(
     first_tab_name - string
 ) -> nanogui.tabwidget
@@ -31399,6 +31401,10 @@ extract_all(
 )
 
   - Extract all substring between specified left and right delimiters
+        --------------------------------------------------
+extract_quotes()
+
+  - Extract substring between the first pair of double quotes in the string
         --------------------------------------------------
 find(
     substring: string - Substring to search for
