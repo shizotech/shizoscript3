@@ -31,6 +31,8 @@ class miniagent
 	//helper
 	added_tools = [];
 	
+	stopped = false;
+	
 	__init__(api_url = "http://localhost:8000", model = None, system_role = "executor", auth_token = "none")
 	{
 		//Load main system skills		
@@ -127,7 +129,7 @@ class miniagent
 			skill_path = AGENT_ROOT_DIR + folder_name + "/" + skill_name;
 		
 		if(!fileio.exists(skill_path))
-			std.runtime_error("Agent skill does not exist: ", skill_name);
+			//std.runtime_error("Agent skill does not exist: ", skill_name);
 			return "";
 		
 		return skill_path;
@@ -281,6 +283,8 @@ class miniagent
 
 	stop()
 	{
+		stopped = true;
+		
 		llm_api.stop();
 		
 		for(i = 0; i < _child_agents.size(); i++) {

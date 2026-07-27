@@ -2,10 +2,50 @@
 #include "../../../miniagent"
 #include "../../SHARED"
 
+first_prompt = R"(
+Required skills: <SKILLS>
+
+The high-level goal is:
+
+```goal
+<GOAL>
+```
+
+No task list exists yet.
+
+Read required skills first if applicable.
+
+Then it's your responsibility to analyze this goal, investigate the required scope, and create the initial set of tasks using one or multiple calls to create_task and priority 'normal'.
+
+Create tasks that represent meaningful work units required to achieve the goal, split the work into logical actions.
+
+Do not implement anything yet.
+
+After creating the initial tasks, start a task by calling task_start.
+)";
+
+run_prompt = R"(
+```history
+<HISTORY>
+```
+
+Your current task is:
+
+```task
+<TASK>
+```
+
+Required skills: <SKILLS>
+
+Execute your current task only now.
+Follow the response format exactly.
+)";
+
 add_tools(agt)
 {
 	//This is needed because some models tend to loop forever without an exit...
-	agt.add_finalize_tool(true);
+	//Or maybe not with this short system prompt?
+	//agt.add_finalize_tool(true);
 
 	add_read_tools(agt);
 	add_code_read_tools(agt);
@@ -15,177 +55,94 @@ add_tools(agt)
 		"execute_plan",
 		"Execute a plan",
 		[
-			goal = "&string(): Goal manifest",
-			state = "&string(): State manifest",
-			taskboard = "&string(): Taskboard manifest",
-			context = "&string(): Context manifest",
+			goal = "&string(): The goal in great detail.",
 			git_message = "&string(): Short description what this is about, use words only, no symbols or quotes.",
 			skills = "array(string): List of required or useful skills that are needed or helpful to complete the task (if non are applicable, this is OPTIONAL)",
-			//working_directory = "&string(): The working directory for the downstream agent.", 
 		],
 		[](agt, args)
 		{	
+			if(agt.env.plan_in_progress)
+				return "Error: another plan is already running. Wait till the other plan finished.";
 		
-			//TODO: add a whole-repo backup system before starting the run, so that plan_failed can truly recover it even from unrecoverable action_historys
-			//Maybe just use git? Or something simple. Must capture all files and directories
+			agt.env.plan_in_progress = true;
 		
-			fileio.remove(".plan");
-			
 			if(!args.git_message)
 				args.git_message = "dreamer commit";
 			
 			std.system("git add -A");
 			std.system("git commit -m \"before checkpoint: " + args.git_message.replace("\"", "'") + "\"");
 		
-			fileio.write_string(".plan/goal.md", args.goal);
-			fileio.write_string(".plan/state.md", args.state);
-			fileio.write_string(".plan/task_board.md", args.taskboard);
-			fileio.write_string(".plan/context.md", args.context);
-			fileio.write_string(".plan/handover.md", "# Important notices to future agents");
-			fileio.write_string(".plan/failures.md", "# No failures reported yet");
-			fileio.write_string(".plan/activity.log", "# No activity yet");
-		
-			prompt_executor = "Read and achieve the goal set in '.plan/' like an intelligent senior software developer.";
-			prompt_reviewer = "Read the goal set in '.plan/' like an intelligent senior software developer and confirm the progress of the plan in the repo.\nEspecially look out for half-finished implementations, lazy implementations, wrong implementations, syntax errors, unused and redundant code and variables, bugs, performance and general integration.\nMake sure the entire project is scalable, modular and not a mess.\n\n\nHere is the official report from the last executing agent:\n\n";
-				
 			steps = 1;
 			
+			env = [taskboard = [], journals=[], task_stack=[], task_id=None];
+		
+			prompt = first_prompt.replace("<GOAL>", args.goal);
+			if(args.skills)
+				prompt = prompt.replace("<SKILLS>", "" + args.skills);
+		
 			try {
 				for(true) {
 
-					managed executor = agt.subagent("planner/executor");				
+					std.cout("\n[STEP " + steps + "]\n\n");
+					
+					//std.print(env);
+
+					managed executor = agt.subagent("planner/executor");
+					executor.env = env;
 					if(agt.on_action) {
 						executor.on_action = [agt](act) {
 							agt.on_action(act);
 						};
 					}
 					
-					last_handover = fileio.read_string(".plan/handover.md");
-					std.print("\n\n---RUN EXECUTOR---\n");
+					executor.llm_api.context.body.messages[0].content = executor.llm_api.context.body.messages[0].content.replace("<GOAL>", args.goal); 
 					
-					exec_result = None;
+					step_result = None;
 					
-					task_prompt = prompt_executor;
+					current_task = None;
 					
-					if(fileio.exists(".plan/handover.md"))
-						task_prompt += "\n- Read the handover file '.plan/handover.md'.";
-					if(fileio.exists(".plan/next_steps.md"))
-						task_prompt += "\n- Read the next suggested steps in '.plan/next_steps.md'.";
+					has_open_tasks = false;
 					
-					if(std.is_json(args.skills) && args.skills)
-						task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
+					for(i = 0; i < env.taskboard.size(); i++) {
+						if(env.taskboard[i].status == "in_progress")
+							current_task = std.string(env.taskboard[i]);
+						if(env.taskboard[i].status == "open")
+							has_open_tasks = true;
+					}
 					
+					if(!current_task) {
+						current_task = std.string(env.taskboard);
+						if(has_open_tasks)
+							current_task += "\n\nUse task_start to choose one of these tasks now before doing anything!";
+						else
+							current_task += "\n\nNo open tasks, create a new task or call plan_finished!";
+					}
+
 					try {
-						exec_result = executor.task(task_prompt);
+						task_prompt = prompt.replace("<TASK>", std.string(current_task));
+						if(env.task_id)
+							task_prompt.replace("<HISTORY>", std.string(env.journals[env.task_id]));
+						else
+							task_prompt.replace("<HISTORY>", "No history yet.");
+						step_result = executor.task(prompt.replace("<TASK>", std.string(current_task)));
 					}
 					catch(e) {}
 					
-					last_report = exec_result.reports ? exec_result.reports[0].report : "<no_report> The agent might have crashed during its run.";
-					
-					if(exec_result.reports)
-						if(last_handover == fileio.read_string(".plan/handover.md"))
-							fileio.write_string(".plan/handover.md", "# Important notices to future agents");
-						fileio.remove(".plan/next_steps.md");
-					
-					std.print("\n\n---RUN REVIEWER---\n");
-					
-					review_result = None;
-					
-					max_fails = 0;
+					last_report = step_result.reports ? step_result.reports[0].report : "no_report: The agent might have crashed during its run.";
 					
 					modified_files = executor.modified_files;
 					
-					for(true) {
-						
-						managed reviewer = agt.subagent("planner/reviewer");	
-						if(agt.on_action) {
-							reviewer.on_action = [agt](act) {
-								agt.on_action(act);
-							};
-						}
-						
-						try {
-							
-							task_prompt = prompt_reviewer + last_report;
-							
-							if(std.is_json(modified_files) && modified_files)
-								task_prompt += "\n\nList of modified files: " + modified_files.compact_string();
-							
-							if(std.is_json(args.skills) && args.skills)
-								task_prompt += "\n\nList of required skills to load: " + args.skills.compact_string();
+					if(env.plan_finished) {
+						std.system("git add -A");
+						std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
+						agt.env.plan_in_progress = false;
+						return env.taskboard;
+					}
 					
-							review_result = reviewer.task(task_prompt);
-							max_fails = 0;
-						}
-						catch(e) { 
-							max_fails++;
-							if(max_fails > 3) {
-								
-								std.system("git add -A");
-								std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
-								
-								return [
-									ok=false,
-									error="The reviewer agent crashed 3 times in a row.",
-								];
-							}					
-							continue; 
-						}
-									
-						if(reviewer.env.plan_revert) {
-							acts = executor.action_history;
-							
-							if(!acts)
-								modified_files = None;
-								last_report = "The previous review agent has issued to revert the last run, however there are no reverts to be made.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
-								continue;
-											
-							for(i = acts.size() - 1; i >= 0; i--) {
-								act = acts[i];
-								
-								if(act.name == "edit" || act.name == "write")
-									if(!act.content.prev_content)
-										agt.filesystem.remove(act.content.path);
-									else
-										agt.filesystem.write_string(act.content.path, act.content.prev_content);
-								else if(act.name == "mkdir" && !act.content.existed_before)
-									agt.filesystem.remove(act.content.path);
-								else if(act.name == "move")
-									agt.filesystem.move(act.content.dst_path, act.content.src_path);
-									if(!act.content.existed_before)
-										agt.filesystem.remove(act.content.dst_path);
-								else if(act.name == "rename")
-									agt.filesystem.rename(act.content.dst_path, act.content.src_path);
-								else if(act.name == "remove_file")
-									agt.filesystem.write_file(act.content.path, act.content.prev_content);
-								else
-									std.error("Implement revert act in orchestrator ROLE.shio: " + act);
-								
-								fileio.remove(act.content.backup_file_path);
-							}
-							
-							executor.action_history = [];
-							
-							last_report = "The previous review agent has issued to revert the last run.\nAll changes (from the last run only) have been reverted.\nCheck out the repo and ensure '.plan/' integrity so the plan can continue, document steps and required fixes for the repo in '.plan/' and do NOT implement them yourself!"; 
-							
-							continue;
-						}
-						
-						if(reviewer.env.plan_finished) {
-							ok = !reviewer.env.plan_failed;
-							status = reviewer.env.plan_failed ? "Plan failed." : "Plan finished in " + steps + " steps.";
-							
-							std.system("git add -A");
-							std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
-	
-							
-							return [
-								ok=ok,
-								status=status,
-							];
-						}
-						
-						break;
+					if(steps == 1) {
+						prompt = run_prompt;
+						if(args.skills)
+							prompt = prompt.replace("<SKILLS>", "" + args.skills);
 					}
 					
 					steps++;
@@ -195,6 +152,13 @@ add_tools(agt)
 	
 			std.system("git add -A");
 			std.system("git commit -m \"after checkpoint: " + args.git_message.replace("\"", "'") + "\"");
+	
+			agt.env.plan_in_progress = false;
+			
+			agt.stop();
+			
+			std.print(env.taskboard);
+			std.print(env.journals);
 	
 			return [
 				ok=false,

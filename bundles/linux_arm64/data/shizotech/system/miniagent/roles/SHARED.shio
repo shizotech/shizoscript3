@@ -28,7 +28,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 		"list_dir",
-		"Query files in the current directory",
+		"FILE OPERATION - Query files in the current directory",
 		[
 			path = "&string(): Path to query, use '.' for the current working directory",
 			recursive = ["true", "false"],
@@ -103,7 +103,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 	  "file_info",
-	  "Get file info",
+	  "FILE OPERATION - Get file info",
 	  [
 		path = "&string(): Target file",
 	  ],
@@ -118,7 +118,7 @@ add_read_tools(agt) {
 	
 	agt.add_tool(
 	  "file_line_count",
-	  "Get file line count",
+	  "FILE OPERATION - Get file line count",
 	  [
 		path = "&string(): Target file",
 	  ],
@@ -133,7 +133,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 	  "read_file",
-	  "Read raw file content",
+	  "FILE OPERATION - Read raw file content",
 	  [
 		path = "&string(): Target file",
 		include_line_numbers = ["true", "false"],
@@ -207,7 +207,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 	  "read_source_map",
-	  "Read a source file of any kind as a skeleton overview with all classes and functions and their locations in the text file, without concrete implementation details\nALWAYS prefer this function over reading entire files when possible",
+	  "FILE OPERATION - Read a source file of any kind as a skeleton overview with all classes and functions and their locations in the text file, without concrete implementation details\nALWAYS prefer this function over reading entire files when possible",
 	  [
 		path = "&string(): Target file",
 	  ],
@@ -296,7 +296,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 	  "search_in_file",
-	  "Extract relevant parts of a file based on a natural language instructions\nNote: use return_format: 'signatures' for a compressed class/function overview without concrete implementation details or function bodies",
+	  "FILE OPERATION - Extract relevant parts of a file based on a natural language instructions\nNote: use return_format: 'signatures' for a compressed class/function overview without concrete implementation details or function bodies",
 	  [
 		path = "&string(): Target file",
 
@@ -376,7 +376,7 @@ add_read_tools(agt) {
 
 	agt.add_tool(
 		"grep",
-		"Grep function",
+		"FILE OPERATION - Grep function",
 		[
 			query = "&string(): The query to search for",
 			recursive = ["true", "false"],
@@ -476,11 +476,11 @@ add_code_read_tools(agt) {
 add_write_tools(agt) {
 	agt.add_tool(
 		"write_file",
-		"DANGEROUS Write or overwrite a file",
+		"FILE OPERATION - Create a new file.",
 		[
 			path = "&string(): Target file",
-			intention = "&string(): Intention for the file operation",
-			content = "&string(): Content of the file",
+			intention = "&string(): Intention of the new file.",
+			content = "&string(): Content of the new file",
 		],
 		[](agt, args)
 		{
@@ -492,6 +492,14 @@ add_write_tools(agt) {
 			}
 			
 			managed _lock = local_file_lock(args.path);
+			
+			if(!agt.filesystem.empty(args.path)) {
+				return [
+					ok = false,
+					error = "The file exists and is not empty.",
+					next_steps = "Prefer to use 'replace_string' to make precise edits to files rather than rewriting the entire file from scratch.\nIf you are absolutely sure you want to overwrite the entire file (not recommended) because it is necessary, use 'remove' to remove the file first, then call this tool again.",
+				];
+			}
 			
 			file_content = args.content;
 		
@@ -596,11 +604,11 @@ Decision must be binary and final.
 								
 				agt.report_back(approve + "\n");
 				
-				if(approve == "DECLINED")
+				if(approve.lowercase().find("decline") >= 0)
 				{
 					return [
 						ok = false,
-						error = "REJECTED BECAUSE:\n" + eval,
+						error = "REJECTED:\n" + eval,
 					];
 				}
 				
@@ -634,7 +642,7 @@ Decision must be binary and final.
 	
 	agt.add_tool(
 		"append_text",
-		"Append text at the end or insert text at the beginning of a file",
+		"FILE OPERATION - Append text at the end or insert text at the beginning of a file",
 		[
 			path = "&string(): Target file",
 			insert_at = ["start", "end"],
@@ -759,11 +767,11 @@ Decision must be binary and final.
 								
 				agt.report_back(approve + "\n");
 				
-				if(approve == "DECLINED")
+				if(approve.lowercase().find("decline") >= 0)
 				{
 					return [
 						ok = false,
-						error = "REJECTED BECAUSE:\n" + eval,
+						error = "REJECTED:\n" + eval,
 					];
 				}
 				
@@ -797,7 +805,7 @@ Decision must be binary and final.
 	
 	agt.add_tool(
 		"replace_string",
-		"Replace one or multiple occurences of a given string within a text file\nMake sure to NOT include any line numbers returned by read functions!\nThis tool is mostly whitespace insensitive, but the text between the whitespaces must match 100% with what you want to replace.",
+		"FILE OPERATION - Replace one or multiple occurences of a given string within a text file\nMake sure to NOT include any line numbers returned by read functions!\nThis tool is mostly whitespace insensitive, but the text between the whitespaces must match 100% with what you want to replace.",
 		[
 			path = "&string(): Target file",
 			target_text = "&string(): Exact text to locate. Must be copied byte-for-byte from the file.",
@@ -987,7 +995,7 @@ Rules:
 				
 				agt.report_back(approve + "\n");
 				
-				if(approve == "DECLINED")
+				if(approve.lowercase().find("decline") >= 0)
 				{
 					return [
 						ok = false,
@@ -1180,7 +1188,7 @@ Rules:
 				
 				agt.report_back(approve + "\n");
 				
-				if(approve == "DECLINED")
+				if(approve.lowercase().find("decline") >= 0)
 				{
 					return [
 						ok = false,
@@ -1216,7 +1224,7 @@ Rules:
 	
 	agt.add_tool(
 		"mkdir",
-		"Create a directory",
+		"FILE OPERATION - Create a directory",
 		[
 			path = "&string(): Create a directory (and all sub-directories)",
 		],
@@ -1245,7 +1253,7 @@ Rules:
 		
 	agt.add_tool(
 		"move",
-		"Move a file or directory.",
+		"FILE OPERATION - Move a file or directory.",
 		[
 			src_path = "&string(): Source path.",
 			dst_path = "&string(): Destination path.",
@@ -1271,7 +1279,7 @@ Rules:
 	
 	agt.add_tool(
 		"copy",
-		"Copy a file or directory.",
+		"FILE OPERATION - Copy a file or directory.",
 		[
 			src_path = "&string(): Source path.",
 			dst_path = "&string(): Destination path.",
@@ -1297,7 +1305,7 @@ Rules:
 	
 	agt.add_tool(
 		"rename",
-		"Rename a file or directory.",
+		"FILE OPERATION - Rename a file or directory.",
 		[
 			src_path = "&string(): Source path.",
 			dst_path = "&string(): Destination path.",
@@ -1322,7 +1330,7 @@ Rules:
 	
 	agt.add_tool(
 		"remove",
-		"DANGEROUS Remove a file or directory",
+		"FILE OPERATION - DANGEROUS Remove a file or directory",
 		[
 			path = "&string(): Source path.",
 			intention = "&string(): A clear and concise explanation *why* the file or directory needs to be removed.",
@@ -1387,7 +1395,7 @@ Rules:
 				
 				agt.report_back(approve + "\n");
 				
-				if(approve == "DECLINED")
+				if(approve.lowercase().find("decline") >= 0)
 				{
 					return "The remove request could not be approved because:\n\n" + eval;
 				}

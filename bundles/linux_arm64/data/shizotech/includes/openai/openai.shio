@@ -95,9 +95,15 @@ class openai_stream
 			std.error("No stream!");
 			return None;
 		
+		if(_stop_stream)
+			return None;
+		
 		raw_chunk = "";
 		
 		for(1) {
+			if(_stop_stream)
+				return None;
+			
 			temp_chunk = stream_curl.poll_stream();
 			if(!temp_chunk) {
 				if(_chunked_stream.empty()) //Still process rest of buffer...
@@ -110,6 +116,9 @@ class openai_stream
 			if(_chunked_stream.contains("\n"))
 				break;
 		}
+		
+		if(_stop_stream)
+			return None;
 		
 		endline_index = _chunked_stream.find("\n");
 		if(endline_index >= 0) {
@@ -215,12 +224,17 @@ class openai_stream
 	
 	answer()
 	{
-		for(poll()) {}	
+		for(poll()) {}
+
+		if(_stop_stream)
+			return None;
+		
 		return [reasoning=stream_reasoning, content=stream_content, text=stream_text, raw=stream_raw];
 	}
 	
 	stop()
 	{
+		_stop_stream = true;
 		if(stream_curl)
 			stream_curl.stop_stream();
 	}
@@ -230,6 +244,7 @@ class openai_stream
 	//For debugging
 	_last_raw = None;
 	//_body = None;
+	_stop_stream = false;
 }
 
 class toolset

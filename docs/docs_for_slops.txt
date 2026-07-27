@@ -69,6 +69,7 @@
   - Object Type: nanogui.screen
   - Object Type: nanogui.scrollarea
   - Object Type: nanogui.shader
+  - Object Type: nanogui.shader_view
   - Object Type: nanogui.slider
   - Object Type: nanogui.spout_receiver
   - Object Type: nanogui.tabwidget
@@ -210,6 +211,12 @@ fileio.dirs(
 )
 
   - List directories inside a directory
+        --------------------------------------------------
+fileio.empty(
+    path: string - Path to the file or directory
+)
+
+  - Check if a file or directory is empty or does not exist
         --------------------------------------------------
 fileio.exists(
     path: string - Path to test
@@ -1143,6 +1150,12 @@ std.user_path(
 )
 
   - Get the user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+        --------------------------------------------------
+std.vaddress(
+    value: Variable to inspect
+)
+
+  - Get the address of a variable
         --------------------------------------------------
 std.vtype(
     value: Variable to inspect
@@ -2612,6 +2625,12 @@ dirs(
 
   - List directories inside a directory (local root)
         --------------------------------------------------
+empty(
+    path: string - Path relative to local root
+)
+
+  - Check if a file or directory is empty (local root)
+        --------------------------------------------------
 exists(
     path: string - Path relative to local root
 )
@@ -3078,7 +3097,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -3578,6 +3597,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -3812,7 +3835,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -4326,6 +4349,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 side(
     value - string
 )
@@ -4540,7 +4567,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clamp_move(
     value - bool
@@ -4751,6 +4778,12 @@ gridview() -> nanogui.gridview
 has_font_size()
 
   - Check if custom font size is set.
+        --------------------------------------------------
+header_enabled(
+    value - bool
+)
+
+  - Get or set header enabled.
         --------------------------------------------------
 header_height()
 
@@ -5068,6 +5101,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -5318,7 +5355,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear()
 
@@ -5808,6 +5845,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 show_diffs(
     new_text - string
 )
@@ -6024,7 +6065,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -6476,6 +6517,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -6696,7 +6741,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -7190,6 +7235,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -7430,7 +7479,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -7970,6 +8019,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 side(
     value - string
 )
@@ -8384,7 +8437,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -8888,6 +8941,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 show_hidden(
     value - bool
 )
@@ -9108,7 +9165,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -9600,6 +9657,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -9834,7 +9895,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -10358,6 +10419,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -10604,7 +10669,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -10955,6 +11020,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+on_cell_drop(
+    callback
+)
+
+  - Set callback(payload, row, col) when an arbitrary payload is dropped onto a cell.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -11109,6 +11180,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 show_grid(
     value - bool
@@ -11320,7 +11395,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -11725,6 +11800,18 @@ on_scroll(
 
   - Set or clear the scroll callback.
         --------------------------------------------------
+outline(
+    value - bool
+)
+
+  - Get or set whether item has an outline.
+        --------------------------------------------------
+outline_color(
+    value - vec4f
+)
+
+  - Get or set outline color.
+        --------------------------------------------------
 parent() -> nanogui.widget
 
   - Get parent widget.
@@ -11789,6 +11876,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 size(
     value - vec2i Size
@@ -11988,7 +12079,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -12442,6 +12533,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -12654,7 +12749,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -13146,6 +13241,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -13374,7 +13473,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -13814,6 +13913,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -14129,7 +14232,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -14629,6 +14732,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -14839,7 +14946,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -15341,6 +15448,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -15559,7 +15670,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -16067,6 +16178,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -16128,6 +16243,12 @@ tooltip(
 )
 
   - Get or set tooltip.
+        --------------------------------------------------
+transparent(
+    transparent - boolean (1 for transparent, 0 for opaque)
+)
+
+  - Get or set transparency.
         --------------------------------------------------
 unlink_from(
     control - The midicontrol_base to unlink from.
@@ -16285,7 +16406,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -16811,6 +16932,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -17029,7 +17154,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -17542,6 +17667,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 size(
     value - vec2i Size
@@ -17761,7 +17890,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -18274,6 +18403,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 size(
     value - vec2i Size
@@ -18493,7 +18626,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -18995,6 +19128,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -19213,7 +19350,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -19727,6 +19864,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -19945,7 +20086,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -20447,6 +20588,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -20665,7 +20810,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -21173,6 +21318,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -21501,7 +21650,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -21975,6 +22124,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -22173,7 +22326,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -22613,6 +22766,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -22821,7 +22978,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -23312,6 +23469,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 should_close(
     callback - function | none
 )
@@ -23522,7 +23683,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -23992,6 +24153,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -24214,7 +24379,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -24773,6 +24938,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -24939,6 +25108,647 @@ y(
 
 
 ==================================================
+Object: nanogui.shader_view
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Set visibility of child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+color_selector() -> nanogui.color_selector
+
+  - Create a child color selector widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrolio
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+gridview() -> nanogui.gridview
+
+  - Create a child grid view widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    shader - shz_shader
+)
+
+  - Get or set the linked shader.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
 Object: nanogui.slider
 ==================================================
 
@@ -25022,7 +25832,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -25480,6 +26290,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -25696,7 +26510,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -26190,6 +27004,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -26414,7 +27232,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -26900,6 +27718,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -27139,7 +27961,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear()
 
@@ -27631,6 +28453,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -27847,7 +28673,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -28327,6 +29153,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -28630,7 +29460,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -29110,6 +29940,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -29332,7 +30166,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -29796,6 +30630,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -30000,7 +30838,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -30452,6 +31290,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -30650,7 +31492,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -31089,6 +31931,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 size(
     value - vec2i Size
@@ -31294,7 +32140,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -31734,6 +32580,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -31932,7 +32782,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clear_anchor_bottom()
 
@@ -32382,6 +33232,10 @@ shader(
 
   - Create a child GLSL shader widget.
         --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
 size(
     value - vec2i Size
 )
@@ -32584,7 +33438,7 @@ children_visible(
     visible - bool
 )
 
-  - Get list of visible child widgets.
+  - Set visibility of child widgets.
         --------------------------------------------------
 clamp_move(
     value - bool
@@ -32795,6 +33649,12 @@ gridview() -> nanogui.gridview
 has_font_size()
 
   - Check if custom font size is set.
+        --------------------------------------------------
+header_enabled(
+    value - bool
+)
+
+  - Get or set header enabled.
         --------------------------------------------------
 header_height()
 
@@ -33111,6 +33971,10 @@ shader(
 ) -> nanogui.shader
 
   - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
         --------------------------------------------------
 size(
     value - vec2i Size

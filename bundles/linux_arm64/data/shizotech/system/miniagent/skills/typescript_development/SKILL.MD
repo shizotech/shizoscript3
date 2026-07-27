@@ -376,3 +376,39 @@ If only a few simple errors occur, try to fix them directly.
 If the errors are more complex, report them and leave them for the next run, then exit.
 
 ---
+
+# Typescript Tools
+
+Since you do not have access to the command line directly, use these specific tools instead:
+
+## tsc_compile
+
+tsc_compile is a tool which executes
+
+```
+npx tsc --project <path>
+```
+
+under the hood.
+
+It also spins up a python webserver and checks that the site (index.html) loads.
+
+## bundle_build
+
+bundle_build is a tool which executes
+
+```
+npx esbuild <entry> --bundle --outfile=<outfile>
+```
+
+under the hood.
+
+## node_install
+
+node_install is a tool which executes
+
+```
+npm install
+```
+
+under the hood.
