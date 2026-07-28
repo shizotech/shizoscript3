@@ -15876,6 +15876,12 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+get_button(
+    
+)
+
+  - Get the button widget.
+        --------------------------------------------------
 graph(
     caption - string
 ) -> nanogui.graph
@@ -15921,6 +15927,12 @@ intbox(
 ) -> nanogui.intbox
 
   - Create a child integer box.
+        --------------------------------------------------
+is_ui_callback(
+    
+)
+
+  - Check if the current callback is from the UI.
         --------------------------------------------------
 keyboard(
     key - int, scancode - int, action - int, modifiers - int
@@ -23277,6 +23289,18 @@ modal_yes_no_cancel(
 )
 
   - Open a blocking modal dialog with YES, NO and CANCEL choices.
+        --------------------------------------------------
+modifier_ctrl()
+
+  - Check if CTRL modifier is active.
+        --------------------------------------------------
+modifier_shift()
+
+  - Check if SHIFT modifier is active.
+        --------------------------------------------------
+modifiers()
+
+  - Get current keyboard modifier state (bitmask).
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
