@@ -3,6 +3,7 @@
   - Namespace: curl
   - Namespace: eigen
   - Namespace: fileio
+  - Namespace: ipc
   - Namespace: leveldb
   - Namespace: math
   - Namespace: mqtt
@@ -10,6 +11,7 @@
   - Namespace: python
   - Namespace: shizonet
   - Namespace: shzdocs
+  - Namespace: simpleaudio
   - Namespace: std
   - Namespace: subprocess
   - Namespace: telegram
@@ -18,6 +20,7 @@
   - Namespace: webserver
   - Namespace: win32
   - Namespace: zip
+  - Object Type: audio.audio_fft
   - Object Type: bitmap.bitmap
   - Object Type: curl.curl
   - Object Type: eigen.vec2d
@@ -30,6 +33,7 @@
   - Object Type: eigen.vec4f
   - Object Type: eigen.vec4i
   - Object Type: fileio.container
+  - Object Type: ipc.ipc
   - Object Type: leveldb.db
   - Object Type: leveldb.iterator
   - Object Type: mqtt.mqtt
@@ -75,6 +79,7 @@
   - Object Type: nanogui.tabwidget
   - Object Type: nanogui.textarea
   - Object Type: nanogui.textbox
+  - Object Type: nanogui.texture
   - Object Type: nanogui.theme
   - Object Type: nanogui.timeline
   - Object Type: nanogui.timeline_item
@@ -87,6 +92,9 @@
   - Object Type: shizonet.client
   - Object Type: shizonet.device
   - Object Type: shizonet.server
+  - Object Type: simpleaudio.audio
+  - Object Type: simpleaudio.audio_analyzer
+  - Object Type: simpleaudio.buffer
   - Object Type: std.global
   - Object Type: std.json
   - Object Type: std.module
@@ -401,6 +409,16 @@ fileio.write_text(
 
 
 ==================================================
+Namespace: ipc
+==================================================
+
+        --------------------------------------------------
+ipc.ipc() -> ipc.ipc
+
+        --------------------------------------------------
+
+
+==================================================
 Namespace: leveldb
 ==================================================
 
@@ -665,6 +683,13 @@ nanogui.serialize_controls()
 
   - Serialize all modmatrix nodes to JSON.
         --------------------------------------------------
+nanogui.sync_update(
+    sync_pos - float,
+    sync_delta - float
+)
+
+  - Sync all midicontrols with an envelope and sync mode enabled (use this once globally in your app)
+        --------------------------------------------------
 
 
 ==================================================
@@ -796,6 +821,17 @@ shzdocs.search_keywords(
 )
 
   - Search documentation across namespaces, classes, functions, and variables and return path/description overview.
+        --------------------------------------------------
+
+
+==================================================
+Namespace: simpleaudio
+==================================================
+
+        --------------------------------------------------
+simpleaudio.audio() -> simpleaudio.audio
+
+  - Creates a new simpleaudio object.
         --------------------------------------------------
 
 
@@ -1349,6 +1385,81 @@ Namespace: zip
 zip.file() -> zip.file
 
   - Instantiate a new zip object
+        --------------------------------------------------
+
+
+==================================================
+Object: audio.audio_fft
+==================================================
+
+        --------------------------------------------------
+attack()
+
+  - Sets attack speed (0.001 - 1.0). Higher = faster rise.
+        --------------------------------------------------
+band_ema()
+
+  - Returns the exponential moving average values for each band
+        --------------------------------------------------
+band_ema_value()
+
+  - Returns the EMA value for a specific band index
+        --------------------------------------------------
+band_normalized()
+
+  - Returns the normalized value for a specific band index
+        --------------------------------------------------
+band_smoothing()
+
+  - Sets the spatial smoothing radius (0-50). Blends each band with that many neighbors. Higher = smoother output.
+        --------------------------------------------------
+decay()
+
+  - Sets adaptive peak decay (0.8 - 0.9999). Lower = peaks reset faster (more dynamic).
+        --------------------------------------------------
+high_cutoff()
+
+  - Mid/high crossover in Hz
+        --------------------------------------------------
+high_energy()
+
+  - High-frequency energy (auto noise-floor, 0..1)
+        --------------------------------------------------
+last_time()
+
+  - Returns seconds since last FFT calculation
+        --------------------------------------------------
+low_cutoff()
+
+  - Low/mid crossover in Hz
+        --------------------------------------------------
+low_energy()
+
+  - Low-frequency energy (auto noise-floor, 0..1)
+        --------------------------------------------------
+magnitudes()
+
+  - Returns the current FFT magnitude values
+        --------------------------------------------------
+mid_energy()
+
+  - Mid-frequency energy (auto noise-floor, 0..1)
+        --------------------------------------------------
+noise_floor()
+
+  - Sets noise-floor threshold (0.0 - 0.5). Values below this are suppressed to 0.
+        --------------------------------------------------
+normalized_bands()
+
+  - Returns the normalized band values (processed audio data)
+        --------------------------------------------------
+release()
+
+  - Sets release speed (0.001 - 1.0). Higher = faster decay.
+        --------------------------------------------------
+sample_rate()
+
+  - Returns the current sample rate
         --------------------------------------------------
 
 
@@ -2822,6 +2933,41 @@ write_text(
 
 
 ==================================================
+Object: ipc.ipc
+==================================================
+
+        --------------------------------------------------
+connect()
+
+  - Connect to an IPC channel
+        --------------------------------------------------
+disconnect()
+
+  - Disconnect from the IPC channel
+        --------------------------------------------------
+get_name()
+
+  - Get the IPC channel name
+        --------------------------------------------------
+is_process_a()
+
+  - Check if this is process A (creator)
+        --------------------------------------------------
+is_ready()
+
+  - Check if the IPC connection is ready
+        --------------------------------------------------
+on_message()
+
+  - Set a callback for incoming messages
+        --------------------------------------------------
+send()
+
+  - Send data to the remote process
+        --------------------------------------------------
+
+
+==================================================
 Object: leveldb.db
 ==================================================
 
@@ -3429,6 +3575,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function
@@ -4171,6 +4321,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function
@@ -4934,6 +5088,10 @@ movable_y(
 
   - Get or set Y-axis move.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -5696,6 +5854,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_autocomplete(
     callback - function(meta_json) -> string|list|json
 )
@@ -6392,6 +6554,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -7073,6 +7239,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_color_change(
     callback - function(color)
@@ -7825,6 +7995,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function(index, text)
@@ -8772,6 +8946,10 @@ multi_select(
 
   - Get or set multi selection support.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_activate(
     callback - function(path, is_dir)
 )
@@ -9509,6 +9687,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function(value)
@@ -10276,6 +10458,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_drag(
     callback - function(index)
 )
@@ -11020,6 +11206,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_cell_drop(
     callback
 )
@@ -11728,6 +11918,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -12404,6 +12598,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -12572,6 +12770,10 @@ textbox(
 ) -> nanogui.textbox
 
   - Create a child textbox.
+        --------------------------------------------------
+texture()
+
+  - Get texture
         --------------------------------------------------
 theme(
     value - nanogui.theme
@@ -13093,6 +13295,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function(value)
@@ -13787,6 +13993,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -14565,6 +14775,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_change(
     callback - function
 )
@@ -15176,11 +15390,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -15310,6 +15522,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -15906,11 +16126,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -16046,6 +16264,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -16648,11 +16874,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -16788,6 +17012,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_change(
     callback - function(index, text)
@@ -17396,11 +17628,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -17542,6 +17772,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -18132,11 +18370,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -18278,6 +18514,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -18868,11 +19112,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -19002,6 +19244,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -19592,11 +19842,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -19738,6 +19986,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -20328,11 +20584,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -20462,6 +20716,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -21058,11 +21320,9 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
-hide_config_menu(
-    hide - whether to hide the config menu button (default: true)
-)
+hide_config_menu()
 
-  - Hide or show the config menu button.
+  - Hide the config menu button.
         --------------------------------------------------
 image(
     path - string
@@ -21192,6 +21452,14 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+no_load_callbacks()
+
+  - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -22005,6 +22273,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -22652,6 +22924,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -23350,6 +23626,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -24039,6 +24319,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -24744,6 +25028,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -25524,6 +25812,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -26188,6 +26480,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -26872,6 +27168,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -27586,6 +27886,10 @@ movable(
 )
 
   - Get or set tab drag-reorder mode.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_change(
     callback - function(index) | none
@@ -28328,6 +28632,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -29030,6 +29338,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_change(
     callback - function(value)
 )
@@ -29304,6 +29616,55 @@ y(
 )
 
   - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.texture
+==================================================
+
+        --------------------------------------------------
+component_count(
+    value - int
+)
+
+  - Get or set the number of color components (channels).
+        --------------------------------------------------
+component_format(
+    value - string
+)
+
+  - Get or set the component format as a string.
+        --------------------------------------------------
+interpolation_mode(
+    value - string
+)
+
+  - Get the interpolation mode as a string. Cannot be changed after creation.
+        --------------------------------------------------
+pixel_format(
+    value - string
+)
+
+  - Get or set the pixel format as a string.
+        --------------------------------------------------
+size(
+    value - vec2
+)
+
+  - Get or set the texture size.
+        --------------------------------------------------
+upload_data(
+    data - shz_std_buffer or shz_std_json
+)
+
+  - Upload pixel data to the texture. Accepts shz_std_buffer (binary) or a JSON array of floats (converted to texture format).
+        --------------------------------------------------
+wrap_mode(
+    value - string
+)
+
+  - Get the wrap mode as a string. Cannot be changed after creation.
         --------------------------------------------------
 
 
@@ -29820,6 +30181,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -30529,6 +30894,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -31176,6 +31545,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -31831,6 +32204,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -32479,6 +32856,10 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -33126,6 +33507,10 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -33829,6 +34214,10 @@ movable_y(
 
   - Get or set Y-axis move.
         --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -34466,6 +34855,111 @@ send_osc(
 )
 
   - Send OSC message(s) described by a JSON object to the specified IP address and port
+        --------------------------------------------------
+
+
+==================================================
+Object: simpleaudio.audio
+==================================================
+
+        --------------------------------------------------
+analyzer() -> simpleaudio.audio_analyzer
+
+  - Creates a new audio analyzer object.
+        --------------------------------------------------
+fft() -> audio.audio_fft
+
+  - Creates a new audio fft object.
+        --------------------------------------------------
+start(
+    callback - audio callback,
+    callback - audio input callback,
+    config - audio config as json
+)
+
+  - Starts the audio device.
+        --------------------------------------------------
+
+
+==================================================
+Object: simpleaudio.audio_analyzer
+==================================================
+
+        --------------------------------------------------
+bpm()
+
+  - Returns the estimated BPM
+        --------------------------------------------------
+break_detected()
+
+  - Returns whether a break has been detected
+        --------------------------------------------------
+break_treshold()
+
+  - Get or set the break detection threshold
+        --------------------------------------------------
+cum_score()
+
+  - Returns the current cumulative beat score
+        --------------------------------------------------
+do_not_fix_tempo()
+
+  - Disable tempo fixing
+        --------------------------------------------------
+drop_treshold()
+
+  - Get or set the drop detection threshold
+        --------------------------------------------------
+fix_tempo()
+
+  - Fix tempo to a specific BPM value
+        --------------------------------------------------
+on_beat()
+
+  - Set a callback function to be called on each beat
+        --------------------------------------------------
+onset_sample()
+
+  - Returns the current onset sample position
+        --------------------------------------------------
+phase()
+
+  - Returns the current beat phase (0-1)
+        --------------------------------------------------
+set_tempo()
+
+  - Get current tempo or set a fixed tempo (0 to disable)
+        --------------------------------------------------
+
+
+==================================================
+Object: simpleaudio.buffer
+==================================================
+
+        --------------------------------------------------
+as_mono_list(
+    mono_list
+)
+
+  - Mix all channels down to a single mono channel and return as a JSON list of floats.
+        --------------------------------------------------
+channel_to_list(
+    channel_index
+)
+
+  - Get a channel as a JSON list of floats.
+        --------------------------------------------------
+channels(
+    num_channels
+)
+
+  - Get/Set the number of channels in the audio buffer.
+        --------------------------------------------------
+size(
+    num_frames
+)
+
+  - Get/Set the size of the audio buffer.
         --------------------------------------------------
 
 
