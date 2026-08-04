@@ -125,6 +125,7 @@ for(1) {
 	//One fixed command, /load for loading prompt text files
 	if(cmd.starts("/load")) {
 		cmd = cmd.removeprefix("/load").strip();
+		cmd = fileio.read_string(cmd);
 	}
 	else if(cmd == "exit" || cmd == "/exit")
 		break;

@@ -1447,7 +1447,7 @@ mid_energy()
         --------------------------------------------------
 noise_floor()
 
-  - Sets noise-floor threshold (0.0 - 0.5). Values below this are suppressed to 0.
+  - Sets noise-floor threshold (0.0 - 0.9). Values below this are suppressed to 0.
         --------------------------------------------------
 normalized_bands()
 
@@ -5163,6 +5163,12 @@ on_move(
 )
 
   - Set or clear the move callback.
+        --------------------------------------------------
+on_move_finished(
+    callback - function()
+)
+
+  - Set or clear the move finished callback.
         --------------------------------------------------
 on_resize(
     callback - function(new_size, old_size)
@@ -24735,6 +24741,10 @@ combobox(
 
   - Create a child combobox.
         --------------------------------------------------
+compile()
+
+  - Compile the shader program from the current source code.
+        --------------------------------------------------
 compile_error()
 
   - Get the last shader compile or render error.
@@ -34290,6 +34300,12 @@ on_move(
 
   - Set or clear the move callback.
         --------------------------------------------------
+on_move_finished(
+    callback - function()
+)
+
+  - Set or clear the move finished callback.
+        --------------------------------------------------
 on_resize(
     callback - function(new_size, old_size)
 )
@@ -34575,6 +34591,12 @@ enabled(
 
   - Get or set the shizonet enabled status
         --------------------------------------------------
+find_artnet_device(
+    mac: string - The MAC address of the device to find
+)
+
+  - Find a device by its MAC address
+        --------------------------------------------------
 find_device(
     mac: string - The MAC address of the device to find
 )
@@ -34771,6 +34793,12 @@ enabled(
 )
 
   - Get or set the shizonet enabled status
+        --------------------------------------------------
+find_artnet_device(
+    mac: string - The MAC address of the device to find
+)
+
+  - Find a device by its MAC address
         --------------------------------------------------
 find_device(
     mac: string - The MAC address of the device to find

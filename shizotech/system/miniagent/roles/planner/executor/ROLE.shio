@@ -32,14 +32,12 @@ add_tools(agt)
 		
 			tb = agt.env.taskboard;
 			
-			if(args.status == "in_progress") {
-				for(i = 0; i < tb.size(); i++) {
-					if(tb[i].status == "in_progress" || tb[i].status == "verify")
-						if(tb[i].task_id == args.task_id)
-							return "Task started";
-						else
-							return "Illegal operation: another task is already in progress!\ntask_id: " + tb[i].task_id;
-				}
+			for(i = 0; i < tb.size(); i++) {
+				if(tb[i].status == "in_progress" || tb[i].status == "verify")
+					if(tb[i].task_id == args.task_id)
+						return "Task already started.";
+					else
+						return "Illegal operation: another task is still in progress or verification!\ntask_id: " + tb[i].task_id;
 			}
 			
 			for(i = 0; i < tb.size(); i++) {
@@ -141,7 +139,7 @@ add_tools(agt)
 						entry = args.journal_entry,
 						timestamp = std.timestamp(),
 					]);
-					if(tb[i].status == "in_progress" && args.status == "finished")
+					if(tb[i].status == "in_progress")
 						tb[i].status = "verify";
 					else
 						tb[i].status = args.status;
