@@ -24719,6 +24719,12 @@ clear_children()
 
   - Remove all child widgets.
         --------------------------------------------------
+clip_uv(
+    enabled - bool
+)
+
+  - Get or set UV clipping mode (true = pixels outside 0..1 are transparent).
+        --------------------------------------------------
 codebox(
     text - string
 ) -> nanogui.codebox
@@ -25231,6 +25237,12 @@ rendering_enabled()
 
   - Get or set the rendering enabled flag.
         --------------------------------------------------
+rotation(
+    rotation - float
+)
+
+  - Get or set image rotation in degrees.
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -25354,6 +25366,12 @@ tooltip(
 
   - Get or set tooltip.
         --------------------------------------------------
+translate(
+    translate - vec2
+)
+
+  - Get or set image translation (in pixels relative to content rect).
+        --------------------------------------------------
 uniform(
     name - string,
     value - float|int|bool|vec2|vec3|vec4
@@ -25426,6 +25444,12 @@ y(
 )
 
   - Get or set widget Y position.
+        --------------------------------------------------
+zoom(
+    zoom - float
+)
+
+  - Get or set image zoom (scale).
         --------------------------------------------------
 
 
