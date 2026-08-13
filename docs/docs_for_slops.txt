@@ -25300,6 +25300,12 @@ spout_enabled(
 
   - Get or set Spout sender enabled state.
         --------------------------------------------------
+spout_framesync(
+    enabled - bool
+)
+
+  - Get or set Spout sender vsync state.
+        --------------------------------------------------
 spout_receiver(
     name - string
 ) -> nanogui.spout_receiver
@@ -27067,6 +27073,12 @@ font_size(
 )
 
   - Get or set font size.
+        --------------------------------------------------
+framesync(
+    set - bool
+)
+
+  - Check or set frame sync.
         --------------------------------------------------
 graph(
     caption - string
