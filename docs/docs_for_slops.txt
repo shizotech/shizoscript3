@@ -8491,6 +8491,12 @@ nvgStrokeColor(
 
   - Set the stroke color.
         --------------------------------------------------
+nvgStrokeWidth(
+    width - float
+)
+
+  - Set the stroke width.
+        --------------------------------------------------
 nvgTranslate(
     delta - vec2f Translation
 )
@@ -17940,6 +17946,12 @@ slider(
 
   - Create a child slider widget.
         --------------------------------------------------
+smoothing(
+    value - float
+)
+
+  - Get or set smoothing value.
+        --------------------------------------------------
 spout_receiver(
     name - string
 ) -> nanogui.spout_receiver
@@ -20153,6 +20165,12 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+smoothing(
+    value - float
+)
+
+  - Get or set smoothing value.
         --------------------------------------------------
 spout_receiver(
     name - string
