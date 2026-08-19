@@ -3592,6 +3592,12 @@ on_click(
 
   - Set or clear click callback.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_drag_change(
     callback - function
 )
@@ -4337,6 +4343,12 @@ on_click(
 )
 
   - Set or clear click callback.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_drag_change(
     callback - function
@@ -5091,6 +5103,12 @@ movable_y(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -5876,6 +5894,12 @@ on_context_changed(
 
   - Set or get callback fired on text/caret context changes.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -6563,6 +6587,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -7261,6 +7291,12 @@ on_commit(
 )
 
   - Get or set script callback invoked when the color is committed.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -8017,6 +8053,12 @@ on_click(
 )
 
   - Set or clear click callback.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_drag_change(
     callback - function
@@ -8974,6 +9016,12 @@ on_click(
 
   - Set or clear file click callback.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_directory_change(
     callback - function(absolute_path)
 )
@@ -9709,6 +9757,12 @@ on_change(
 )
 
   - Set or clear commit callback.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -10474,6 +10528,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_drag(
     callback - function(index)
 )
@@ -11228,6 +11288,12 @@ on_cell_drop(
 
   - Set callback(payload, row, col) when an arbitrary payload is dropped onto a cell.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -11934,6 +12000,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -12613,6 +12685,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -13318,6 +13396,12 @@ on_change(
 
   - Set or clear commit callback.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -14009,6 +14093,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -14803,6 +14893,12 @@ on_click(
 
   - Set or clear click callback.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_drag_change(
     callback - function
 )
@@ -15542,6 +15638,12 @@ new_texture() -> nanogui.texture
 no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -16284,6 +16386,12 @@ new_texture() -> nanogui.texture
 no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -17039,6 +17147,12 @@ on_change(
 
   - Set or clear selection callback.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -17793,6 +17907,12 @@ no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -18541,6 +18661,12 @@ no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -19270,6 +19396,12 @@ new_texture() -> nanogui.texture
 no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -20013,6 +20145,12 @@ no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -20749,6 +20887,12 @@ no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -21484,6 +21628,12 @@ new_texture() -> nanogui.texture
 no_load_callbacks()
 
   - Do not call value/script callbacks when a new state is loaded during deserialize_json.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -22301,6 +22451,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -22952,6 +23108,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -23654,6 +23816,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -24347,6 +24515,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -25066,6 +25240,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -25874,6 +26054,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -26542,6 +26728,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -27236,6 +27428,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -27966,6 +28164,12 @@ on_close(
 )
 
   - Set or get close-button callback.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -28700,6 +28904,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -29411,6 +29621,12 @@ on_change(
 )
 
   - Set or clear commit callback.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -30250,6 +30466,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -30962,6 +31184,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -31613,6 +31841,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -32272,6 +32506,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -32924,6 +33164,12 @@ new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
         --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
 )
@@ -33575,6 +33821,12 @@ mouse_motion_default(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -34281,6 +34533,12 @@ movable_y(
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
