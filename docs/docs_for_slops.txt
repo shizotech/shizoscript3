@@ -8572,7 +8572,8 @@ screen(
     stencil_buffer: Enable stencil buffer (default false).,
     float_buffer: Enable float buffer (default true).,
     gl_major: OpenGL major version (default 3).,
-    gl_minor: OpenGL minor version (default 2).
+    gl_minor: OpenGL minor version (default 2).,
+    monitor_id: Monitor index to place the window on (default primary monitor).
 ) -> nanogui.screen
 
   - Create a screen with optional parameters
@@ -24322,6 +24323,10 @@ find_widget(
 )
 
   - Find widget at position.
+        --------------------------------------------------
+fit_content()
+
+  - Fit the content widget into the scrollarea by adjusting pan and zoom.
         --------------------------------------------------
 fixed_height(
     value - int
