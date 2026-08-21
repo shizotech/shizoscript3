@@ -19909,6 +19909,12 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope_value(
+    value - float
+)
+
+  - Get or set envelope value.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
