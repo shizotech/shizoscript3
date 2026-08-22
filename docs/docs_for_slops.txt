@@ -16245,6 +16245,12 @@ hide_config_menu()
 
   - Hide the config menu button.
         --------------------------------------------------
+hold(
+    mode - boolean (1 for hold button, 0 for normal button)
+)
+
+  - Get or set hold button mode.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
