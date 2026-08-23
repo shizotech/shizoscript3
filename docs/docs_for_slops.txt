@@ -8386,6 +8386,10 @@ fps()
 
   - Get/set FPS for non-fullscreen windows
         --------------------------------------------------
+frame_index()
+
+  - Get the current frame index (number of frames rendered since start).
+        --------------------------------------------------
 fullscreen(
     monitor_id: Monitor index to use for fullscreen (default primary monitor).,
     caption: Window title (default "test").,
@@ -28063,6 +28067,14 @@ image(
 
   - Create a child image widget.
         --------------------------------------------------
+insert_tab(
+    index - int,
+    name - string,
+    switch_to - bool
+) -> nanogui.widget
+
+  - Insert a new tab page at the specified index.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -28187,6 +28199,12 @@ on_destroy(
 )
 
   - Set or clear the on destroy callback.
+        --------------------------------------------------
+on_double_click(
+    callback - function(index) | none
+)
+
+  - Set or get tab double-click callback.
         --------------------------------------------------
 on_dragdrop(
     callback - function(payload_json, local_pos)
@@ -28368,6 +28386,12 @@ tab_at(
 tab_count()
 
   - Get number of tabs.
+        --------------------------------------------------
+tab_index(
+    tab_widget - nanogui.widget
+)
+
+  - Get tab index by providing a tab content widget.
         --------------------------------------------------
 tab_name(
     index_or_tab - int | nanogui.widget,
