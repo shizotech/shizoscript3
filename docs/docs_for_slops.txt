@@ -24344,6 +24344,12 @@ fit_content()
 
   - Fit the content widget into the scrollarea by adjusting pan and zoom.
         --------------------------------------------------
+fit_mode(
+    value - bool
+)
+
+  - Enable or disable fit mode, keeping the content fitted to the parent window.
+        --------------------------------------------------
 fixed_height(
     value - int
 )
