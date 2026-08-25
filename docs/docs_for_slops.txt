@@ -646,6 +646,10 @@ nanogui.current_context()
 
   - Get the current nanogui context.
         --------------------------------------------------
+nanogui.current_screen()
+
+  - Get the current nanogui screen.
+        --------------------------------------------------
 nanogui.deserialize_controls()
 
   - Deserialize modmatrix nodes from JSON.
@@ -29177,6 +29181,12 @@ tooltip(
 )
 
   - Get or set tooltip.
+        --------------------------------------------------
+value(
+    value - string
+)
+
+  - Get or set full textarea plain text.
         --------------------------------------------------
 visible(
     value - bool
