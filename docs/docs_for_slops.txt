@@ -1030,6 +1030,13 @@ std.is_string(
 
   - Check if value is a string type
         --------------------------------------------------
+std.is_type(
+    value: Variable to inspect,
+    type: string - Type name to check against
+)
+
+  - Check the type of a variable
+        --------------------------------------------------
 std.json(
     json: string - Optional JSON string to parse into the new object,
     suppress_errors: bool - Suppress any error messages.
@@ -1183,6 +1190,12 @@ std.thread(
 std.timestamp()
 
   - Get current date and time in DD-MM-YYYY HH:MM:SS format
+        --------------------------------------------------
+std.type(
+    value: Variable to inspect
+)
+
+  - Get the type of a variable
         --------------------------------------------------
 std.user_path(
     package: string - Config package/folder name (safe token),
