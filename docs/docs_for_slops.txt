@@ -95,6 +95,7 @@
   - Object Type: simpleaudio.audio
   - Object Type: simpleaudio.audio_analyzer
   - Object Type: simpleaudio.buffer
+  - Object Type: std.buffer
   - Object Type: std.global
   - Object Type: std.json
   - Object Type: std.module
@@ -25383,6 +25384,22 @@ parent() -> nanogui.widget
 
   - Get parent widget.
         --------------------------------------------------
+pixel_buffer()
+
+  - Get the latest completed shader frame as a binary buffer.
+        --------------------------------------------------
+pixel_callback(
+    callback - function|none
+)
+
+  - Get or set the callback called when a pixel readback completes.
+        --------------------------------------------------
+pixel_readback(
+    enabled - bool
+)
+
+  - Get or set asynchronous GPU pixel readback.
+        --------------------------------------------------
 position(
     value - vec2i Position
 )
@@ -34934,6 +34951,19 @@ online()
 
   - Get the online status of the device
         --------------------------------------------------
+set_artnet_buffer(
+    universe: int - The Artnet universe number,
+    start_adr: int - The start address of the buffer,
+    data: array - The data to send,
+    data_offset: int - The offset within the data array,
+    data_size: int - The size of the data to send,
+    wrap_leds: bool - Whether to wrap LEDs,
+    input_channels: int - The number of input channels,
+    target_channels: int - The number of target channels
+)
+
+  - Set the Artnet buffer for the device
+        --------------------------------------------------
 set_artnet_channel(
     universe: int - The Artnet universe number,
     channel: int - The Artnet channel number,
@@ -35370,6 +35400,21 @@ size(
 )
 
   - Get/Set the size of the audio buffer.
+        --------------------------------------------------
+
+
+==================================================
+Object: std.buffer
+==================================================
+
+        --------------------------------------------------
+clear()
+
+  - Returns the number of elements in a JSON array or the number of keys in a JSON object.
+        --------------------------------------------------
+size()
+
+  - Returns the number of elements in a JSON array or the number of keys in a JSON object.
         --------------------------------------------------
 
 
