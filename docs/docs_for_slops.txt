@@ -8416,6 +8416,12 @@ fullscreen(
 
   - Create a screen with optional parameters
         --------------------------------------------------
+get_modmatrix_node_by_path(
+    path - string
+)
+
+  - Get a modmatrix node by its full path (e.g., 'node1/subnode2').
+        --------------------------------------------------
 monitor_count()
 
   - Get the number of monitors connected.
@@ -22338,10 +22344,14 @@ font_size(
   - Get or set font size.
         --------------------------------------------------
 get_control_by_path(
-    path - string
+    path - relative path string
 )
 
-  - Get a control by its path (e.g., 'node1/control1').
+  - Get a control by its relative path (e.g., 'node1/control1').
+        --------------------------------------------------
+get_control_paths()
+
+  - Get all controls in this node and its subnodes as relative paths.
         --------------------------------------------------
 get_full_path()
 
@@ -22563,6 +22573,10 @@ on_scroll(
 )
 
   - Set or clear the scroll callback.
+        --------------------------------------------------
+parent_node()
+
+  - Get the parent modmatrix node (if any).
         --------------------------------------------------
 position(
     value - vec2i Position
