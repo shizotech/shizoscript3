@@ -15782,6 +15782,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -16541,6 +16545,10 @@ refresh_layout()
 refresh_size()
 
   - Mark this widget for size refresh.
+        --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -17302,6 +17310,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -18055,6 +18067,10 @@ refresh_layout()
 refresh_size()
 
   - Mark this widget for size refresh.
+        --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -18810,6 +18826,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -19545,6 +19565,10 @@ refresh_layout()
 refresh_size()
 
   - Mark this widget for size refresh.
+        --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -20300,6 +20324,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -21042,6 +21070,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
+        --------------------------------------------------
 screen() -> nanogui.screen
 
   - Get parent widget.
@@ -21783,6 +21815,10 @@ refresh_layout()
 refresh_size()
 
   - Mark this widget for size refresh.
+        --------------------------------------------------
+remove_all_links()
+
+  - Remove all links (both outgoing and incoming).
         --------------------------------------------------
 screen() -> nanogui.screen
 
