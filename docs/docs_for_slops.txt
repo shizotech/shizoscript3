@@ -25641,6 +25641,12 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+frame_index(
+    return - int
+)
+
+  - Get the current frame index (incremented each time draw_all() is called).
+        --------------------------------------------------
 garbage_cleared()
 
   - Check if all disposed widgets are cleared
@@ -27086,6 +27092,18 @@ fixed_width(
 
   - Get or set fixed widget width.
         --------------------------------------------------
+flip_uv_x(
+    enabled - bool
+)
+
+  - Get or set horizontal UV flipping.
+        --------------------------------------------------
+flip_uv_y(
+    enabled - bool
+)
+
+  - Get or set vertical UV flipping.
+        --------------------------------------------------
 floatbox(
     value - string
 ) -> nanogui.floatbox
@@ -27481,6 +27499,12 @@ refresh_size()
 reload()
 
   - Reload source from the configured source file.
+        --------------------------------------------------
+render(
+    bool - clear output texture
+)
+
+  - Force a manual (re-)render of the shader.
         --------------------------------------------------
 render_size(
     size - vec2
