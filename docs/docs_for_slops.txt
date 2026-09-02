@@ -50,6 +50,7 @@
   - Object Type: nanogui.graph
   - Object Type: nanogui.gridview
   - Object Type: nanogui.gridview_item
+  - Object Type: nanogui.hscroll
   - Object Type: nanogui.image
   - Object Type: nanogui.intbox
   - Object Type: nanogui.label
@@ -3480,6 +3481,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 icon(
     value - int
 )
@@ -4236,6 +4243,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 icon(
     value - int
 )
@@ -4987,6 +5000,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -5806,6 +5825,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -6516,6 +6541,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -7205,6 +7236,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 hsv(
     h,s,v - floats or vec3
@@ -7960,6 +7997,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 icon(
     value - int
 )
@@ -8461,6 +8504,13 @@ monitor_info(
 
   - Get information about all connected monitors.
         --------------------------------------------------
+nvgAddFallbackFont(
+    base - string,
+    fallback - string
+)
+
+  - Add a fallback font by name.
+        --------------------------------------------------
 nvgArc(
     center - vec2f Center,
     radius - float,
@@ -8498,6 +8548,17 @@ nvgCircle(
 
   - Add a circle to the current path.
         --------------------------------------------------
+nvgClosePath()
+
+  - Close the current NanoVG sub-path.
+        --------------------------------------------------
+nvgCreateFont(
+    name - string,
+    filename - string
+)
+
+  - Load a font from a file and return its handle.
+        --------------------------------------------------
 nvgEllipse(
     center - vec2f Center,
     radius - vec2f Radius
@@ -8515,6 +8576,64 @@ nvgFillColor(
 
   - Set the fill color.
         --------------------------------------------------
+nvgFindFont(
+    name - string
+)
+
+  - Find a loaded font by name.
+        --------------------------------------------------
+nvgFontBlur(
+    blur - float
+)
+
+  - Set the current text blur amount.
+        --------------------------------------------------
+nvgFontFace(
+    font - string
+)
+
+  - Select the current font by name.
+        --------------------------------------------------
+nvgFontFaceId(
+    font - int
+)
+
+  - Select the current font by handle.
+        --------------------------------------------------
+nvgFontSize(
+    size - float
+)
+
+  - Set the current text font size.
+        --------------------------------------------------
+nvgGlobalAlpha(
+    alpha - float (0..1)
+)
+
+  - Set the global shape alpha.
+        --------------------------------------------------
+nvgGlobalCompositeBlendFunc(
+    source - int (NVGblendFactor),
+    destination - int (NVGblendFactor)
+)
+
+  - Set the global composite blend factors.
+        --------------------------------------------------
+nvgGlobalCompositeBlendFuncSeparate(
+    src_rgb - int,
+    dst_rgb - int,
+    src_alpha - int,
+    dst_alpha - int
+)
+
+  - Set separate RGB and alpha composite blend factors.
+        --------------------------------------------------
+nvgGlobalCompositeOperation(
+    operation - int (NVGcompositeOperation)
+)
+
+  - Set the global composite operation.
+        --------------------------------------------------
 nvgIntersectScissor(
     pos - vec2f Position,
     size - vec2f Size
@@ -8522,17 +8641,41 @@ nvgIntersectScissor(
 
   - Intersect the current scissor rectangle.
         --------------------------------------------------
+nvgLineCap(
+    cap - int (NVG_BUTT, NVG_ROUND, or NVG_SQUARE)
+)
+
+  - Set the stroke line cap.
+        --------------------------------------------------
+nvgLineJoin(
+    join - int (NVG_MITER, NVG_ROUND, or NVG_BEVEL)
+)
+
+  - Set the stroke line join.
+        --------------------------------------------------
 nvgLineTo(
     p - vec2f Position
 )
 
   - Add a line to (x, y) on the current Screen.
         --------------------------------------------------
+nvgMiterLimit(
+    limit - float
+)
+
+  - Set the stroke miter limit.
+        --------------------------------------------------
 nvgMoveTo(
     x - vec2f Position
 )
 
   - Move the current NanoVG path to (x, y) on the current Screen.
+        --------------------------------------------------
+nvgPathWinding(
+    direction - int (NVG_CCW or NVG_CW)
+)
+
+  - Set the winding direction of the current sub-path.
         --------------------------------------------------
 nvgQuadTo(
     c - vec2f Control point,
@@ -8547,6 +8690,28 @@ nvgRect(
 )
 
   - Add a rectangle to the current path.
+        --------------------------------------------------
+nvgReset()
+
+  - Reset the current NanoVG render state.
+        --------------------------------------------------
+nvgResetScissor()
+
+  - Disable NanoVG scissoring.
+        --------------------------------------------------
+nvgResetTransform()
+
+  - Reset the current transform to identity.
+        --------------------------------------------------
+nvgRestore()
+
+  - Restore the previously saved NanoVG render state.
+        --------------------------------------------------
+nvgRotate(
+    angle - float
+)
+
+  - Rotate the current transform in radians.
         --------------------------------------------------
 nvgRoundedRect(
     pos - vec2f Position,
@@ -8567,6 +8732,10 @@ nvgRoundedRectVarying(
 
   - Add a rounded rectangle with varying radii to the current path.
         --------------------------------------------------
+nvgSave()
+
+  - Save the current NanoVG render state.
+        --------------------------------------------------
 nvgScale(
     scale - vec2f Scale
 )
@@ -8579,6 +8748,30 @@ nvgScissor(
 )
 
   - Set the scissor rectangle.
+        --------------------------------------------------
+nvgSetDevicePixelRatio(
+    ratio - float
+)
+
+  - Set the NanoVG device pixel ratio.
+        --------------------------------------------------
+nvgShapeAntiAlias(
+    enabled - bool
+)
+
+  - Enable or disable shape antialiasing.
+        --------------------------------------------------
+nvgSkewX(
+    angle - float
+)
+
+  - Skew the current transform along X in radians.
+        --------------------------------------------------
+nvgSkewY(
+    angle - float
+)
+
+  - Skew the current transform along Y in radians.
         --------------------------------------------------
 nvgStroke()
 
@@ -8595,6 +8788,65 @@ nvgStrokeWidth(
 )
 
   - Set the stroke width.
+        --------------------------------------------------
+nvgText(
+    pos - vec2f Position,
+    text - string
+)
+
+  - Draw text at a position and return its horizontal advance.
+        --------------------------------------------------
+nvgTextAlign(
+    align - int (NVG_ALIGN_* flags)
+)
+
+  - Set the current text alignment.
+        --------------------------------------------------
+nvgTextBounds(
+    pos - vec2f Position,
+    text - string
+)
+
+  - Measure text and return [advance, xmin, ymin, xmax, ymax].
+        --------------------------------------------------
+nvgTextBox(
+    pos - vec2f Position,
+    width - float,
+    text - string
+)
+
+  - Draw wrapped text.
+        --------------------------------------------------
+nvgTextBoxBounds(
+    pos - vec2f Position,
+    width - float,
+    text - string
+)
+
+  - Measure wrapped text and return [xmin, ymin, xmax, ymax].
+        --------------------------------------------------
+nvgTextLetterSpacing(
+    spacing - float
+)
+
+  - Set the current text letter spacing.
+        --------------------------------------------------
+nvgTextLineHeight(
+    line_height - float
+)
+
+  - Set the current text line height multiplier.
+        --------------------------------------------------
+nvgTransform(
+    a - float,
+    b - float,
+    c - float,
+    d - float,
+    e - float,
+    f - float
+)
+
+  - Premultiply the current transform by a 2x3 matrix.
         --------------------------------------------------
 nvgTranslate(
     delta - vec2f Translation
@@ -8948,6 +9200,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -9694,6 +9952,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -10481,6 +10745,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -11245,6 +11515,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -11961,6 +12237,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -12225,6 +12507,680 @@ scrollarea(
 ) -> nanogui.scrollarea
 
   - Create a child scroll area widget.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.hscroll
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Set visibility of child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+color_selector() -> nanogui.color_selector
+
+  - Create a child color selector widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content()
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrolio
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+gridview() -> nanogui.gridview
+
+  - Create a child grid view widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+projection_mapper() -> nanogui.projection_mapper
+
+  - Create a projection mapping editor with shader inputs and output slices.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    value - float (0..1)
+)
+
+  - Get or set normalized scroll position.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scroll_step(
+    value - float
+)
+
+  - Get or set mouse wheel scroll speed factor.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+scrollbar_height(
+    value - float
+)
+
+  - Get or set scrollbar height.
         --------------------------------------------------
 shader(
     source - string,
@@ -12650,6 +13606,12 @@ has_font_size()
 height()
 
   - Get the image height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -13352,6 +14314,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -14072,6 +15040,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -14852,6 +15826,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 icon(
     value - int
 )
@@ -15595,6 +16575,12 @@ height(
 hide_config_menu()
 
   - Hide the config menu button.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -16351,6 +17337,12 @@ hold(
 )
 
   - Get or set hold button mode.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -17113,6 +18105,12 @@ height(
 hide_config_menu()
 
   - Hide the config menu button.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -17882,6 +18880,12 @@ hide_config_menu()
 
   - Hide the config menu button.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -18644,6 +19648,12 @@ hide_config_menu()
 
   - Hide the config menu button.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -19400,6 +20410,12 @@ hide_config_menu()
 
   - Hide the config menu button.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -20149,6 +21165,12 @@ height(
 hide_config_menu()
 
   - Hide the config menu button.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -20912,6 +21934,12 @@ hide_config_menu()
 
   - Hide the config menu button.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -21661,6 +22689,12 @@ height(
 hide_config_menu()
 
   - Hide the config menu button.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -22526,6 +23560,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -23191,6 +24231,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -23873,6 +24919,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -24613,6 +25665,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -25344,6 +26402,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -25982,6 +27046,10 @@ dragdrop_enabled(
 
   - Get or set automatic dragdrop start state.
         --------------------------------------------------
+drawing_enabled()
+
+  - Get or set the drawing enabled flag.
+        --------------------------------------------------
 enabled(
     value - bool
 )
@@ -26080,6 +27148,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -26102,6 +27176,12 @@ intbox(
 ) -> nanogui.intbox
 
   - Create a child integer box.
+        --------------------------------------------------
+keep_aspect_ratio(
+    enabled - bool
+)
+
+  - Get or set whether the shader keeps its aspect ratio inside the widget.
         --------------------------------------------------
 keyboard(
     key - int, scancode - int, action - int, modifiers - int
@@ -26930,6 +28010,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -27596,6 +28682,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -28306,6 +29398,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -29040,6 +30138,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -29822,6 +30926,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -30543,6 +31653,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -31382,6 +32498,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -32102,6 +33224,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -32782,6 +33910,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -33450,6 +34584,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -34112,6 +35252,12 @@ height(
 
   - Get or set widget height.
         --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
 image(
     path - string
 ) -> nanogui.image
@@ -34773,6 +35919,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -35453,6 +36605,12 @@ height(
 )
 
   - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
         --------------------------------------------------
 image(
     path - string
@@ -36452,6 +37610,10 @@ overwrite: bool - Replace existing keys (default true)
 clear()
 
   - Returns the number of elements in a JSON array or the number of keys in a JSON object.
+        --------------------------------------------------
+clear_free()
+
+  - Clears the JSON container and frees all objects inside it.
         --------------------------------------------------
 combine_string(
     separator: string - Separator appended after each string value during concatenation
