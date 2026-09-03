@@ -28052,6 +28052,12 @@ intbox(
 
   - Create a child integer box.
         --------------------------------------------------
+keep_aspect_ratio(
+    enabled - bool
+)
+
+  - Get or set whether the view keeps the shader texture aspect ratio.
+        --------------------------------------------------
 keyboard(
     key - int, scancode - int, action - int, modifiers - int
 )
