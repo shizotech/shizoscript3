@@ -9111,6 +9111,12 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+extensions(
+    value - json list of strings
+)
+
+  - Get or set allowed file extensions. An empty list allows all files.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -16488,6 +16494,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -17237,6 +17247,10 @@ enabled(
 )
 
   - Get or set enabled state.
+        --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
         --------------------------------------------------
 filebrowser(
     path - string
@@ -18018,6 +18032,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -18792,6 +18810,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -19560,6 +19582,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -20322,6 +20348,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -21071,6 +21101,10 @@ enabled(
 )
 
   - Get or set enabled state.
+        --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
         --------------------------------------------------
 envelope_value(
     value - float
@@ -21846,6 +21880,10 @@ enabled(
 
   - Get or set enabled state.
         --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
+        --------------------------------------------------
 filebrowser(
     path - string
 ) -> nanogui.filebrowser
@@ -22595,6 +22633,10 @@ enabled(
 )
 
   - Get or set enabled state.
+        --------------------------------------------------
+envelope()
+
+  - Get the envelope graph widget.
         --------------------------------------------------
 expanded(
     value - bool
