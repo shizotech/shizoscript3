@@ -30462,6 +30462,10 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
+remove_all_tabs()
+
+  - Remove all tabs.
+        --------------------------------------------------
 remove_tab(
     index_or_tab - int | nanogui.widget
 )
