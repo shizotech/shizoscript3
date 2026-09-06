@@ -16316,6 +16316,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -17069,6 +17073,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
         --------------------------------------------------
 button(
     title - string
@@ -17854,6 +17862,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -18632,6 +18644,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -19404,6 +19420,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -20170,6 +20190,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -20923,6 +20947,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
         --------------------------------------------------
 button(
     title - string
@@ -21702,6 +21730,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
+        --------------------------------------------------
 button(
     title - string
 ) -> nanogui.button
@@ -22455,6 +22487,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+broadcast_value()
+
+  - Broadcast the current value to linked controls and MIDI devices.
         --------------------------------------------------
 button(
     title - string
@@ -25984,10 +26020,10 @@ screen() -> nanogui.screen
   - Get parent widget.
         --------------------------------------------------
 screen_size(
-    return - vec2f
+    size - vec2f|vec2i|list [w, h]
 )
 
-  - Get current NanoGUI drawing area size (logical width/height).
+  - Get or set the current NanoGUI drawing area size (logical width/height).
         --------------------------------------------------
 scroll(
     p - vec2f Point, rel - vec2f Scroll delta
