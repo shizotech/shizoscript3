@@ -18447,6 +18447,12 @@ selected_index(
 
   - Get or set the selected item index.
         --------------------------------------------------
+selected_text(
+    text - string
+)
+
+  - Get or set the selected item text.
+        --------------------------------------------------
 shader(
     source - string,
     render_size - vec2
