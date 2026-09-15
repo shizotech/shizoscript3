@@ -11195,10 +11195,10 @@ add_header_top_item(
   - Add a header item on the top and return it.
         --------------------------------------------------
 add_item(
-    row?, col?
+    row? - grid row, or -1 for the header corner; col? - grid column, or -1 for the header corner
 ) -> nanogui.gridview_item
 
-  - Add a new grid item and return it.
+  - Add a new grid item and return it. Use row=-1 and col=-1 for the header corner item.
         --------------------------------------------------
 anchor(
     value - float,
