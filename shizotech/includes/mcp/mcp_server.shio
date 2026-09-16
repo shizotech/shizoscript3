@@ -15,6 +15,7 @@ class mcpserver
 	http = None;
 	clients = [];
 	tools = toolset();
+	resources = resource_registry();
 	
 	__init__(name, port, http_backend = webserver.http_server()) {
 		this.name = name;
@@ -71,7 +72,7 @@ class mcpserver
 	// Initialize handler
 	handle_initialize(req_params)
 	{
-		result = [protocolVersion=MCP_VERSION, capabilities=[tools=handle_tools_list(None)], serverInfo=[name=name, version="1.0.0"]];
+		result = [protocolVersion=MCP_VERSION, capabilities=[tools=handle_tools_list(None), resources=[listChanged=false]], serverInfo=[name=name, version="1.0.0"]];
 		return result;
 	}
 
@@ -119,6 +120,60 @@ class mcpserver
 		catch(e) {}
 		
 		error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INTERNAL_ERROR, "Internal server error.");
+		return error_resp;
+	}
+
+	// Resources/List handler
+	handle_resources_list(req_params)
+	{
+		list = [];
+
+		for(i = 0; i < resources.resources.size(); i++) {
+			entry = resources.resources[i];
+			t = [uri=entry.uri];
+
+			if(entry.name)
+				t.name = entry.name;
+
+			if(entry.description)
+				t.description = entry.description;
+
+			if(entry.mimeType)
+				t.mimeType = entry.mimeType;
+
+			list.push_back(t);
+		}
+
+		// No nextCursor: full list is returned in one page
+		return [resources=list];
+	}
+
+	// Resources/Read handler
+	handle_resources_read(req_params, rpc_id)
+	{
+		try {
+			uri = req_params.geti("uri");
+			res = resources.find_resource(uri);
+
+			if (!res)
+			{
+				error_resp = create_jsonrpc_error(rpc_id, JSONRPC_RESOURCE_NOT_FOUND, "Resource does not exist.");
+				return error_resp;
+			}
+
+			if (!fileio.exists(res.path))
+			{
+				error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INTERNAL_ERROR, "Resource file is missing: " + res.path);
+				return error_resp;
+			}
+
+			text = fileio.read_string(res.path);
+			result = [contents=[[uri=uri, mimeType=res.mimeType, text=text]]];
+			return create_jsonrpc_response(rpc_id, result);
+		}
+		catch(e) {}
+
+		error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INTERNAL_ERROR, "Failed to read resource file.");
 		return error_resp;
 	}
 
@@ -196,6 +251,18 @@ class mcpserver
 		{
 			response = handle_tools_call(params, rpc_id);
 		}
+		else if (method == RESOURCES_LIST_METHOD)
+		{
+			result = handle_resources_list(params);
+			if (rpc_id)
+				response = create_jsonrpc_response(rpc_id, result);
+			else
+				response = create_notification(RESOURCES_LIST_METHOD + "/result", result);
+		}
+		else if (method == RESOURCES_READ_METHOD)
+		{
+			response = handle_resources_read(params, rpc_id);
+		}
 		else if (method == PING_METHOD)
 		{
 			result = [status="ok"];
@@ -242,10 +309,26 @@ server.tools.add_tool(
 ],
 [](svr, args)
 {	
-	std.print(args);
-	
-	return "Ok worked!";
-});
+ 	std.print(args);
+ 	
+ 	return "Ok worked!";
+ });
+
+ server.resources.add_resource(
+ "file:///skills/shizoscript.md",
+ "ShizoScript skill",
+ "Skill instructions for working with ShizoScript",
+ "text/markdown",
+ "docs/shizoscript.md"
+ );
+
+ server.resources.add_resource(
+ "file:///notes/welcome.txt",
+ "Welcome",
+ "Example plain text resource",
+ "text/plain",
+ "docs/welcome.txt"
+ );
 
 // Keep server running
 std.sleep(-1);

@@ -13,6 +13,8 @@ INIT_METHOD = "initialize";
 TOOLS_LIST_METHOD = "tools/list";
 TOOLS_CALL_METHOD = "tools/call";
 PING_METHOD = "ping";
+RESOURCES_LIST_METHOD = "resources/list";
+RESOURCES_READ_METHOD = "resources/read";
 
 // JSON-RPC error codes
 JSONRPC_PARSE_ERROR = -32700;
@@ -22,6 +24,7 @@ JSONRPC_INVALID_PARAMS = -32602;
 JSONRPC_INTERNAL_ERROR = -32603;
 JSONRPC_TOOL_NOT_FOUND = -32001;
 JSONRPC_TOOL_ERROR = -32002;
+JSONRPC_RESOURCE_NOT_FOUND = -32003;
 
 // ============================================================================
 // Helper: parse JSON string into json object
@@ -78,4 +81,61 @@ create_notification(method, params)
     if (params)
         notif.params = params;
     return notif;
+}
+
+// ============================================================================
+// Resource registry: holds MCP file-based resources (e.g. skill .md files)
+// Modeled on the toolset class style from the openai standard include
+// ============================================================================
+class resource_registry
+{
+	resources = [];
+	
+	add_resource(
+		uri,
+		name,
+		description,
+		mimeType,
+		file_path
+	)
+	{
+		//Check if it already exists and if so, overwrite silently
+		found_resource = false;
+		for(i = 0; i < resources.size(); i++)
+		{
+			if(resources[i].uri == uri)
+			{
+				resources[i] = [
+					uri = uri,
+					name = name,
+					description = description,
+					mimeType = mimeType,
+					path = file_path,
+				];
+				found_resource = true;
+				break;
+			}
+		}
+		
+		if(!found_resource) {
+			resources.push_back([
+				uri = uri,
+				name = name,
+				description = description,
+				mimeType = mimeType,
+				path = file_path,
+			]);
+		}
+	}
+	
+	find_resource(uri) {
+		for(i = 0; i < resources.size(); i++)
+		{
+			if(resources[i].uri == uri) {
+				return resources[i];
+			}
+		}
+		
+		return None;
+	}
 }
