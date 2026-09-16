@@ -30,12 +30,25 @@ server.tools.add_tool(
  );
 
  server.resources.add_resource(
- "file:///notes/welcome.txt",
- "Welcome",
- "Example plain text resource",
- "text/plain",
- "docs/welcome.txt"
- );
+  "file:///notes/welcome.txt",
+  "Welcome",
+  "Example plain text resource",
+  "text/plain",
+  "docs/welcome.txt"
+  );
 
-// Keep server running
-std.sleep(-1);
+  server.prompts.add_prompt(
+  "welcome",
+  "Welcome a user by name",
+  [
+  	[name = "user", description = "Name of the user", required = true],
+  ],
+  [](svr, args)
+  {
+  	return "Welcome, " + std.string(args.geti("user")) + "!";
+  });
+
+  server.set_instructions("Test MCP server exposing tools, resources and prompts.");
+
+  // Keep server running
+  std.sleep(-1);

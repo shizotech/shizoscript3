@@ -13,53 +13,34 @@ class mcpserver
 	name = "";
 	port = 13338;
 	http = None;
-	clients = [];
 	tools = toolset();
 	resources = resource_registry();
+	prompts = prompt_registry();
+	instructions = "";
 	
-	__init__(name, port, http_backend = webserver.http_server()) {
+	__init__(name, port, http_backend = webserver.http_server(), instructions = "") {
 		this.name = name;
 		this.port = port;
 		this.http = http_backend;
+		this.instructions = instructions;
 		http.init(port);
 		
-		// Register MCP endpoint for POST requests
+		// Register MCP endpoint for POST requests (Streamable HTTP)
 		http.route("POST", "/mcp", this.mcp_handler);
+
+		// Register GET endpoint for /mcp: no SSE stream is offered
+		http.route("GET", "/mcp", [this](request_object, writer) {
+			this.send_json(writer, 405, [
+				jsonrpc = JSONRPC_VERSION,
+				error = [code = JSONRPC_INVALID_REQUEST, message = "Method not allowed. Use POST."],
+			]);
+		});
 
 		// Register GET endpoint for server health check
 		http.route("GET", "/", [this](request_object, writer) {
-			if(!writer.write_header(200, "text/event-stream")) {
-				std.print("write header failed.");
-				return;
-			}
-			
-			client_id = std.random_hash(128);
-			
-			std.print(client_id);
-			
-			stream_write_cb = [this, writer, client_id](data) {
-				//data is a json with the response
-				send_sse = "event: message\ndata: " + data.compact_string() + "\n\n";
-				if(!writer.write(send_sse))
-					this.clients[client_id].stop = true;
-			};
-			
-			this.clients[client_id] = [
-				stream_writer = stream_write_cb,
-				stop = false,
-			];
-			
-			if(!writer.write("event: endpoint\ndata: /mcp?sessionid=" + client_id + "\n\n")) {
-				this.clients.erase(client_id);
-			}
-			
-			for(!this.clients[client_id].stop && writer.is_client_alive()) {
-				std.sleep(1000);
-			}
-			
-			std.print("client disconnected.");
-			
-			this.clients.erase(client_id);
+			writer.write_header(200, "text/plain");
+			writer.write("MCP server running on port " + std.string(this.port));
+			writer.end();
 		});
 
 		// Start the server
@@ -69,10 +50,74 @@ class mcpserver
 		std.print("MCP Endpoint: http://localhost:" + port);
 	}
 	
+	// ShizoScript json has no dedicated boolean type: true/false literals
+	// serialize as 1/0. Strict MCP clients (e.g. GitHub Copilot) reject numeric
+	// flags where the schema demands real booleans (listChanged, required),
+	// so the boolean literals are restored at the wire boundary.
+	normalize_booleans(s)
+	{
+		s = s.regex_replace("\"listChanged\":1", "\"listChanged\":true");
+		s = s.regex_replace("\"listChanged\":0", "\"listChanged\":false");
+		s = s.regex_replace("\"required\":1", "\"required\":true");
+		s = s.regex_replace("\"required\":0", "\"required\":false");
+		return s;
+	}
+
+	// Send a JSON response through the writer (write_header -> write -> end)
+	send_json(writer, status, obj)
+	{
+		writer.write_header(status, "application/json");
+		if (obj)
+			writer.write(normalize_booleans(obj.compact_string()));
+		writer.end();
+	}
+	
+	// Send a 202 empty response through the writer (notifications-only)
+	send_no_content(writer)
+	{
+		writer.write_header(202, "application/json");
+		writer.end();
+	}
+	
+	// Set (or clear) the server instructions shown in the initialize result
+	set_instructions(text)
+	{
+		this.instructions = text;
+	}
+	
 	// Initialize handler
 	handle_initialize(req_params)
 	{
-		result = [protocolVersion=MCP_VERSION, capabilities=[tools=handle_tools_list(None), resources=[listChanged=false]], serverInfo=[name=name, version="1.0.0"]];
+		// Negotiate protocol version: echo a known client version, else use the default
+		protocol_version = MCP_VERSION;
+		client_version = None;
+		if (req_params)
+			client_version = req_params.geti("protocolVersion");
+		if (client_version)
+		{
+			for(i = 0; i < MCP_VERSIONS.size(); i++)
+			{
+				if (client_version == MCP_VERSIONS[i])
+				{
+					protocol_version = client_version;
+					break;
+				}
+			}
+		}
+		
+		result = [
+			protocolVersion = protocol_version,
+			capabilities = [
+				tools = [listChanged = false],
+				resources = [listChanged = false],
+				prompts = [listChanged = false],
+			],
+			serverInfo = [name = name, version = "1.0.0"],
+		];
+		
+		if (instructions)
+			result.instructions = instructions;
+		
 		return result;
 	}
 
@@ -178,115 +223,198 @@ class mcpserver
 	}
 
 	
+	// Prompts/List handler
+	handle_prompts_list(req_params)
+	{
+		list = [];
+		
+		for(i = 0; i < prompts.prompts.size(); i++) {
+			entry = prompts.prompts[i];
+			t = [name=entry.name];
+			
+			if(entry.description)
+				t.description = entry.description;
+			
+			if(entry.arguments)
+				t.arguments = entry.arguments;
+			
+			list.push_back(t);
+		}
+		
+		return [prompts=list];
+	}
+	
+	// Prompts/Get handler
+	handle_prompts_get(req_params, rpc_id)
+	{
+		try {
+			name = req_params.geti("name");
+			arguments = req_params.geti("arguments");
+			
+			if (!prompts.prompt_callbacks.has(name))
+			{
+				error_resp = create_jsonrpc_error(rpc_id, JSONRPC_PROMPT_NOT_FOUND, "Prompt does not exist.");
+				return error_resp;
+			}
+			
+			cb = prompts.prompt_callbacks[name];
+			ret = cb(this, arguments);
+			
+			// If the callback already returns a json with messages, pass it through
+			if (std.is_json(ret) && ret.has("messages"))
+			{
+				return create_jsonrpc_response(rpc_id, ret);
+			}
+			
+			// Wrap plain results into a single user message
+			result = [messages=[[role="user", content=[type="text", text=std.string(ret)]]]];
+			return create_jsonrpc_response(rpc_id, result);
+		}
+		catch(e) {}
+		
+		error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INTERNAL_ERROR, "Internal server error.");
+		return error_resp;
+	}
+	
+	
 	// ============================================================================
 	// MCP Request Handler - defined LAST
 	// Processes JSON-RPC messages and routes to appropriate handlers
 	// ============================================================================
 	mcp_handler(request_object, writer)
 	{
-		std.print(request_object);
+		// Accept header check: only application/json (plus */*) is accepted
+		accept = request_object.headers.geti("Accept");
+		if (accept && !accept.contains("application/json"))
+		{
+			send_json(writer, 406, create_jsonrpc_error(None, JSONRPC_INVALID_REQUEST, "Not Acceptable: content type must include application/json."));
+			return;
+		}
 		
 		// Guard: reject empty or null body before calling std.json()
 		body_str = std.string(request_object.body);
 		if (body_str == "")
 		{
-			error_resp = create_jsonrpc_error(-1, JSONRPC_PARSE_ERROR, "Empty or invalid request body");
-			return error_resp.string(0);
+			send_json(writer, 400, create_jsonrpc_error(None, JSONRPC_PARSE_ERROR, "Empty or invalid request body"));
+			return;
 		}
-
-		req = None;
-
-		// Wrap JSON parse in try/catch to handle malformed input gracefully
-		try {
-			req = std.json(body_str);
-		} catch (e) {
-			error_resp = create_jsonrpc_error(-1, JSONRPC_PARSE_ERROR, "Failed to parse JSON: " + std.string(e).string(0));
-			return error_resp.string(0);
-		}
-
-		// Extract method and id
-		method = req.geti("method");
-		rpc_id = req.geti("id");
-
-		if (!method)
-		{
-			error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INVALID_REQUEST, "Missing method");
-			return error_resp;
-		}
-
-		// Extract params
-		params = req.geti("params");
-
-		// Extract clientid
-		clientid = request_object.query_params.sessionid;
 		
-		if(!clients.has(clientid)) {
-			error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INVALID_REQUEST, "Missing method");
-			return error_resp;
+		req = None;
+		
+		// Wrap JSON parse in try/catch to handle malformed input gracefully
+		// (strict mode: pure garbage returns an empty json without throwing)
+		try {
+			req = std.json(body_str, true);
+		} catch (e) {
+			req = None;
 		}
+		
+		// A valid request must carry at least one message: a non-empty json object
+	// with a method, or a non-empty batch array. Garbage that parses to an empty
+	// json (strict mode returns empty without throwing) is a parse error.
+	has_content = false;
+	if (std.is_list(req))
+		has_content = req.size() > 0;
+	else
+		has_content = (req && req.hasi("method"));
 
-		// Declare all variables at top
-		response = "";
-		result = None;
-		error_resp = None;
-
-		// Route to appropriate handler
-		if (method == INIT_METHOD)
-		{
-			result = handle_initialize(params);
-			if (rpc_id)
-				response = create_jsonrpc_response(rpc_id, result);
+	if (!has_content)
+	{
+		send_json(writer, 400, create_jsonrpc_error(None, JSONRPC_PARSE_ERROR, "Failed to parse JSON request body."));
+		return;
+	}
+		
+		responses = [];
+		
+		// Process a single JSON-RPC message; adds a response to responses
+		// unless the message is a notification (no "id" key)
+		process_message = [this, &responses](msg) {
+			if (!std.is_json(msg))
+				return;
+			
+			method = msg.geti("method");
+			
+			// Missing method: only requests get an error response
+			if (!method)
+			{
+				if (msg.hasi("id"))
+					responses.push_back(create_jsonrpc_error(msg.geti("id"), JSONRPC_INVALID_REQUEST, "Missing method"));
+				return;
+			}
+			
+			rpc_id = msg.geti("id");
+			params = msg.geti("params");
+			
+			// Notification: dispatch for side effects, never add a response
+			if (!msg.hasi("id"))
+			{
+				if (method == TOOLS_CALL_METHOD)
+					this.handle_tools_call(params, None);
+				else if (method == RESOURCES_READ_METHOD)
+					this.handle_resources_read(params, None);
+				else if (method == PROMPTS_GET_METHOD)
+					this.handle_prompts_get(params, None);
+				return;
+			}
+			
+			if (method == INIT_METHOD)
+			{
+				responses.push_back(create_jsonrpc_response(rpc_id, this.handle_initialize(params)));
+			}
+			else if (method == TOOLS_LIST_METHOD)
+			{
+				responses.push_back(create_jsonrpc_response(rpc_id, this.handle_tools_list(params)));
+			}
+			else if (method == TOOLS_CALL_METHOD)
+			{
+				responses.push_back(this.handle_tools_call(params, rpc_id));
+			}
+			else if (method == RESOURCES_LIST_METHOD)
+			{
+				responses.push_back(create_jsonrpc_response(rpc_id, this.handle_resources_list(params)));
+			}
+			else if (method == RESOURCES_READ_METHOD)
+			{
+				responses.push_back(this.handle_resources_read(params, rpc_id));
+			}
+			else if (method == PROMPTS_LIST_METHOD)
+			{
+				responses.push_back(create_jsonrpc_response(rpc_id, this.handle_prompts_list(params)));
+			}
+			else if (method == PROMPTS_GET_METHOD)
+			{
+				responses.push_back(this.handle_prompts_get(params, rpc_id));
+			}
+			else if (method == PING_METHOD)
+			{
+				responses.push_back(create_jsonrpc_response(rpc_id, []));
+			}
 			else
-				response = create_notification(INIT_METHOD + "/result", result);
-		}
-		else if (method == TOOLS_LIST_METHOD)
+			{
+				responses.push_back(create_jsonrpc_error(rpc_id, JSONRPC_METHOD_NOT_FOUND, "Method not found: " + method));
+			}
+		};
+		
+		if (std.is_list(req))
 		{
-			result = handle_tools_list(params);
-			if (rpc_id)
-				response = create_jsonrpc_response(rpc_id, result);
-			else
-				response = create_notification(TOOLS_LIST_METHOD + "/result", result);
-		}
-		else if (method == TOOLS_CALL_METHOD)
-		{
-			response = handle_tools_call(params, rpc_id);
-		}
-		else if (method == RESOURCES_LIST_METHOD)
-		{
-			result = handle_resources_list(params);
-			if (rpc_id)
-				response = create_jsonrpc_response(rpc_id, result);
-			else
-				response = create_notification(RESOURCES_LIST_METHOD + "/result", result);
-		}
-		else if (method == RESOURCES_READ_METHOD)
-		{
-			response = handle_resources_read(params, rpc_id);
-		}
-		else if (method == PING_METHOD)
-		{
-			result = [status="ok"];
-			if (rpc_id)
-				response = create_jsonrpc_response(rpc_id, result);
-			else
-				response = create_notification(PING_METHOD + "/result", result);
+			// Batch request: process each message in the array
+			for(i = 0; i < req.size(); i++)
+			{
+				process_message(req[i]);
+			}
 		}
 		else
 		{
-			error_resp = create_jsonrpc_error(rpc_id, JSONRPC_METHOD_NOT_FOUND, "Method not found: " + method);
-			response = error_resp;
-		}
-
-		if(!clients.has(clientid)) {
-			error_resp = create_jsonrpc_error(rpc_id, JSONRPC_INVALID_REQUEST, "Missing method");
-			return error_resp;
+			process_message(req);
 		}
 		
-		clients[clientid].stream_writer(response);
-		
-		return [
-			body = "",
-		];
+		// Send responses: single response, batch array, or 202 if notifications-only
+		if (responses.size() == 1)
+			send_json(writer, 200, responses[0]);
+		else if (responses.size() > 1)
+			send_json(writer, 200, responses);
+		else
+			send_no_content(writer);
 	}
 
 }
@@ -323,13 +451,26 @@ server.tools.add_tool(
  );
 
  server.resources.add_resource(
- "file:///notes/welcome.txt",
- "Welcome",
- "Example plain text resource",
- "text/plain",
- "docs/welcome.txt"
- );
+  "file:///notes/welcome.txt",
+  "Welcome",
+  "Example plain text resource",
+  "text/plain",
+  "docs/welcome.txt"
+  );
+ 
+ server.prompts.add_prompt(
+  "welcome",
+  "Welcome a user by name",
+  [
+  	[name = "user", description = "Name of the user", required = true],
+  ],
+  [](svr, args)
+  {
+  	return "Welcome, " + std.string(args.geti("user")) + "!";
+  });
 
-// Keep server running
-std.sleep(-1);
-*/
+  server.set_instructions("Test MCP server exposing tools, resources and prompts.");
+
+  // Keep server running
+  std.sleep(-1);
+  */
