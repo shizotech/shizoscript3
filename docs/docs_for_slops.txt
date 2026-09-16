@@ -8880,8 +8880,8 @@ screen(
     depth_buffer: Enable depth buffer (default false).,
     stencil_buffer: Enable stencil buffer (default false).,
     float_buffer: Enable float buffer (default true).,
-    gl_major: OpenGL major version (default 3).,
-    gl_minor: OpenGL minor version (default 2).,
+    gl_major: OpenGL major version (default 4).,
+    gl_minor: OpenGL minor version (default 1).,
     monitor_id: Monitor index to place the window on (default primary monitor).
 ) -> nanogui.screen
 
