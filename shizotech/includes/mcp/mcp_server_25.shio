@@ -475,13 +475,13 @@ class mcpserver
 		error_resp = None;
 
 		// Route to appropriate handler
-		if (method == "initialize")
+		if (method == INIT_METHOD)
 		{
 			result = handle_initialize(params);
 			if (rpc_id)
 				response = create_jsonrpc_response(rpc_id, result);
 			else
-				response = create_notification("initialize" + "/result", result);
+				response = create_notification(INIT_METHOD + "/result", result);
 		}
 		else if (method == TOOLS_LIST_METHOD)
 		{
