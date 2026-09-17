@@ -20,10 +20,6 @@ PROMPTS_LIST_METHOD = "prompts/list";
 PROMPTS_GET_METHOD = "prompts/get";
 
 PING_METHOD = "ping";
-RESOURCES_LIST_METHOD = "resources/list";
-RESOURCES_READ_METHOD = "resources/read";
-PROMPTS_LIST_METHOD = "prompts/list";
-PROMPTS_GET_METHOD = "prompts/get";
 
 // JSON-RPC error codes
 JSONRPC_PARSE_ERROR = -32700;
@@ -147,6 +143,88 @@ class resource_registry
 		}
 		
 		return None;
+	}
+	
+	add_static_resource(
+		uri,
+		name,
+		description,
+		mimeType,
+		text
+	)
+	{
+		//Check if it already exists and if so, overwrite silently
+		found_resource = false;
+		for(i = 0; i < resources.size(); i++)
+		{
+			if(resources[i].uri == uri)
+			{
+				resources[i] = [
+					uri = uri,
+					name = name,
+					description = description,
+					mimeType = mimeType,
+					text = text,
+					path = None,
+					callback = None,
+				];
+				found_resource = true;
+				break;
+			}
+		}
+		
+		if(!found_resource) {
+			resources.push_back([
+				uri = uri,
+				name = name,
+				description = description,
+				mimeType = mimeType,
+				text = text,
+				path = None,
+				callback = None,
+			]);
+		}
+	}
+	
+	add_resource_callback(
+		uri,
+		name,
+		description,
+		mimeType,
+		callback
+	)
+	{
+		//Check if it already exists and if so, overwrite silently
+		found_resource = false;
+		for(i = 0; i < resources.size(); i++)
+		{
+			if(resources[i].uri == uri)
+			{
+				resources[i] = [
+					uri = uri,
+					name = name,
+					description = description,
+					mimeType = mimeType,
+					text = None,
+					path = None,
+					callback = callback,
+				];
+				found_resource = true;
+				break;
+			}
+		}
+		
+		if(!found_resource) {
+			resources.push_back([
+				uri = uri,
+				name = name,
+				description = description,
+				mimeType = mimeType,
+				text = None,
+				path = None,
+				callback = callback,
+			]);
+		}
 	}
 }
 

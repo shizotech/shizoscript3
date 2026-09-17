@@ -88,7 +88,7 @@ class mcpserver
 	//   3. dynamically generated
 	// ------------------------------------------------------------------------
 
-	resources = [];
+	resources = resource_registry();
 
 
 	// ------------------------------------------------------------------------
@@ -102,7 +102,7 @@ class mcpserver
 	// ]
 	// ------------------------------------------------------------------------
 
-	prompts = [];
+	prompts = prompt_registry();
 
 
 	// ------------------------------------------------------------------------
@@ -133,6 +133,12 @@ class mcpserver
 		this.port = port;
 		this.http = http_backend;
 
+
+		// toolset has no __init__ and None members, initialize them here.
+		this.tools.tools = [];
+		this.tools.tool_callbacks = [];
+
+
 		http.init(port);
 
 
@@ -145,7 +151,12 @@ class mcpserver
 			"/mcp",
 			this.mcp_handler
 		);
-
+		
+		http.route(
+			"POST",
+			"/",
+			this.mcp_handler
+		);
 
 		// ---------------------------------------------------------------------
 		// Start server
@@ -168,6 +179,16 @@ class mcpserver
 	// -------------------------------------------------------------------------
 
 	add_instruction(text)
+	{
+		this.instructions = text;
+	}
+
+
+	// -------------------------------------------------------------------------
+	// Alias for add_instruction
+	// -------------------------------------------------------------------------
+
+	set_instructions(text)
 	{
 		this.instructions = text;
 	}
@@ -208,16 +229,13 @@ class mcpserver
 		text
 	)
 	{
-		this.resources.push_back([
-			uri = uri,
-			name = name,
-			description = description,
-			mimeType = mime_type,
-
-			text = text,
-			path = None,
-			callback = None
-		]);
+		this.resources.add_static_resource(
+			uri,
+			name,
+			description,
+			mime_type,
+			text
+		);
 	}
 
 
@@ -243,16 +261,13 @@ class mcpserver
 		mime_type = "text/markdown"
 	)
 	{
-		this.resources.push_back([
-			uri = uri,
-			name = name,
-			description = description,
-			mimeType = mime_type,
-
-			text = None,
-			path = path,
-			callback = None
-		]);
+		this.resources.add_resource(
+			uri,
+			name,
+			description,
+			mime_type,
+			path
+		);
 	}
 
 
@@ -270,16 +285,13 @@ class mcpserver
 		callback
 	)
 	{
-		this.resources.push_back([
-			uri = uri,
-			name = name,
-			description = description,
-			mimeType = mime_type,
-
-			text = None,
-			path = None,
-			callback = callback
-		]);
+		this.resources.add_resource_callback(
+			uri,
+			name,
+			description,
+			mime_type,
+			callback
+		);
 	}
 
 
@@ -301,12 +313,12 @@ class mcpserver
 		callback
 	)
 	{
-		this.prompts.push_back([
-			name = name,
-			description = description,
-			arguments = arguments,
-			callback = callback
-		]);
+		this.prompts.add_prompt(
+			name,
+			description,
+			arguments,
+			callback
+		);
 	}
 
 
@@ -441,7 +453,7 @@ class mcpserver
 
 			return create_jsonrpc_tool_response(
 				rpc_id,
-				cb(this, arguments)
+				cb(arguments)
 			);
 		}
 		catch(e)
@@ -464,9 +476,9 @@ class mcpserver
 		list = [];
 
 
-		for(i = 0; i < resources.size(); i++)
+		for(i = 0; i < resources.resources.size(); i++)
 		{
-			r = resources[i];
+			r = resources.resources[i];
 
 
 			list.push_back([
@@ -506,109 +518,105 @@ class mcpserver
 		}
 
 
-		for(i = 0; i < resources.size(); i++)
+		r = this.resources.find_resource(uri);
+
+
+		if(!r)
 		{
-			r = resources[i];
-
-
-			if(r.uri != uri)
-				continue;
-
-
-			// -------------------------------------------------------------
-			// Dynamic resource
-			// -------------------------------------------------------------
-
-			if(r.callback)
-			{
-				try
-				{
-					text = r.callback(this, uri);
-
-
-					return [
-						contents = [
-							[
-								uri = r.uri,
-								mimeType = r.mimeType,
-								text = text
-							]
-						],
-
-						ttlMs = cache_ttl_ms,
-						cacheScope = cache_scope
-					];
-				}
-				catch(e)
-				{
-					return create_jsonrpc_error(
-						rpc_id,
-						JSONRPC_INTERNAL_ERROR,
-						"Resource callback failed."
-					);
-				}
-			}
-
-
-			// -------------------------------------------------------------
-			// File-backed resource
-			// -------------------------------------------------------------
-
-			if(r.path)
-			{
-				try
-				{
-					text = fileio.read_string(r.path);
-
-
-					return [
-						contents = [
-							[
-								uri = r.uri,
-								mimeType = r.mimeType,
-								text = text
-							]
-						],
-
-						ttlMs = cache_ttl_ms,
-						cacheScope = cache_scope
-					];
-				}
-				catch(e)
-				{
-					return create_jsonrpc_error(
-						rpc_id,
-						JSONRPC_INTERNAL_ERROR,
-						"Failed to read resource file."
-					);
-				}
-			}
-
-
-			// -------------------------------------------------------------
-			// Static resource
-			// -------------------------------------------------------------
-
-			return [
-				contents = [
-					[
-						uri = r.uri,
-						mimeType = r.mimeType,
-						text = r.text
-					]
-				],
-
-				ttlMs = cache_ttl_ms,
-				cacheScope = cache_scope
-			];
+			return create_jsonrpc_error(
+				rpc_id,
+				JSONRPC_RESOURCE_NOT_FOUND,
+				"Resource not found: " + uri
+			);
 		}
 
 
-		return create_jsonrpc_error(
-			rpc_id,
-			JSONRPC_INVALID_REQUEST,
-			"Resource not found: " + uri
-		);
+		// -------------------------------------------------------------
+		// Dynamic resource
+		// -------------------------------------------------------------
+
+		if(r.callback)
+		{
+			try
+			{
+				text = r.callback(this, uri);
+
+
+				return [
+					contents = [
+						[
+							uri = r.uri,
+							mimeType = r.mimeType,
+							text = text
+						]
+					],
+
+					ttlMs = cache_ttl_ms,
+					cacheScope = cache_scope
+				];
+			}
+			catch(e)
+			{
+				return create_jsonrpc_error(
+					rpc_id,
+					JSONRPC_INTERNAL_ERROR,
+					"Resource callback failed."
+				);
+			}
+		}
+
+
+		// -------------------------------------------------------------
+		// File-backed resource
+		// -------------------------------------------------------------
+
+		if(r.path)
+		{
+			try
+			{
+				text = fileio.read_string(r.path);
+
+
+				return [
+					contents = [
+						[
+							uri = r.uri,
+							mimeType = r.mimeType,
+							text = text
+						]
+					],
+
+					ttlMs = cache_ttl_ms,
+					cacheScope = cache_scope
+				];
+			}
+			catch(e)
+			{
+				return create_jsonrpc_error(
+					rpc_id,
+					JSONRPC_INTERNAL_ERROR,
+					"Failed to read resource file."
+				);
+			}
+		}
+
+
+		// -------------------------------------------------------------
+		// Static resource
+		// -------------------------------------------------------------
+
+		return [
+			contents = [
+				[
+					uri = r.uri,
+					mimeType = r.mimeType,
+					text = r.text
+				]
+			],
+
+			ttlMs = cache_ttl_ms,
+			cacheScope = cache_scope
+		];
 	}
 
 
@@ -621,9 +629,9 @@ class mcpserver
 		list = [];
 
 
-		for(i = 0; i < prompts.size(); i++)
+		for(i = 0; i < prompts.prompts.size(); i++)
 		{
-			p = prompts[i];
+			p = prompts.prompts[i];
 
 
 			list.push_back([
@@ -663,57 +671,56 @@ class mcpserver
 		}
 
 
-		for(i = 0; i < prompts.size(); i++)
+		p = this.prompts.find_prompt(prompt_name);
+
+
+		if(!p)
 		{
-			p = prompts[i];
-
-
-			if(p.name != prompt_name)
-				continue;
-
-
-			try
-			{
-				text = p.callback(
-					this,
-					arguments
-				);
-
-
-				return [
-					description = p.description,
-
-					messages = [
-						[
-							role = "user",
-
-							content = [
-								type = "text",
-								text = text
-							]
-						]
-					],
-
-					ttlMs = cache_ttl_ms,
-					cacheScope = cache_scope
-				];
-			}
-			catch(e)
-			{
-				return create_jsonrpc_error(
-					rpc_id,
-					JSONRPC_INTERNAL_ERROR,
-					"Prompt callback failed."
-				);
-			}
+			return create_jsonrpc_error(
+				rpc_id,
+				JSONRPC_PROMPT_NOT_FOUND,
+				"Prompt not found: " + prompt_name
+			);
 		}
 
 
-		return create_jsonrpc_error(
-			rpc_id,
-			JSONRPC_INVALID_REQUEST,
-			"Prompt not found: " + prompt_name
-		);
+		cb = this.prompts.prompt_callbacks[prompt_name];
+
+
+		try
+		{
+			text = cb(
+				this,
+				arguments
+			);
+
+
+			return [
+				description = p.description,
+
+				messages = [
+					[
+						role = "user",
+
+						content = [
+							type = "text",
+							text = text
+						]
+					]
+				],
+
+				ttlMs = cache_ttl_ms,
+				cacheScope = cache_scope
+			];
+		}
+		catch(e)
+		{
+			return create_jsonrpc_error(
+				rpc_id,
+				JSONRPC_INTERNAL_ERROR,
+				"Prompt callback failed."
+			);
+		}
 	}
 
 
@@ -910,6 +917,9 @@ class mcpserver
 			return false;
 
 
+		writer.end();
+
+
 		return true;
 	}
 
@@ -935,12 +945,11 @@ class mcpserver
 
 	mcp_handler(request_object, writer)
 	{
-		std.print(request_object);
-
-
 		// ---------------------------------------------------------------------
 		// Body
 		// ---------------------------------------------------------------------
+
+		std.print(request_object);
 
 		body_str = std.string(
 			request_object.body
@@ -1365,8 +1374,8 @@ ShizoScript MCP Server
 Name: " + svr.name + "
 Port: " + svr.port + "
 Tools: " + svr.tools.tools.size() + "
-Resources: " + svr.resources.size() + "
-Prompts: " + svr.prompts.size() + "
+Resources: " + svr.resources.resources.size() + "
+Prompts: " + svr.prompts.prompts.size() + "
 ";
 	}
 );
@@ -1388,7 +1397,7 @@ server.tools.add_tool(
 		num = "&int(): number",
 	],
 
-	[](svr, args)
+	[](args)
 	{
 		std.print(args);
 
