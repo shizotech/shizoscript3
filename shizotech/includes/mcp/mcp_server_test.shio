@@ -36,8 +36,8 @@ server.tools.add_tool(
   "text/plain",
   "docs/welcome.txt"
   );
-
-  server.prompts.add_prompt(
+ 
+ server.prompts.add_prompt(
   "welcome",
   "Welcome a user by name",
   [
