@@ -8,6 +8,9 @@ import webserver;
 #include "mcp_types.shio"
 #include "openai/openai"
 
+// Protocol version for this server (overrides the shared default in mcp_types.shio)
+MCP_VERSION = "2025-11-25";
+
 class mcpserver
 {
 	name = "";
