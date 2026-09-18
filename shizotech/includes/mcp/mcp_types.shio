@@ -8,6 +8,8 @@ MCP_VERSION = "2026-07-28";
 // JSON-RPC version
 JSONRPC_VERSION = "2.0";
 
+INIT_METHOD = "initialize";
+
 SERVER_DISCOVER_METHOD = "server/discover";
 
 TOOLS_LIST_METHOD = "tools/list";
