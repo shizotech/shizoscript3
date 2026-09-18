@@ -431,8 +431,6 @@ class mcpserver
 	// ============================================================================
 	mcp_handler(request_object, writer)
 	{
-		std.print(request_object);
-		
 		// Guard: reject empty or null body before calling std.json()
 		body_str = std.string(request_object.body);
 		if (body_str == "")
@@ -553,6 +551,8 @@ class mcpserver
 			return error_resp;
 		}
 		
+		std.print(method, response);
+		
 		clients[clientid].stream_writer(response);
 		
 		return [
@@ -561,7 +561,6 @@ class mcpserver
 	}
 
 }
-
 
 // Example Server configuration
 /*

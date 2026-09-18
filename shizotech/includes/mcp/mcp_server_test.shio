@@ -41,7 +41,7 @@ server.tools.add_tool(
   "welcome",
   "Welcome a user by name",
   [
-  	[name = "user", description = "Name of the user", required = true],
+  	[name = "user", description = "Name of the user"],
   ],
   [](svr, args)
   {

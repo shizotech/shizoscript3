@@ -3249,6 +3249,12 @@ caption(
 
   - Get or set button caption.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -4007,6 +4013,12 @@ caption(
 
   - Get or set button caption.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -4758,6 +4770,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -5573,6 +5591,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -6303,6 +6327,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -6998,6 +7028,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -7756,6 +7792,12 @@ caption(
 )
 
   - Get or set button caption.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -8961,6 +9003,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -9715,6 +9763,12 @@ caption(
 
   - Get or set the caption text.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -10464,6 +10518,12 @@ caption(
 )
 
   - Get or set graph caption.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -11253,6 +11313,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 cell_size(
     value - vec2f
 )
@@ -12005,6 +12071,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -12709,6 +12781,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -13382,6 +13460,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -14076,6 +14160,12 @@ caption(
 )
 
   - Get or set the caption text.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -14820,6 +14910,12 @@ caption(
 )
 
   - Get or set label caption.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -15600,6 +15696,12 @@ caption(
 
   - Get or set button caption.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -16337,6 +16439,12 @@ callback(
 )
 
   - Get or set the value change callback function.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -17095,6 +17203,12 @@ callback(
 )
 
   - Get or set the value change callback function.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -17884,6 +17998,12 @@ callback(
 
   - Get or set the value change callback function.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -18672,6 +18792,12 @@ callback(
 
   - Get or set the value change callback function.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -19448,6 +19574,12 @@ callback(
 
   - Get or set the value change callback function.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -20218,6 +20350,12 @@ callback(
 
   - Get or set the value change callback function.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -20975,6 +21113,12 @@ callback(
 )
 
   - Get or set the value change callback function.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -21758,6 +21902,12 @@ callback(
 
   - Get or set the value change callback function.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -22515,6 +22665,12 @@ callback(
 )
 
   - Get or set the value change callback function.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -23386,6 +23542,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -24090,6 +24252,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -24777,6 +24945,12 @@ canvas_scale(
 )
 
   - Get or set the projection canvas zoom.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -25512,6 +25686,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -26256,6 +26436,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -26981,6 +27167,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -27892,6 +28084,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -28564,6 +28762,12 @@ caption(
 )
 
   - Get or set slider caption.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -29262,6 +29466,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -30016,6 +30226,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -30790,6 +31006,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -31527,6 +31749,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -32384,6 +32612,12 @@ caption(
 
   - Get or set the timeline caption.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -33110,6 +33344,12 @@ caption(
 
   - Get or set the item caption.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -33802,6 +34042,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -34476,6 +34722,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -35144,6 +35396,12 @@ button_popup(
 
   - Create a child popup button.
         --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -35805,6 +36063,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 
@@ -36481,6 +36745,12 @@ button_popup(
 ) -> nanogui.button_popup
 
   - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
 child_count()
 

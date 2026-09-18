@@ -3,7 +3,7 @@
 // Starts a server on a test port, then uses curl to exercise every endpoint.
 // ============================================================================
 
-#include "mcp_server"
+#include "mcp_server_25"
 
 import curl;
 
