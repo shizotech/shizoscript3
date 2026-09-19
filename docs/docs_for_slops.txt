@@ -4,6 +4,7 @@
   - Namespace: eigen
   - Namespace: fileio
   - Namespace: ipc
+  - Namespace: json
   - Namespace: leveldb
   - Namespace: math
   - Namespace: mqtt
@@ -34,6 +35,7 @@
   - Object Type: eigen.vec4i
   - Object Type: fileio.container
   - Object Type: ipc.ipc
+  - Object Type: json.bool
   - Object Type: leveldb.db
   - Object Type: leveldb.iterator
   - Object Type: mqtt.mqtt
@@ -418,6 +420,19 @@ Namespace: ipc
         --------------------------------------------------
 ipc.ipc() -> ipc.ipc
 
+        --------------------------------------------------
+
+
+==================================================
+Namespace: json
+==================================================
+
+        --------------------------------------------------
+json.bool(
+    value: object - Value to wrap as a boolean.
+) -> json.bool
+
+  - Create a JSON boolean. The wrapped value is written as true/false instead of 1/0 when the JSON is converted to a string.
         --------------------------------------------------
 
 
@@ -2984,6 +2999,15 @@ on_message()
 send()
 
   - Send data to the remote process
+        --------------------------------------------------
+
+
+==================================================
+Object: json.bool
+==================================================
+
+    value -> variable
+
         --------------------------------------------------
 
 
