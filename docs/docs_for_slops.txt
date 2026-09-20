@@ -59,6 +59,7 @@
   - Object Type: nanogui.layout_base
   - Object Type: nanogui.layout_horizontal
   - Object Type: nanogui.layout_vertical
+  - Object Type: nanogui.mapping_surface
   - Object Type: nanogui.midi_learn_button
   - Object Type: nanogui.midicontrol_base
   - Object Type: nanogui.midicontrolbutton
@@ -73,7 +74,6 @@
   - Object Type: nanogui.mididevicehandler
   - Object Type: nanogui.modmatrixnode
   - Object Type: nanogui.permanent_tab
-  - Object Type: nanogui.projection_mapper
   - Object Type: nanogui.screen
   - Object Type: nanogui.scrollarea
   - Object Type: nanogui.shader
@@ -88,6 +88,7 @@
   - Object Type: nanogui.timeline
   - Object Type: nanogui.timeline_item
   - Object Type: nanogui.vscroll
+  - Object Type: nanogui.warp_mapper
   - Object Type: nanogui.widget
   - Object Type: nanogui.widget_solid
   - Object Type: nanogui.widget_unique
@@ -3760,10 +3761,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -3900,6 +3897,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -4538,10 +4539,6 @@ position_from_parent_window(
 
   - Get or set whether popup positioning uses the parent window when available.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -4684,6 +4681,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -5298,10 +5299,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -5462,6 +5459,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6098,10 +6099,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -6238,6 +6235,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6796,10 +6797,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -6934,6 +6931,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -7516,10 +7517,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -7674,6 +7671,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -8334,10 +8335,6 @@ position_from_parent_window(
 
   - Get or set whether popup positioning uses the parent window when available.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -8490,6 +8487,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -9522,10 +9523,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -9668,6 +9665,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -10268,10 +10269,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -10418,6 +10415,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11054,10 +11055,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -11212,6 +11209,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11824,10 +11825,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -11988,6 +11985,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -12558,10 +12559,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -12698,6 +12695,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -13238,10 +13239,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -13378,6 +13375,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -13928,10 +13929,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -14068,6 +14065,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -14666,10 +14667,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -14816,6 +14813,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -15368,10 +15369,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -15509,6 +15506,10 @@ vscroll(
 
   - Create a child vertical scroll panel.
         --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+        --------------------------------------------------
 widget() -> nanogui.widget
 
   - Create a child shz_widget.
@@ -15629,6 +15630,124 @@ spacing(
 )
 
   - Get or set vertical spacing.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.mapping_surface
+==================================================
+
+        --------------------------------------------------
+add_vertex(
+    source_uv - vec2 Source UV (0..1),
+    destination - vec2 Output position (0..1)
+)
+
+  - Append a polygon vertex. Returns the new vertex index.
+        --------------------------------------------------
+clear()
+
+  - Remove all vertices from the polygon.
+        --------------------------------------------------
+destination(
+    index - int Vertex index,
+    position - vec2 Output position (0..1)
+)
+
+  - Get or set the projected position of one vertex.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set whether this surface is rendered.
+        --------------------------------------------------
+insert_vertex(
+    edge - int Edge index (edge N joins vertex N and N+1),
+    t - float Interpolation 0..1 (default 0.5)
+)
+
+  - Insert a vertex on an existing edge, interpolated between its endpoints. Returns the new vertex index.
+        --------------------------------------------------
+load(
+    data - json Serialized surface
+)
+
+  - Load a mapping surface from JSON.
+        --------------------------------------------------
+move_destination(
+    delta - vec2 Output offset
+)
+
+  - Translate every destination position, moving the projected polygon without changing its shape.
+        --------------------------------------------------
+move_source(
+    delta - vec2 UV offset
+)
+
+  - Translate every source UV, moving the selected mask without changing its shape.
+        --------------------------------------------------
+name(
+    value - string
+)
+
+  - Get or set the surface name.
+        --------------------------------------------------
+rect(
+    source_min - vec2 Top left source UV,
+    source_max - vec2 Bottom right source UV,
+    dest_min - vec2 Top left output position,
+    dest_max - vec2 Bottom right output position
+)
+
+  - Replace the polygon with a rectangle mapped from a source region to an output region.
+        --------------------------------------------------
+remove_vertex(
+    index - int Vertex index
+)
+
+  - Delete a polygon vertex.
+        --------------------------------------------------
+save()
+
+  - Serialize this mapping surface to JSON.
+        --------------------------------------------------
+select_vertex(
+    index - int Vertex index
+)
+
+  - Get or set the selected vertex index (-1 for none).
+        --------------------------------------------------
+source(
+    index - int
+)
+
+  - Get or set which mapper input this surface samples from.
+        --------------------------------------------------
+source_uv(
+    index - int Vertex index,
+    uv - vec2 Source UV (0..1)
+)
+
+  - Get or set the source UV of one vertex.
+        --------------------------------------------------
+triangle(
+    index - int Triangle index
+)
+
+  - Get the vertex indices of one generated triangle.
+        --------------------------------------------------
+triangle_count()
+
+  - Get the number of generated triangles.
+        --------------------------------------------------
+triangulate()
+
+  - Rebuild triangle indices from the polygon topology.
+        --------------------------------------------------
+vertex_count()
+
+  - Get the number of polygon vertices.
         --------------------------------------------------
 
 
@@ -16207,10 +16326,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -16347,6 +16462,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -16965,10 +17084,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -17111,6 +17226,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -17747,10 +17866,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 push(
     mode - boolean (1 for pushbutton, 0 for normal button)
 )
@@ -17905,6 +18020,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -18541,10 +18660,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -18699,6 +18814,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -19329,10 +19448,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -19481,6 +19596,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -20111,10 +20230,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -20257,6 +20372,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -20875,10 +20994,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -21021,6 +21136,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -21657,10 +21776,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -21809,6 +21924,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -22427,10 +22546,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -22573,6 +22688,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -23197,10 +23316,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -23345,6 +23460,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -24031,10 +24150,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -24169,6 +24284,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -24709,10 +24828,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -24838,762 +24953,9 @@ vscroll(
 
   - Create a child vertical scroll panel.
         --------------------------------------------------
-widget() -> nanogui.widget
+warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child shz_widget.
-        --------------------------------------------------
-widget_solid(
-    background_color - vec4f
-) -> nanogui.widget_solid
-
-  - Create a child shz_widget.
-        --------------------------------------------------
-widget_unique(
-    guid - string
-) -> nanogui.widget_unique
-
-  - Create a child unique widget.
-        --------------------------------------------------
-width(
-    value - int
-)
-
-  - Get or set widget width.
-        --------------------------------------------------
-window(
-    title - string
-) -> nanogui.window
-
-  - Create a child Window.
-        --------------------------------------------------
-x(
-    value - float
-)
-
-  - Get or set widget X position.
-        --------------------------------------------------
-y(
-    value - float
-)
-
-  - Get or set widget Y position.
-        --------------------------------------------------
-
-
-==================================================
-Object: nanogui.projection_mapper
-==================================================
-
-    attr -> variable
-
-        --------------------------------------------------
-absolute_position()
-
-  - Get the absolute widget position.
-        --------------------------------------------------
-add_input(
-    name - string,
-    shader - nanogui.shader
-)
-
-  - Add a named shader input.
-        --------------------------------------------------
-add_output(
-    name - string,
-    input_index - int
-)
-
-  - Create a shader output slice.
-        --------------------------------------------------
-anchor(
-    value - float,
-    mode - string (pixels|percent|none), default pixels
-)
-
-  - Set all anchors.
-        --------------------------------------------------
-anchor_bottom(
-    value - float,
-    mode - string (pixels|percent|none), default pixels
-)
-
-  - Get or set bottom anchor.
-        --------------------------------------------------
-anchor_left(
-    value - float,
-    mode - string (pixels|percent|none), default pixels
-)
-
-  - Get or set left anchor.
-        --------------------------------------------------
-anchor_right(
-    value - float,
-    mode - string (pixels|percent|none), default pixels
-)
-
-  - Get or set right anchor.
-        --------------------------------------------------
-anchor_top(
-    value - float,
-    mode - string (pixels|percent|none), default pixels
-)
-
-  - Get or set top anchor.
-        --------------------------------------------------
-begin_dragdrop(
-    payload - std.json with at least type field
-)
-
-  - Begin a dragdrop operation from this widget.
-        --------------------------------------------------
-button(
-    title - string
-) -> nanogui.button
-
-  - Create a child button.
-        --------------------------------------------------
-button_popup(
-    title - string
-) -> nanogui.button_popup
-
-  - Create a child popup button.
-        --------------------------------------------------
-canvas_pan(
-    value - vec2
-)
-
-  - Get or set the projection canvas pan.
-        --------------------------------------------------
-canvas_scale(
-    value - float
-)
-
-  - Get or set the projection canvas zoom.
-        --------------------------------------------------
-capture(
-    filename - string, scale - float (defaults to the screen's pixel ratio)
-)
-
-  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
-        --------------------------------------------------
-child_count()
-
-  - Get number of child widgets.
-        --------------------------------------------------
-children(
-    index - int (optional)
-)
-
-  - Get list of child widgets.
-        --------------------------------------------------
-children_visible(
-    visible - bool
-)
-
-  - Set visibility of child widgets.
-        --------------------------------------------------
-clear_anchor_bottom()
-
-  - Clear bottom anchor.
-        --------------------------------------------------
-clear_anchor_left()
-
-  - Clear left anchor.
-        --------------------------------------------------
-clear_anchor_right()
-
-  - Clear right anchor.
-        --------------------------------------------------
-clear_anchor_top()
-
-  - Clear top anchor.
-        --------------------------------------------------
-clear_anchors()
-
-  - Clear all anchors.
-        --------------------------------------------------
-clear_children()
-
-  - Remove all child widgets.
-        --------------------------------------------------
-codebox(
-    text - string
-) -> nanogui.codebox
-
-  - Create a child codebox widget.
-        --------------------------------------------------
-collapsable(
-    title - string
-) -> nanogui.collapsable
-
-  - Create a child collapsable widget.
-        --------------------------------------------------
-color_selector() -> nanogui.color_selector
-
-  - Create a child color selector widget.
-        --------------------------------------------------
-combobox(
-    title - string
-) -> nanogui.combobox
-
-  - Create a child combobox.
-        --------------------------------------------------
-contains(
-    p - vec2i Point
-)
-
-  - Check if point is inside the widget.
-        --------------------------------------------------
-content() -> nanogui.widget
-
-  - Get content widget.
-        --------------------------------------------------
-control(
-    name - string,
-    group - string
-) -> nanogui.midicontrolio
-
-  - Create a child MIDI control IO (generic value holder).
-        --------------------------------------------------
-controlbutton(
-    name - string,
-    group - string
-) -> nanogui.midicontrolbutton
-
-  - Create a child MIDI control button.
-        --------------------------------------------------
-controlcombo(
-    name - string,
-    group - string
-) -> nanogui.midicontrolcombo
-
-  - Create a child MIDI control combo box.
-        --------------------------------------------------
-controlfloat(
-    name - string,
-    group - string
-) -> nanogui.midicontrolfloat
-
-  - Create a child MIDI control float.
-        --------------------------------------------------
-controlint(
-    name - string,
-    group - string
-) -> nanogui.midicontrolint
-
-  - Create a child MIDI control integer.
-        --------------------------------------------------
-controlslider(
-    name - string,
-    group - string
-) -> nanogui.midicontrolslider
-
-  - Create a child MIDI control slider.
-        --------------------------------------------------
-controltext(
-    name - string,
-    group - string
-) -> nanogui.midicontroltext
-
-  - Create a child MIDI control text box.
-        --------------------------------------------------
-controlvector(
-    name - string,
-    group - string
-) -> nanogui.midicontrolvector
-
-  - Create a child MIDI control vector.
-        --------------------------------------------------
-cursor(
-    value - int
-)
-
-  - Get or set cursor.
-        --------------------------------------------------
-dragdrop_enabled(
-    value - bool
-)
-
-  - Get or set automatic dragdrop start state.
-        --------------------------------------------------
-enabled(
-    value - bool
-)
-
-  - Get or set enabled state.
-        --------------------------------------------------
-filebrowser(
-    path - string
-) -> nanogui.filebrowser
-
-  - Create a child file browser.
-        --------------------------------------------------
-find_widget(
-    p - vec2i Point
-)
-
-  - Find widget at position.
-        --------------------------------------------------
-fixed_height(
-    value - int
-)
-
-  - Get or set fixed widget height.
-        --------------------------------------------------
-fixed_size(
-    value - vec2i Size
-)
-
-  - Get or set the fixed size.
-        --------------------------------------------------
-fixed_width(
-    value - int
-)
-
-  - Get or set fixed widget width.
-        --------------------------------------------------
-floatbox(
-    value - string
-) -> nanogui.floatbox
-
-  - Create a child float box.
-        --------------------------------------------------
-focus(
-    focused - bool
-)
-
-  - Call focus handler.
-        --------------------------------------------------
-focus_default(
-    focused - bool
-)
-
-  - Call default focus handler.
-        --------------------------------------------------
-focused(
-    value - bool
-)
-
-  - Get or set focused state.
-        --------------------------------------------------
-font_size(
-    value - int
-)
-
-  - Get or set font size.
-        --------------------------------------------------
-graph(
-    caption - string
-) -> nanogui.graph
-
-  - Create a child graph widget.
-        --------------------------------------------------
-gridview() -> nanogui.gridview
-
-  - Create a child grid view widget.
-        --------------------------------------------------
-has_font_size()
-
-  - Check if custom font size is set.
-        --------------------------------------------------
-height(
-    value - int
-)
-
-  - Get or set widget height.
-        --------------------------------------------------
-hscroll(
-    scroll - float
-) -> nanogui.hscroll
-
-  - Create a child horizontal scroll panel.
-        --------------------------------------------------
-image(
-    path - string
-) -> nanogui.image
-
-  - Create a child image widget.
-        --------------------------------------------------
-input_count()
-
-  - Get the number of registered shader inputs.
-        --------------------------------------------------
-intbox(
-    value - string
-) -> nanogui.intbox
-
-  - Create a child integer box.
-        --------------------------------------------------
-keyboard(
-    key - int, scancode - int, action - int, modifiers - int
-)
-
-  - Call keyboard handler.
-        --------------------------------------------------
-keyboard_character(
-    codepoint - int
-)
-
-  - Call keyboard character handler.
-        --------------------------------------------------
-keyboard_character_default(
-    codepoint - int
-)
-
-  - Call default keyboard character handler.
-        --------------------------------------------------
-keyboard_default(
-    key - int, scancode - int, action - int, modifiers - int
-)
-
-  - Call default keyboard handler.
-        --------------------------------------------------
-label(
-    text - string
-) -> nanogui.label
-
-  - Create a child label.
-        --------------------------------------------------
-layout(
-    name - string (vertical|horizontal)
-)
-
-  - Get current layout or set layout by name.
-        --------------------------------------------------
-load(
-    json - object
-)
-
-  - Load projection mapper state from JSON.
-        --------------------------------------------------
-matrixnode(
-    name - string,
-    guid - string
-) -> nanogui.modmatrixnode
-
-  - Create a child modmatrix node.
-        --------------------------------------------------
-mouse_button(
-    p - vec2f Point, button - int, down - bool, modifiers - int
-)
-
-  - Call mouse button handler.
-        --------------------------------------------------
-mouse_button_default(
-    p - vec2f Point, button - int, down - bool, modifiers - int
-)
-
-  - Call default mouse button handler.
-        --------------------------------------------------
-mouse_drag(
-    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
-)
-
-  - Call mouse drag handler.
-        --------------------------------------------------
-mouse_drag_default(
-    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
-)
-
-  - Call default mouse drag handler.
-        --------------------------------------------------
-mouse_enter(
-    p - vec2f Point, enter - bool
-)
-
-  - Call mouse enter/leave handler.
-        --------------------------------------------------
-mouse_enter_default(
-    p - vec2f Point, enter - bool
-)
-
-  - Call default mouse enter/leave handler.
-        --------------------------------------------------
-mouse_motion(
-    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
-)
-
-  - Call mouse motion handler.
-        --------------------------------------------------
-mouse_motion_default(
-    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
-)
-
-  - Call default mouse motion handler.
-        --------------------------------------------------
-new_texture() -> nanogui.texture
-
-  - Create a child GLSL texture.
-        --------------------------------------------------
-on_destroy(
-    callback - function
-)
-
-  - Set or clear the on destroy callback.
-        --------------------------------------------------
-on_dragdrop(
-    callback - function(payload_json, local_pos)
-)
-
-  - Set or clear dragdrop drop callback.
-        --------------------------------------------------
-on_dragdrop_hover(
-    callback - function(payload_json, local_pos) -> bool
-)
-
-  - Set or clear dragdrop hover callback.
-        --------------------------------------------------
-on_draw(
-    callback - function
-)
-
-  - Set or clear the draw callback.
-        --------------------------------------------------
-on_focus(
-    callback - function
-)
-
-  - Set or clear the focus callback.
-        --------------------------------------------------
-on_keyboard(
-    callback - function
-)
-
-  - Set or clear the keyboard callback.
-        --------------------------------------------------
-on_keyboard_character(
-    callback - function
-)
-
-  - Set or clear the keyboard character callback.
-        --------------------------------------------------
-on_layout(
-    callback - function
-)
-
-  - Set or clear the layout callback.
-        --------------------------------------------------
-on_mouse_button(
-    callback - function
-)
-
-  - Set or clear the mouse button callback.
-        --------------------------------------------------
-on_mouse_drag(
-    callback - function
-)
-
-  - Set or clear the mouse drag callback.
-        --------------------------------------------------
-on_mouse_enter(
-    callback - function
-)
-
-  - Set or clear the mouse enter/leave callback.
-        --------------------------------------------------
-on_mouse_motion(
-    callback - function
-)
-
-  - Set or clear the mouse motion callback.
-        --------------------------------------------------
-on_scroll(
-    callback - function
-)
-
-  - Set or clear the scroll callback.
-        --------------------------------------------------
-output_count()
-
-  - Get the number of output slices.
-        --------------------------------------------------
-output_shader(
-    index - int
-)
-
-  - Get the direct-render output source for an output slice.
-        --------------------------------------------------
-parent() -> nanogui.widget
-
-  - Get parent widget.
-        --------------------------------------------------
-position(
-    value - vec2i Position
-)
-
-  - Get or set widget position.
-        --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
-pushbutton(
-    title - string
-) -> nanogui.button
-
-  - Create a child button.
-        --------------------------------------------------
-refresh_layout()
-
-  - Mark this widget for layout refresh.
-        --------------------------------------------------
-refresh_size()
-
-  - Mark this widget for size refresh.
-        --------------------------------------------------
-remove_input(
-    index - int
-)
-
-  - Remove a shader input.
-        --------------------------------------------------
-remove_output(
-    index - int
-)
-
-  - Remove an output slice.
-        --------------------------------------------------
-save()
-
-  - Save projection mapper state to JSON.
-        --------------------------------------------------
-screen() -> nanogui.screen
-
-  - Get parent widget.
-        --------------------------------------------------
-scroll(
-    p - vec2f Point, rel - vec2f Scroll delta
-)
-
-  - Call scroll handler.
-        --------------------------------------------------
-scroll_default(
-    p - vec2f Point, rel - vec2f Scroll delta
-)
-
-  - Call default scroll handler.
-        --------------------------------------------------
-scrollarea(
-    scale - float
-) -> nanogui.scrollarea
-
-  - Create a child scroll area widget.
-        --------------------------------------------------
-select_input(
-    index - int
-)
-
-  - Get or select the input being previewed.
-        --------------------------------------------------
-select_output(
-    index - int
-)
-
-  - Get or select the output slice being edited.
-        --------------------------------------------------
-set_input_point(
-    input_index - int,
-    point_index - int,
-    point - vec2
-)
-
-  - Set a transformed input corner.
-        --------------------------------------------------
-set_output_input(
-    output_index - int,
-    input_index - int
-)
-
-  - Route an input shader to an output slice.
-        --------------------------------------------------
-shader(
-    source - string,
-    render_size - vec2
-) -> nanogui.shader
-
-  - Create a child GLSL shader widget.
-        --------------------------------------------------
-shader_view() -> nanogui.shader_view
-
-  - Create a child GLSL shader view widget.
-        --------------------------------------------------
-size(
-    value - vec2i Size
-)
-
-  - Get or set the widget size.
-        --------------------------------------------------
-slider(
-    caption - string
-) -> nanogui.slider
-
-  - Create a child slider widget.
-        --------------------------------------------------
-spout_receiver(
-    name - string
-) -> nanogui.spout_receiver
-
-  - Create a child Spout receiver widget.
-        --------------------------------------------------
-tabwidget(
-    first_tab_name - string
-) -> nanogui.tabwidget
-
-  - Create a child tab widget.
-        --------------------------------------------------
-textarea(
-    text - string
-) -> nanogui.textarea
-
-  - Create a child textarea widget.
-        --------------------------------------------------
-textbox(
-    value - string
-) -> nanogui.textbox
-
-  - Create a child textbox.
-        --------------------------------------------------
-theme(
-    value - nanogui.theme
-) -> nanogui.theme
-
-  - Get or set theme.
-        --------------------------------------------------
-timeline(
-    caption - string
-) -> nanogui.timeline
-
-  - Create a child timeline widget.
-        --------------------------------------------------
-timeline_item(
-    beat - float,
-    length - float,
-    caption - string
-) -> nanogui.timeline_item
-
-  - Create a child timeline item.
-        --------------------------------------------------
-tooltip(
-    value - string
-)
-
-  - Get or set tooltip.
-        --------------------------------------------------
-visible(
-    value - bool
-)
-
-  - Get or set visibility.
-        --------------------------------------------------
-visible_recursive()
-
-  - Check visibility including parents.
-        --------------------------------------------------
-vscroll(
-    scroll - float
-) -> nanogui.vscroll
-
-  - Create a child vertical scroll panel.
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -26201,10 +25563,6 @@ pre_render_callback(
 
   - Get or set the callback fired before the UI is rendered each frame.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -26353,6 +25711,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -26927,10 +26289,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -27062,6 +26420,10 @@ vscroll(
 
   - Create a child vertical scroll panel.
         --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+        --------------------------------------------------
 widget() -> nanogui.widget
 
   - Create a child shz_widget.
@@ -27167,6 +26529,12 @@ anchor_top(
 )
 
   - Get or set top anchor.
+        --------------------------------------------------
+antialias_samples(
+    samples - int
+)
+
+  - Get or set the MSAA sample count used when rendering projection-mapped meshes (0 or 1 disables).
         --------------------------------------------------
 before_render(
     callback - function|none
@@ -27752,10 +27120,6 @@ projection_load(
 
   - Load shader state from a JSON object.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 projection_point(
     x - int,
     y - int,
@@ -27995,6 +27359,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -28547,10 +27915,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -28674,6 +28038,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -29238,10 +28606,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -29384,6 +28748,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -29960,10 +29328,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -30130,6 +29494,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -30726,10 +30094,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -30905,6 +30269,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -31497,10 +30865,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -31655,6 +31019,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -32243,10 +31611,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -32381,6 +31745,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -33091,10 +32459,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -33243,6 +32607,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -33825,10 +33193,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -33959,6 +33323,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -34499,10 +33867,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -34639,6 +34003,828 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.warp_mapper
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+add_source(
+    name - string,
+    source - shader|warp_mapper|None (optional)
+)
+
+  - Add an input source slot. The shader is optional, so a slot can be created empty and bound later with set_source(). Returns its source index.
+        --------------------------------------------------
+add_surface(
+    name - string,
+    source - int Input source index (default 0)
+) -> nanogui.mapping_surface
+
+  - Create a mapping surface and return it.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Set visibility of child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+clear_sources()
+
+  - Remove all source slots. Surfaces keep their geometry and become unbound.
+        --------------------------------------------------
+clear_surfaces()
+
+  - Remove all mapping surfaces.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+color_selector() -> nanogui.color_selector
+
+  - Create a child color selector widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrolio
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+edit_mode(
+    mode - string source|destination
+)
+
+  - Get or set the editing mode: "source" edits which region of the input texture is used, "destination" edits where it is projected.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_source(
+    name - string
+)
+
+  - Find a source slot index by name. Returns -1 when the name is not used.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+gridview() -> nanogui.gridview
+
+  - Create a child grid view widget.
+        --------------------------------------------------
+handle_radius(
+    value - float
+)
+
+  - Get or set the vertex handle radius in pixels.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+keep_aspect_ratio(
+    value - bool
+)
+
+  - Get or set whether the editor letterboxes the surface to the output aspect.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+keyboard_step(
+    value - float
+)
+
+  - Get or set how far arrow keys move a selected vertex (10x with shift).
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+load(
+    data - json Serialized mapper
+)
+
+  - Load mapping surfaces and output settings from JSON.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+output_size(
+    size - vec2i Size in pixels
+)
+
+  - Get or set the output texture resolution.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+remove_source(
+    index - int Source index
+)
+
+  - Remove an input shader source.
+        --------------------------------------------------
+remove_surface(
+    index - int Surface index
+)
+
+  - Remove a mapping surface.
+        --------------------------------------------------
+render()
+
+  - Force the warp pass to run immediately.
+        --------------------------------------------------
+save()
+
+  - Serialize all mapping surfaces and output settings to JSON.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+select_surface(
+    index - int Surface index
+)
+
+  - Get or set the selected mapping surface index.
+        --------------------------------------------------
+set_source(
+    index - int Source index,
+    source - shader|warp_mapper|None
+)
+
+  - Bind a shader to an existing source slot, or unbind it by passing None. Empty slots stay reserved.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
+show_handles(
+    value - bool
+)
+
+  - Get or set whether vertex handles are drawn.
+        --------------------------------------------------
+show_triangulation(
+    value - bool
+)
+
+  - Get or set whether generated triangle edges are drawn in the editor.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+source(
+    index - int Source index
+)
+
+  - Get a registered input source object.
+        --------------------------------------------------
+source_bound(
+    index - int Source index
+)
+
+  - Check if a source slot already has a shader bound.
+        --------------------------------------------------
+source_count()
+
+  - Get the number of source slots, including slots without a shader.
+        --------------------------------------------------
+source_name(
+    index - int Source index,
+    value - string
+)
+
+  - Get or set the name of an input source.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+surface(
+    index - int Surface index
+)
+
+  - Get a mapping surface object.
+        --------------------------------------------------
+surface_count()
+
+  - Get the number of mapping surfaces.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+texture()
+
+  - Get the composited output texture.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+unbound_source_count()
+
+  - Get how many source slots have no shader bound yet.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -35179,10 +35365,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -35307,6 +35489,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -35853,10 +36039,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -35981,6 +36163,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -36527,10 +36713,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -36659,6 +36841,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -37273,10 +37459,6 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
-projection_mapper() -> nanogui.projection_mapper
-
-  - Create a projection mapping editor with shader inputs and output slices.
-        --------------------------------------------------
 pushbutton(
     title - string
 ) -> nanogui.button
@@ -37437,6 +37619,10 @@ vscroll(
 ) -> nanogui.vscroll
 
   - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
         --------------------------------------------------
 widget() -> nanogui.widget
 
