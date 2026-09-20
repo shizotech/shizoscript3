@@ -15786,6 +15786,14 @@ remove_mask_vertex(
 
   - Delete a mask point. Contours that drop below 3 points are removed with everything nested inside them.
         --------------------------------------------------
+render_triangle_count()
+
+  - Get the number of triangles in the uploaded render mesh, including subdivision samples. Only valid after the mesh was uploaded.
+        --------------------------------------------------
+render_vertex_count()
+
+  - Get the number of vertices in the uploaded render mesh, including subdivision samples. Only valid after the mesh was uploaded.
+        --------------------------------------------------
 selected_mask_vertex(
     index - int Mask point index
 )
@@ -15821,6 +15829,12 @@ source_vertex(
 )
 
   - Get the frozen input UV an output vertex samples. Output vertices never move their source.
+        --------------------------------------------------
+subdivisions(
+    value - int Splits per output triangle (0..32)
+)
+
+  - Get or set the output mesh subdivision. Each output triangle is split into that many steps and the sampled UVs are interpolated smoothly over the whole contour, which makes curved warps follow the mask instead of the triangulation. 0 and 1 render the raw triangles only.
         --------------------------------------------------
 transfer(
     reset_output - bool Discard the previous output first (default false)
@@ -34931,6 +34945,12 @@ spout_receiver(
 ) -> nanogui.spout_receiver
 
   - Create a child Spout receiver widget.
+        --------------------------------------------------
+subdivisions(
+    value - int Splits per output triangle (0..32)
+)
+
+  - Get or set the output mesh subdivision used for the smooth sampling between the output control points. Only the control points are ever moved by the editor. 0 and 1 render the raw triangles only.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
