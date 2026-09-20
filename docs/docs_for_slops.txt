@@ -3900,7 +3900,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -4684,7 +4684,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -5462,7 +5462,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6238,7 +6238,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6934,7 +6934,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -7674,7 +7674,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -8490,7 +8490,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -9668,7 +9668,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -10418,7 +10418,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11212,7 +11212,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11988,7 +11988,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -12698,7 +12698,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -13378,7 +13378,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -14068,7 +14068,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -14816,7 +14816,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -15508,7 +15508,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -15638,116 +15638,231 @@ Object: nanogui.mapping_surface
 ==================================================
 
         --------------------------------------------------
-add_vertex(
-    source_uv - vec2 Source UV (0..1),
-    destination - vec2 Output position (0..1)
+active_mask_contour(
+    contour - int Contour index
 )
 
-  - Append a polygon vertex. Returns the new vertex index.
+  - Get or set the contour new mask points are appended to.
         --------------------------------------------------
-clear()
-
-  - Remove all vertices from the polygon.
-        --------------------------------------------------
-destination(
-    index - int Vertex index,
-    position - vec2 Output position (0..1)
+add_mask_vertex(
+    uv - vec2 Input UV (0..1)
 )
 
-  - Get or set the projected position of one vertex.
+  - Append a point to the active mask contour. Returns the new point index.
         --------------------------------------------------
-enabled(
-    value - bool
+clear_mask()
+
+  - Delete the whole input mask. The committed output transform is kept.
+        --------------------------------------------------
+clear_output()
+
+  - Delete the committed output transform. The input mask is kept.
+        --------------------------------------------------
+deserialize(
+    preset - object or string
 )
 
-  - Get or set whether this surface is rendered.
+  - Load a mask model from a JSON object or JSON text. Triangles are rebuilt and selections are cleared.
         --------------------------------------------------
-insert_vertex(
-    edge - int Edge index (edge N joins vertex N and N+1),
+destination_vertex(
+    index - int Vertex index
+)
+
+  - Get the output position of a vertex (0..1 in output space).
+        --------------------------------------------------
+insert_mask_vertex(
+    index - int Mask point index,
     t - float Interpolation 0..1 (default 0.5)
 )
 
-  - Insert a vertex on an existing edge, interpolated between its endpoints. Returns the new vertex index.
+  - Insert a point on the edge that starts at the given point. Returns the new point index.
         --------------------------------------------------
-load(
-    data - json Serialized surface
+mask_centroid()
+
+  - Get the center of the input mask.
+        --------------------------------------------------
+mask_contains(
+    uv - vec2 Input UV
 )
 
-  - Load a mapping surface from JSON.
+  - Test whether an input UV is inside the masked area, holes included.
         --------------------------------------------------
-move_destination(
-    delta - vec2 Output offset
+mask_contour_count()
+
+  - Get the number of mask contours. Contour 0 is the outer border, every later contour is a hole.
+        --------------------------------------------------
+mask_contour_of(
+    index - int Mask point index
 )
 
-  - Translate every destination position, moving the projected polygon without changing its shape.
+  - Get which contour a mask point belongs to.
         --------------------------------------------------
-move_source(
-    delta - vec2 UV offset
+mask_contour_size(
+    contour - int Contour index
 )
 
-  - Translate every source UV, moving the selected mask without changing its shape.
+  - Get how many points a mask contour has.
+        --------------------------------------------------
+mask_invert(
+    value - bool
+)
+
+  - Get or set mask inversion. Inverted masks keep everything outside the contours instead of everything inside them.
+        --------------------------------------------------
+mask_locked(
+    value - bool
+)
+
+  - Get or set whether the input mask is frozen. A locked mask can only be changed through the output transform.
+        --------------------------------------------------
+mask_move(
+    delta - vec2 Offset in input UV
+)
+
+  - Move the whole input mask.
+        --------------------------------------------------
+mask_rect(
+    min_uv - vec2 Top left input UV,
+    max_uv - vec2 Bottom right input UV
+)
+
+  - Replace the input mask with a rectangle.
+        --------------------------------------------------
+mask_start(
+    contour - int Contour index
+)
+
+  - Get the first point index of a mask contour.
+        --------------------------------------------------
+mask_vertex(
+    index - int Mask point index
+)
+
+  - Get the input UV of a mask point (0..1 in input texture space).
+        --------------------------------------------------
+mask_vertex_count()
+
+  - Get the number of input mask points. Stage 1.
         --------------------------------------------------
 name(
     value - string
 )
 
-  - Get or set the surface name.
+  - Get or set the mask name.
         --------------------------------------------------
-rect(
-    source_min - vec2 Top left source UV,
-    source_max - vec2 Bottom right source UV,
-    dest_min - vec2 Top left output position,
-    dest_max - vec2 Bottom right output position
+new_mask_contour()
+
+  - Start a new mask contour. A new contour is only allowed once every earlier contour is closed.
+        --------------------------------------------------
+output_centroid()
+
+  - Get the center of the output transform.
+        --------------------------------------------------
+output_contains(
+    position - vec2 Output position
 )
 
-  - Replace the polygon with a rectangle mapped from a source region to an output region.
+  - Test whether an output position is inside the warped result.
         --------------------------------------------------
-remove_vertex(
+output_move(
+    delta - vec2 Offset in output space
+)
+
+  - Move the whole output transform.
+        --------------------------------------------------
+pull()
+
+  - Copy the current output shape back into the input mask and unlock the mask again.
+        --------------------------------------------------
+remove_mask_contour(
+    contour - int Contour index
+)
+
+  - Delete a mask contour and every point after it.
+        --------------------------------------------------
+remove_mask_vertex(
+    index - int Mask point index
+)
+
+  - Delete a mask point. Contours that drop below 3 points are removed with everything nested inside them.
+        --------------------------------------------------
+selected_mask_vertex(
+    index - int Mask point index
+)
+
+  - Get or set the selected mask point. Use -1 to clear the selection.
+        --------------------------------------------------
+selected_vertex(
     index - int Vertex index
 )
 
-  - Delete a polygon vertex.
+  - Get or set the selected output vertex. Use -1 to clear the selection.
         --------------------------------------------------
-save()
+serialize()
 
-  - Serialize this mapping surface to JSON.
+  - Serialize the mask model into a JSON object. Use json.string() or json.compact_string() to store it as text.
         --------------------------------------------------
-select_vertex(
-    index - int Vertex index
-)
-
-  - Get or set the selected vertex index (-1 for none).
-        --------------------------------------------------
-source(
-    index - int
-)
-
-  - Get or set which mapper input this surface samples from.
-        --------------------------------------------------
-source_uv(
+set_destination_vertex(
     index - int Vertex index,
-    uv - vec2 Source UV (0..1)
+    position - vec2 Output position
 )
 
-  - Get or set the source UV of one vertex.
+  - Move one output vertex. Positions may go past 0..1 to overscan the warp.
+        --------------------------------------------------
+set_mask_vertex(
+    index - int Mask point index,
+    uv - vec2 Input UV (0..1)
+)
+
+  - Move one mask point in input texture space.
+        --------------------------------------------------
+source_vertex(
+    index - int Vertex index
+)
+
+  - Get the frozen input UV an output vertex samples. Output vertices never move their source.
+        --------------------------------------------------
+transfer(
+    reset_output - bool Discard the previous output first (default false)
+)
+
+  - Commit the input mask to the output transform. Each output vertex keeps the input UV it samples, so the warp can then be edited without touching the mask.
         --------------------------------------------------
 triangle(
     index - int Triangle index
 )
 
-  - Get the vertex indices of one generated triangle.
+  - Get a triangle as a list of three output vertex indices.
         --------------------------------------------------
 triangle_count()
 
   - Get the number of generated triangles.
         --------------------------------------------------
-triangulate()
+triangle_kept(
+    index - int Triangle index
+)
 
-  - Rebuild triangle indices from the polygon topology.
+  - Check whether a triangle is drawn into the output (true) or cut out of it (false).
+        --------------------------------------------------
+vertex_contour_count()
+
+  - Get the number of output contours.
+        --------------------------------------------------
+vertex_contour_size(
+    contour - int Contour index
+)
+
+  - Get how many vertices an output contour has.
         --------------------------------------------------
 vertex_count()
 
-  - Get the number of polygon vertices.
+  - Get the number of committed output vertices. Stage 2.
+        --------------------------------------------------
+vertex_start(
+    contour - int Contour index
+)
+
+  - Get the first vertex index of an output contour.
         --------------------------------------------------
 
 
@@ -16465,7 +16580,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -17229,7 +17344,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -18023,7 +18138,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -18817,7 +18932,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -19599,7 +19714,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -20375,7 +20490,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -21139,7 +21254,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -21927,7 +22042,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -22691,7 +22806,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -23463,7 +23578,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -24287,7 +24402,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -24955,7 +25070,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -25714,7 +25829,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -26422,7 +26537,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -27362,7 +27477,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -27621,6 +27736,12 @@ dragdrop_enabled(
 )
 
   - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+drawing_enabled(
+    enabled - bool
+)
+
+  - Get or set whether drawing is enabled for this view.
         --------------------------------------------------
 enabled(
     value - bool
@@ -28041,7 +28162,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -28751,7 +28872,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -29497,7 +29618,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -30272,7 +30393,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -31022,7 +31143,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -31748,7 +31869,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -32610,7 +32731,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -33326,7 +33447,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -34006,7 +34127,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -34061,19 +34182,15 @@ absolute_position()
 
   - Get the absolute widget position.
         --------------------------------------------------
-add_source(
-    name - string,
-    source - shader|warp_mapper|None (optional)
+add_mask_hole()
+
+  - Start a new inner contour (a hole) in the input mask.
+        --------------------------------------------------
+add_mask_vertex(
+    uv - vec2 Input UV (0..1)
 )
 
-  - Add an input source slot. The shader is optional, so a slot can be created empty and bound later with set_source(). Returns its source index.
-        --------------------------------------------------
-add_surface(
-    name - string,
-    source - int Input source index (default 0)
-) -> nanogui.mapping_surface
-
-  - Create a mapping surface and return it.
+  - Append a point to the active mask contour. Returns the new point index.
         --------------------------------------------------
 anchor(
     value - float,
@@ -34109,6 +34226,12 @@ anchor_top(
 )
 
   - Get or set top anchor.
+        --------------------------------------------------
+auto_output_size(
+    value - bool true follows the input source, false keeps the fixed output_size
+)
+
+  - Get or set auto output sizing. The output texture follows the input source resolution, and falls back to requested_output_size when no input is bound.
         --------------------------------------------------
 begin_dragdrop(
     payload - std.json with at least type field
@@ -34174,13 +34297,13 @@ clear_children()
 
   - Remove all child widgets.
         --------------------------------------------------
-clear_sources()
+clear_mask()
 
-  - Remove all source slots. Surfaces keep their geometry and become unbound.
+  - Delete the whole input mask. The committed output transform is kept.
         --------------------------------------------------
-clear_surfaces()
+clear_output()
 
-  - Remove all mapping surfaces.
+  - Delete the committed output transform. The input mask is kept.
         --------------------------------------------------
 codebox(
     text - string
@@ -34203,6 +34326,10 @@ combobox(
 ) -> nanogui.combobox
 
   - Create a child combobox.
+        --------------------------------------------------
+compile_error()
+
+  - Get the last warp shader compile error.
         --------------------------------------------------
 contains(
     p - vec2i Point
@@ -34276,17 +34403,23 @@ cursor(
 
   - Get or set cursor.
         --------------------------------------------------
+deserialize(
+    preset - object or string
+)
+
+  - Load a state produced by serialize(). JSON text is parsed as well. Mask points are normalized input UVs and are never reset by loading, and a currently bound input source stays bound.
+        --------------------------------------------------
+destination_vertex(
+    index - int Output point index
+)
+
+  - Get the output position of a committed point (0..1, may exceed 1 for overscan).
+        --------------------------------------------------
 dragdrop_enabled(
     value - bool
 )
 
   - Get or set automatic dragdrop start state.
-        --------------------------------------------------
-edit_mode(
-    mode - string source|destination
-)
-
-  - Get or set the editing mode: "source" edits which region of the input texture is used, "destination" edits where it is projected.
         --------------------------------------------------
 enabled(
     value - bool
@@ -34299,12 +34432,6 @@ filebrowser(
 ) -> nanogui.filebrowser
 
   - Create a child file browser.
-        --------------------------------------------------
-find_source(
-    name - string
-)
-
-  - Find a source slot index by name. Returns -1 when the name is not used.
         --------------------------------------------------
 find_widget(
     p - vec2i Point
@@ -34360,6 +34487,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+force_render()
+
+  - Force the warp output to be re-rendered on the next frame.
+        --------------------------------------------------
 graph(
     caption - string
 ) -> nanogui.graph
@@ -34374,7 +34505,7 @@ handle_radius(
     value - float
 )
 
-  - Get or set the vertex handle radius in pixels.
+  - Get or set the editor handle radius. Values below 1.0 are clamped.
         --------------------------------------------------
 has_font_size()
 
@@ -34398,6 +34529,26 @@ image(
 
   - Create a child image widget.
         --------------------------------------------------
+input(
+    source - shader / shader view / image / spout receiver
+)
+
+  - Get or set the single input source. Pass None to unbind it.
+        --------------------------------------------------
+input_bound()
+
+  - Check whether an input source is bound.
+        --------------------------------------------------
+input_name(
+    value - string
+)
+
+  - Get or set the name used to find the input when the asset is loaded.
+        --------------------------------------------------
+input_texture_size()
+
+  - Get the bound input source texture size, or the requested output size when no input is bound.
+        --------------------------------------------------
 intbox(
     value - string
 ) -> nanogui.intbox
@@ -34408,7 +34559,7 @@ keep_aspect_ratio(
     value - bool
 )
 
-  - Get or set whether the editor letterboxes the surface to the output aspect.
+  - Get or set whether the preview keeps the input aspect ratio.
         --------------------------------------------------
 keyboard(
     key - int, scancode - int, action - int, modifiers - int
@@ -34438,7 +34589,7 @@ keyboard_step(
     value - float
 )
 
-  - Get or set how far arrow keys move a selected vertex (10x with shift).
+  - Get or set the arrow key nudge distance in normalized coordinates. Zero disables keyboard nudging.
         --------------------------------------------------
 label(
     text - string
@@ -34452,11 +34603,44 @@ layout(
 
   - Get current layout or set layout by name.
         --------------------------------------------------
-load(
-    data - json Serialized mapper
+lock_mask()
+
+  - Freeze the input mask without changing the output transform.
+        --------------------------------------------------
+mapping()
+
+  - Get the mask model object (stage 1 mask + stage 2 output transform).
+        --------------------------------------------------
+mask_contour_count()
+
+  - Number of input mask contours (border first, then holes).
+        --------------------------------------------------
+mask_invert(
+    value - bool
 )
 
-  - Load mapping surfaces and output settings from JSON.
+  - Get or set mask inversion (keep the outside instead of the inside).
+        --------------------------------------------------
+mask_locked()
+
+  - Check whether the input mask is frozen.
+        --------------------------------------------------
+mask_rect(
+    min_uv - vec2 Top left input UV,
+    max_uv - vec2 Bottom right input UV
+)
+
+  - Replace the input mask with a rectangle.
+        --------------------------------------------------
+mask_vertex(
+    index - int Mask point index
+)
+
+  - Get the input UV of a mask point (0..1 in input texture space).
+        --------------------------------------------------
+mask_vertex_count()
+
+  - Number of input mask points.
         --------------------------------------------------
 matrixnode(
     name - string,
@@ -34512,6 +34696,18 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+move_destination(
+    delta - vec2 Offset in output UV
+)
+
+  - Move the whole output transform.
+        --------------------------------------------------
+move_mask(
+    delta - vec2 Offset in input UV
+)
+
+  - Move the whole input mask.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -34596,10 +34792,10 @@ on_scroll(
   - Set or clear the scroll callback.
         --------------------------------------------------
 output_size(
-    size - vec2i Size in pixels
+    size - vec2 Width and height in pixels
 )
 
-  - Get or set the output texture resolution.
+  - Get the effective output texture size, or set a fixed size. Setting a size disables auto output sizing.
         --------------------------------------------------
 parent() -> nanogui.widget
 
@@ -34610,6 +34806,10 @@ position(
 )
 
   - Get or set widget position.
+        --------------------------------------------------
+pull_mask()
+
+  - Copy the current output shape back into the input mask and unlock stage 1 again.
         --------------------------------------------------
 pushbutton(
     title - string
@@ -34625,25 +34825,25 @@ refresh_size()
 
   - Mark this widget for size refresh.
         --------------------------------------------------
-remove_source(
-    index - int Source index
+remove_mask_contour(
+    contour - int Contour index
 )
 
-  - Remove an input shader source.
+  - Delete a mask contour and every point after it.
         --------------------------------------------------
-remove_surface(
-    index - int Surface index
+remove_mask_vertex(
+    index - int Mask point index
 )
 
-  - Remove a mapping surface.
+  - Delete a mask point. Contours that drop below 3 points are removed with everything nested inside them.
         --------------------------------------------------
-render()
+rendering_enabled()
 
-  - Force the warp pass to run immediately.
+  - Get or set the rendering enabled flag.
         --------------------------------------------------
-save()
+requested_output_size()
 
-  - Serialize all mapping surfaces and output settings to JSON.
+  - Get the fixed output size stored in the widget, which is also the auto sizing fallback.
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -34667,18 +34867,23 @@ scrollarea(
 
   - Create a child scroll area widget.
         --------------------------------------------------
-select_surface(
-    index - int Surface index
-)
+serialize()
 
-  - Get or set the selected mapping surface index.
+  - Save the complete widget state (mask model plus editor settings) into a JSON object. Use json.string() or json.compact_string() to store it as text.
         --------------------------------------------------
-set_source(
-    index - int Source index,
-    source - shader|warp_mapper|None
+set_destination(
+    index - int Output point index,
+    uv - vec2 Output UV
 )
 
-  - Bind a shader to an existing source slot, or unbind it by passing None. Empty slots stay reserved.
+  - Move one committed output point.
+        --------------------------------------------------
+set_mask_vertex(
+    index - int Mask point index,
+    uv - vec2 Input UV (0..1)
+)
+
+  - Move one mask point in input texture space.
         --------------------------------------------------
 shader(
     source - string,
@@ -34695,13 +34900,13 @@ show_handles(
     value - bool
 )
 
-  - Get or set whether vertex handles are drawn.
+  - Get or set whether editor handles are drawn.
         --------------------------------------------------
 show_triangulation(
     value - bool
 )
 
-  - Get or set whether generated triangle edges are drawn in the editor.
+  - Get or set the triangulation debug overlay.
         --------------------------------------------------
 size(
     value - vec2i Size
@@ -34715,44 +34920,17 @@ slider(
 
   - Create a child slider widget.
         --------------------------------------------------
-source(
-    index - int Source index
+source_vertex(
+    index - int Output point index
 )
 
-  - Get a registered input source object.
-        --------------------------------------------------
-source_bound(
-    index - int Source index
-)
-
-  - Check if a source slot already has a shader bound.
-        --------------------------------------------------
-source_count()
-
-  - Get the number of source slots, including slots without a shader.
-        --------------------------------------------------
-source_name(
-    index - int Source index,
-    value - string
-)
-
-  - Get or set the name of an input source.
+  - Get the frozen input UV a committed point samples from.
         --------------------------------------------------
 spout_receiver(
     name - string
 ) -> nanogui.spout_receiver
 
   - Create a child Spout receiver widget.
-        --------------------------------------------------
-surface(
-    index - int Surface index
-)
-
-  - Get a mapping surface object.
-        --------------------------------------------------
-surface_count()
-
-  - Get the number of mapping surfaces.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -34771,10 +34949,6 @@ textbox(
 ) -> nanogui.textbox
 
   - Create a child textbox.
-        --------------------------------------------------
-texture()
-
-  - Get the composited output texture.
         --------------------------------------------------
 theme(
     value - nanogui.theme
@@ -34796,15 +34970,35 @@ timeline_item(
 
   - Create a child timeline item.
         --------------------------------------------------
+toggle_view()
+
+  - Switch between the input mask view and the output transform view.
+        --------------------------------------------------
 tooltip(
     value - string
 )
 
   - Get or set tooltip.
         --------------------------------------------------
-unbound_source_count()
+transfer_mask(
+    reset_output - bool Discard the previous output first (default false)
+)
 
-  - Get how many source slots have no shader bound yet.
+  - Freeze the input mask and commit it to the output transform.
+        --------------------------------------------------
+unlock_mask()
+
+  - Unlock the input mask so stage 1 can be edited again.
+        --------------------------------------------------
+vertex_count()
+
+  - Number of committed output transform points.
+        --------------------------------------------------
+view(
+    name - string
+)
+
+  - Get or switch the editor stage. Valid names are 'input' (mask creation) and 'output' (mask transform).
         --------------------------------------------------
 visible(
     value - bool
@@ -34824,7 +35018,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -35492,7 +35686,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -36166,7 +36360,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -36844,7 +37038,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -37622,7 +37816,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create an arbitrary polygon projection mapping / warp editor with shader inputs.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
         --------------------------------------------------
 widget() -> nanogui.widget
 
