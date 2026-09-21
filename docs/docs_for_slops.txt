@@ -34284,6 +34284,12 @@ anchor_top(
 
   - Get or set top anchor.
         --------------------------------------------------
+antialias_samples(
+    samples - int Requested samples (0..16), clamped to the driver maximum
+)
+
+  - Get or set the multisample count used while the warp pass renders the output texture. The mask border is rasterized into that texture, so this is what removes the stair stepping there; nanovg shape antialiasing only affects the editor overlay.
+        --------------------------------------------------
 auto_output_size(
     value - bool true follows the input source, false keeps the fixed output_size
 )
@@ -35109,14 +35115,18 @@ tooltip(
   - Get or set tooltip.
         --------------------------------------------------
 transfer_mask(
-    reset_output - bool Discard the previous output first (default false)
+    reset_output - bool Rebuild the output vertices on the current mask instead (default false)
 )
 
-  - Freeze the input mask and commit it to the output transform.
+  - Freeze the input mask and commit it to the output transform. Repeated transfers keep the output vertices where they are, only the committed mask shape updates.
         --------------------------------------------------
 unlock_mask()
 
   - Unlock the input mask so stage 1 can be edited again.
+        --------------------------------------------------
+used_antialias_samples()
+
+  - Get the multisample count currently active for the output render, 0 when rendering straight into the texture.
         --------------------------------------------------
 vertex_count()
 
