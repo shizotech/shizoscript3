@@ -15874,10 +15874,10 @@ source_vertex(
   - Get the frozen input UV an output vertex samples. Output vertices never move their source.
         --------------------------------------------------
 subdivisions(
-    value - int Splits per output triangle (0..32)
+    value - int Splits per source triangle (0..32)
 )
 
-  - Get or set the output mesh subdivision. Each output triangle is split into that many steps and the sampled UVs are interpolated smoothly over the whole contour, which makes curved warps follow the mask instead of the triangulation. 0 and 1 render the raw triangles only.
+  - Get or set the mesh subdivision. Each source triangle is split into that many steps and the output position of every sample follows the selected warp mode, so the surface bends between the control points instead of creasing along the triangulation. 0 and 1 render the raw triangles only.
         --------------------------------------------------
 transfer(
     reset_output - bool Discard the previous output first (default false)
@@ -15920,6 +15920,20 @@ vertex_start(
 )
 
   - Get the first vertex index of an output contour.
+        --------------------------------------------------
+warp_fit_error()
+
+  - Get the residual of the homography fitted in projective mode, as the root mean square output offset over all fitted contours, in normalized output units. 0 means the control points are an exact perspective image of the input.
+        --------------------------------------------------
+warp_fit_valid()
+
+  - Get whether the homography of the last upload fitted every contour. A contour with fewer than four points is always blended smoothly instead.
+        --------------------------------------------------
+warp_mode(
+    mode - string 'affine', 'smooth' or 'projective'
+)
+
+  - Get or set how the mesh between the control points is sampled. 'affine' renders the raw triangles, 'smooth' blends the whole contour so the surface bends freely, 'projective' fits a homography to the control point pairs so a flat surface warps like a real perspective image. Only the sampled mesh changes, control points are never moved.
         --------------------------------------------------
 
 
@@ -34478,6 +34492,10 @@ cursor(
 
   - Get or set cursor.
         --------------------------------------------------
+cycle_warp_mode()
+
+  - Switch to the next warp mode, the same as the Warp button and the W key.
+        --------------------------------------------------
 deserialize(
     preset - object or string
 )
@@ -34685,11 +34703,11 @@ keyboard_default(
 
   - Call default keyboard handler.
         --------------------------------------------------
-keyboard_step(
+keyboard_step_pixels(
     value - float
 )
 
-  - Get or set the arrow key nudge distance in normalized coordinates. Zero disables keyboard nudging.
+  - Get or set the arrow key nudge distance in texture pixels of the current view, so 1.0 moves one texel. Shift multiplies it by 10, ctrl by 0.1. Zero disables keyboard nudging.
         --------------------------------------------------
 label(
     text - string
@@ -35061,10 +35079,10 @@ spout_receiver(
   - Create a child Spout receiver widget.
         --------------------------------------------------
 subdivisions(
-    value - int Splits per output triangle (0..32)
+    value - int Splits per source triangle (0..32)
 )
 
-  - Get or set the output mesh subdivision used for the smooth sampling between the output control points. Only the control points are ever moved by the editor. 0 and 1 render the raw triangles only.
+  - Get or set the subdivision of the output mesh. The sampling grid is uniform over the input mask and every grid point gets its output position from the control points following the selected warp mode, which makes the warp bend instead of folding along a straight triangle seam. Only the control points are ever moved by the editor. 0 and 1 render the raw triangles only.
         --------------------------------------------------
 tabwidget(
     first_tab_name - string
@@ -35154,9 +35172,23 @@ vscroll(
 
   - Create a child vertical scroll panel.
         --------------------------------------------------
+warp_fit_error()
+
+  - Get the residual of the homography fitted in projective mode, as the root mean square output offset over all fitted contours, in normalized output units. 0 means the output control points are an exact perspective image of the input mask.
+        --------------------------------------------------
+warp_fit_valid()
+
+  - Get whether the homography of the last upload fitted every contour in projective mode.
+        --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
   - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+        --------------------------------------------------
+warp_mode(
+    mode - string 'affine', 'smooth' or 'projective'
+)
+
+  - Get or set how the output mesh between the control points is sampled. 'affine' renders the raw triangles, 'smooth' blends the whole contour so the surface bends freely, 'projective' fits a homography to the control point pairs so a flat surface warps like a real perspective image. Only the sampled mesh changes, the control points of both stages are never moved.
         --------------------------------------------------
 widget() -> nanogui.widget
 
