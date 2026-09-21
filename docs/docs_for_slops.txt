@@ -15650,6 +15650,18 @@ add_mask_vertex(
 
   - Append a point to the active mask contour. Returns the new point index.
         --------------------------------------------------
+center_mask(
+    target - vec2 Input UV the center should reach
+)
+
+  - Move the whole input mask so its center reaches the target input UV (default 0.5, 0.5). Nothing happens while the mask is locked.
+        --------------------------------------------------
+center_output(
+    target - vec2 Output UV the center should reach
+)
+
+  - Move the whole output transform so its center reaches the target output UV (default 0.5, 0.5).
+        --------------------------------------------------
 clear_mask()
 
   - Delete the whole input mask. The committed output transform is kept.
@@ -15670,12 +15682,23 @@ destination_vertex(
 
   - Get the output position of a vertex (0..1 in output space).
         --------------------------------------------------
+fit_output(
+    min_uv - vec2 Top left output UV,
+    max_uv - vec2 Bottom right output UV
+)
+
+  - Scale the whole output transform from its current bounding box into the given rectangle.
+        --------------------------------------------------
 insert_mask_vertex(
     index - int Mask point index,
     t - float Interpolation 0..1 (default 0.5)
 )
 
   - Insert a point on the edge that starts at the given point. Returns the new point index.
+        --------------------------------------------------
+mask_bounds()
+
+  - Get the input mask bounding box as [min, max] vec2 values in input UV.
         --------------------------------------------------
 mask_centroid()
 
@@ -15744,6 +15767,12 @@ mask_vertex_count()
 
   - Get the number of input mask points. Stage 1.
         --------------------------------------------------
+mirror_output(
+    horizontal - bool true flips left to right, false flips top to bottom (default true)
+)
+
+  - Flip the output transform about the center of the output space. Only destinations move, the frozen input UVs stay as they are.
+        --------------------------------------------------
 name(
     value - string
 )
@@ -15753,6 +15782,10 @@ name(
 new_mask_contour()
 
   - Start a new mask contour. A new contour is only allowed once every earlier contour is closed.
+        --------------------------------------------------
+output_bounds()
+
+  - Get the output transform bounding box as [min, max] vec2 values in output UV. Overscan is allowed, so values can be outside 0..1.
         --------------------------------------------------
 output_centroid()
 
@@ -15793,6 +15826,16 @@ render_triangle_count()
 render_vertex_count()
 
   - Get the number of vertices in the uploaded render mesh, including subdivision samples. Only valid after the mesh was uploaded.
+        --------------------------------------------------
+reset()
+
+  - Reset both stages to the full rectangle: the input mask covers the whole source, becomes editable again, and the output transform samples it 1:1.
+        --------------------------------------------------
+rotate_output(
+    quarter_turns - int Number of 90 degree steps
+)
+
+  - Turn the output transform around the center of the output space in quarter steps. Negative values turn the other way.
         --------------------------------------------------
 selected_mask_vertex(
     index - int Mask point index
@@ -34271,6 +34314,18 @@ capture(
 
   - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
         --------------------------------------------------
+center_mask(
+    target - vec2 Input UV the center should reach
+)
+
+  - Move the whole input mask so its center reaches the target input UV (default 0.5, 0.5). Nothing happens while the mask is locked.
+        --------------------------------------------------
+center_output(
+    target - vec2 Output UV the center should reach
+)
+
+  - Move the whole output transform so its center reaches the target output UV (default 0.5, 0.5).
+        --------------------------------------------------
 child_count()
 
   - Get number of child widgets.
@@ -34453,6 +34508,13 @@ find_widget(
 
   - Find widget at position.
         --------------------------------------------------
+fit_output(
+    min_uv - vec2 Top left output UV,
+    max_uv - vec2 Bottom right output UV
+)
+
+  - Scale the whole output transform from its current bounding box into the given rectangle.
+        --------------------------------------------------
 fixed_height(
     value - int
 )
@@ -34510,6 +34572,24 @@ graph(
 ) -> nanogui.graph
 
   - Create a child graph widget.
+        --------------------------------------------------
+grid(
+    enable - bool Show the grid
+)
+
+  - Get or set the grid overlay. Snapping is controlled by grid_snap().
+        --------------------------------------------------
+grid_divisions(
+    divisions - int Cells per axis (2..64)
+)
+
+  - Get or set how many grid cells span the width and the height of the editing area.
+        --------------------------------------------------
+grid_snap(
+    enable - bool Snap edits to the grid
+)
+
+  - Get or set grid snapping. Held Ctrl overrides snapping during an edit.
         --------------------------------------------------
 gridview() -> nanogui.gridview
 
@@ -34625,6 +34705,10 @@ mapping()
 
   - Get the mask model object (stage 1 mask + stage 2 output transform).
         --------------------------------------------------
+mask_bounds()
+
+  - Get the input mask bounding box as [min, max] vec2 values in input UV.
+        --------------------------------------------------
 mask_contour_count()
 
   - Number of input mask contours (border first, then holes).
@@ -34662,6 +34746,12 @@ matrixnode(
 ) -> nanogui.modmatrixnode
 
   - Create a child modmatrix node.
+        --------------------------------------------------
+mirror_output(
+    horizontal - bool true flips left to right, false flips top to bottom (default true)
+)
+
+  - Flip the output transform about the center of the output space. Only destinations move, the frozen input UVs stay as they are.
         --------------------------------------------------
 mouse_button(
     p - vec2f Point, button - int, down - bool, modifiers - int
@@ -34805,6 +34895,10 @@ on_scroll(
 
   - Set or clear the scroll callback.
         --------------------------------------------------
+output_bounds()
+
+  - Get the output transform bounding box as [min, max] vec2 values in output UV. Overscan is allowed, so values can be outside 0..1.
+        --------------------------------------------------
 output_size(
     size - vec2 Width and height in pixels
 )
@@ -34858,6 +34952,16 @@ rendering_enabled()
 requested_output_size()
 
   - Get the fixed output size stored in the widget, which is also the auto sizing fallback.
+        --------------------------------------------------
+reset()
+
+  - Reset both stages to the full rectangle, the same as the Reset button. Grid settings and subdivisions are kept.
+        --------------------------------------------------
+rotate_output(
+    quarter_turns - int Number of 90 degree steps
+)
+
+  - Turn the output transform around the center of the output space in quarter steps. Negative values turn the other way.
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -34933,6 +35037,10 @@ slider(
 ) -> nanogui.slider
 
   - Create a child slider widget.
+        --------------------------------------------------
+snap_points()
+
+  - Snap the selected point of the visible stage to the grid, or every point of that stage when none is selected. Returns how many points moved.
         --------------------------------------------------
 source_vertex(
     index - int Output point index
