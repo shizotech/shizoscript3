@@ -15650,6 +15650,12 @@ add_mask_vertex(
 
   - Append a point to the active mask contour. Returns the new point index.
         --------------------------------------------------
+auto_curves(
+    tension - float Handle strength, 0..1 (default 0.33)
+)
+
+  - Derive every curve handle from the two neighbours of its corner, which turns the whole output contour into one smooth spline through the control points. Overwrites all manual handle placement. Tension 0 straightens every edge again.
+        --------------------------------------------------
 center_mask(
     target - vec2 Input UV the center should reach
 )
@@ -15662,6 +15668,10 @@ center_output(
 
   - Move the whole output transform so its center reaches the target output UV (default 0.5, 0.5).
         --------------------------------------------------
+clear_curves()
+
+  - Straighten every output edge by zeroing all curve handles.
+        --------------------------------------------------
 clear_mask()
 
   - Delete the whole input mask. The committed output transform is kept.
@@ -15669,6 +15679,20 @@ clear_mask()
 clear_output()
 
   - Delete the committed output transform. The input mask is kept.
+        --------------------------------------------------
+curve_handle(
+    index - int Output vertex index,
+    outgoing - bool true reads the handle of the edge leaving this vertex, false the handle of the edge arriving from the previous one
+)
+
+  - Get the editable handle position of one output curve as a vec2 value in output UV. It is the inner control point of that edge's cubic Bezier, so a straight edge has its handle on the edge itself, at one third or two thirds of it.
+        --------------------------------------------------
+curve_offset(
+    index - int Output vertex index,
+    outgoing - bool true reads the edge leaving this vertex, false the edge arriving from the previous one
+)
+
+  - Get the curve offset of one output edge as a vec2 value. Offsets are relative to the flat one third position of the edge, so 0, 0 is a straight edge, and both ends of an edge have to agree for the mesh and its border to stay watertight.
         --------------------------------------------------
 deserialize(
     preset - object or string
@@ -15688,6 +15712,10 @@ fit_output(
 )
 
   - Scale the whole output transform from its current bounding box into the given rectangle.
+        --------------------------------------------------
+has_curves()
+
+  - Check whether any output edge is bent by a curve handle right now.
         --------------------------------------------------
 insert_mask_vertex(
     index - int Mask point index,
@@ -15852,6 +15880,23 @@ selected_vertex(
 serialize()
 
   - Serialize the mask model into a JSON object. Use json.string() or json.compact_string() to store it as text.
+        --------------------------------------------------
+set_curve_handle(
+    index - int Output vertex index,
+    outgoing - bool true moves the handle of the edge leaving this vertex, false the handle of the edge arriving from the previous one,
+    position - vec2 New handle position in output UV,
+    mirror - bool Also mirror the paired handle about the corner (default false)
+)
+
+  - Move the handle of one output curve, which bends that edge exactly like dragging the handle in the widget. Set mirror to also place the paired handle point symmetric about the corner, which keeps that corner smooth instead of creased.
+        --------------------------------------------------
+set_curve_offset(
+    index - int Output vertex index,
+    outgoing - bool true bends the edge leaving this vertex, false the edge arriving from the previous one,
+    offset - vec2 Bend relative to the flat handle position
+)
+
+  - Bend one output edge by setting its curve offset. The offset is measured from the flat one third position of that edge, is clamped to one output unit per axis, and only becomes visible on the rendered mesh once subdivision is enabled.
         --------------------------------------------------
 set_destination_vertex(
     index - int Vertex index,
@@ -34304,6 +34349,12 @@ antialias_samples(
 
   - Get or set the multisample count used while the warp pass renders the output texture. The mask border is rasterized into that texture, so this is what removes the stair stepping there; nanovg shape antialiasing only affects the editor overlay.
         --------------------------------------------------
+auto_curves(
+    tension - float Handle strength, 0..1 (default 0.33)
+)
+
+  - Derive every curve handle from the two neighbours of its corner, which turns the whole output contour into one smooth spline through the control points. Overwrites all manual handle placement. Tension 0 straightens every edge again.
+        --------------------------------------------------
 auto_output_size(
     value - bool true follows the input source, false keeps the fixed output_size
 )
@@ -34385,6 +34436,10 @@ clear_anchors()
 clear_children()
 
   - Remove all child widgets.
+        --------------------------------------------------
+clear_curves()
+
+  - Straighten every output edge by zeroing all curve handles.
         --------------------------------------------------
 clear_mask()
 
@@ -34491,6 +34546,20 @@ cursor(
 )
 
   - Get or set cursor.
+        --------------------------------------------------
+curve_handle(
+    index - int Output vertex index,
+    outgoing - bool true reads the handle of the edge leaving this vertex, false the handle of the edge arriving from the previous one
+)
+
+  - Get the editable handle position of one output curve as a vec2 value in output UV. It is the inner control point of that edge's cubic Bezier, so a straight edge has its handle on the edge itself, at one third or two thirds of it.
+        --------------------------------------------------
+curve_offset(
+    index - int Output vertex index,
+    outgoing - bool true reads the edge leaving this vertex, false the edge arriving from the previous one
+)
+
+  - Get the curve offset of one output edge as a vec2 value. Offsets are relative to the flat one third position of the edge, so 0, 0 is a straight edge, and both ends of an edge have to agree for the mesh and its border to stay watertight.
         --------------------------------------------------
 cycle_warp_mode()
 
@@ -34624,6 +34693,10 @@ handle_radius(
 )
 
   - Get or set the editor handle radius. Values below 1.0 are clamped.
+        --------------------------------------------------
+has_curves()
+
+  - Check whether any output edge is bent by a curve handle right now.
         --------------------------------------------------
 has_font_size()
 
@@ -35013,6 +35086,23 @@ serialize()
 
   - Save the complete widget state (mask model plus editor settings) into a JSON object. Use json.string() or json.compact_string() to store it as text.
         --------------------------------------------------
+set_curve_handle(
+    index - int Output vertex index,
+    outgoing - bool true moves the handle of the edge leaving this vertex, false the handle of the edge arriving from the previous one,
+    position - vec2 New handle position in output UV,
+    mirror - bool Also mirror the paired handle about the corner (default false)
+)
+
+  - Move the handle of one output curve, which bends that edge exactly like dragging the handle in the widget. Set mirror to also place the paired handle point symmetric about the corner, which keeps that corner smooth instead of creased.
+        --------------------------------------------------
+set_curve_offset(
+    index - int Output vertex index,
+    outgoing - bool true bends the edge leaving this vertex, false the edge arriving from the previous one,
+    offset - vec2 Bend relative to the flat handle position
+)
+
+  - Bend one output edge by setting its curve offset. The offset is measured from the flat one third position of that edge, is clamped to one output unit per axis, and only becomes visible on the rendered mesh once subdivision is enabled.
+        --------------------------------------------------
 set_destination(
     index - int Output point index,
     uv - vec2 Output UV
@@ -35037,6 +35127,12 @@ shader(
 shader_view() -> nanogui.shader_view
 
   - Create a child GLSL shader view widget.
+        --------------------------------------------------
+show_curve_handles(
+    value - bool
+)
+
+  - Get or set whether the output transform draws its curve handles. Hiding them only hides the knobs, the curvature itself stays active, and hidden handles can no longer be grabbed with the mouse.
         --------------------------------------------------
 show_handles(
     value - bool
