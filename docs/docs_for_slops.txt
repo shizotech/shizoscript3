@@ -15656,6 +15656,12 @@ auto_curves(
 
   - Derive every curve handle from the two neighbours of its corner, which turns the whole output contour into one smooth spline through the control points. Overwrites all manual handle placement. Tension 0 straightens every edge again.
         --------------------------------------------------
+auto_mask_curves(
+    tension - float Handle strength, 0..1 (default 0.33)
+)
+
+  - Derive every mask curve handle from the two neighbours of its corner, which turns the whole selection outline into one smooth spline through the mask points. Overwrites all manual handle placement. Tension 0 straightens every edge again, and a locked mask ignores the call.
+        --------------------------------------------------
 center_mask(
     target - vec2 Input UV the center should reach
 )
@@ -15675,6 +15681,10 @@ clear_curves()
 clear_mask()
 
   - Delete the whole input mask. The committed output transform is kept.
+        --------------------------------------------------
+clear_mask_curves()
+
+  - Straighten every input mask edge by zeroing all mask curve handles. Nothing happens while the mask is locked.
         --------------------------------------------------
 clear_output()
 
@@ -15717,6 +15727,10 @@ has_curves()
 
   - Check whether any output edge is bent by a curve handle right now.
         --------------------------------------------------
+has_mask_curves()
+
+  - Check whether any input mask edge is bent by a curve handle right now.
+        --------------------------------------------------
 insert_mask_vertex(
     index - int Mask point index,
     t - float Interpolation 0..1 (default 0.5)
@@ -15726,7 +15740,7 @@ insert_mask_vertex(
         --------------------------------------------------
 mask_bounds()
 
-  - Get the input mask bounding box as [min, max] vec2 values in input UV.
+  - Get the input mask bounding box as [min, max] vec2 values in input UV. Bent edges count too, so the box covers the outline that is drawn and not only its corner points.
         --------------------------------------------------
 mask_centroid()
 
@@ -15753,6 +15767,20 @@ mask_contour_size(
 )
 
   - Get how many points a mask contour has.
+        --------------------------------------------------
+mask_curve_handle(
+    index - int Mask point index,
+    outgoing - bool true reads the handle of the edge leaving this point, false the handle of the edge arriving from the previous one
+)
+
+  - Get the editable handle position of one input mask curve as a vec2 value in input UV. It is the inner control point of that edge's cubic Bezier, so a straight edge has its handle on the edge itself, at one third or two thirds of it.
+        --------------------------------------------------
+mask_curve_offset(
+    index - int Mask point index,
+    outgoing - bool true reads the edge leaving this point, false the edge arriving from the previous one
+)
+
+  - Get the curve offset of one input mask edge as a vec2 value. Offsets are relative to the flat one third position of the edge, so 0, 0 is a straight edge, and both ends of an edge have to agree for the selection outline to stay watertight.
         --------------------------------------------------
 mask_invert(
     value - bool
@@ -15813,7 +15841,7 @@ new_mask_contour()
         --------------------------------------------------
 output_bounds()
 
-  - Get the output transform bounding box as [min, max] vec2 values in output UV. Overscan is allowed, so values can be outside 0..1.
+  - Get the output transform bounding box as [min, max] vec2 values in output UV. Overscan is allowed, so values can be outside 0..1, and bent edges count too.
         --------------------------------------------------
 output_centroid()
 
@@ -15904,6 +15932,23 @@ set_destination_vertex(
 )
 
   - Move one output vertex. Positions may go past 0..1 to overscan the warp.
+        --------------------------------------------------
+set_mask_curve_handle(
+    index - int Mask point index,
+    outgoing - bool true moves the handle of the edge leaving this point, false the handle of the edge arriving from the previous one,
+    position - vec2 New handle position in input UV,
+    mirror - bool Also mirror the paired handle about the corner (default false)
+)
+
+  - Move the handle of one input mask curve, which bends that selection edge exactly like dragging the handle in the widget. Set mirror to also place the paired handle point symmetric about the corner, which keeps that corner smooth instead of creased. Fails while the mask is locked.
+        --------------------------------------------------
+set_mask_curve_offset(
+    index - int Mask point index,
+    outgoing - bool true bends the edge leaving this point, false the edge arriving from the previous one,
+    offset - vec2 Bend relative to the flat handle position
+)
+
+  - Bend one input mask edge by setting its curve offset, which curves the selected area of the input texture. The offset is measured from the flat one third position of that edge, is clamped to one input unit per axis, and fails while the mask is locked. The bend reaches the rendered output with the next transfer.
         --------------------------------------------------
 set_mask_vertex(
     index - int Mask point index,
@@ -34359,6 +34404,12 @@ auto_curves(
 
   - Derive every curve handle from the two neighbours of its corner, which turns the whole output contour into one smooth spline through the control points. Overwrites all manual handle placement. Tension 0 straightens every edge again.
         --------------------------------------------------
+auto_mask_curves(
+    tension - float Handle strength, 0..1 (default 0.33)
+)
+
+  - Derive every mask curve handle of the active mask from the two neighbours of its corner, which turns the whole selection outline into one smooth spline through the mask points. Overwrites all manual handle placement. Tension 0 straightens every edge again, and a locked mask ignores the call.
+        --------------------------------------------------
 auto_output_size(
     value - bool true follows the input source, false keeps the fixed output_size
 )
@@ -34448,6 +34499,10 @@ clear_curves()
 clear_mask()
 
   - Delete the whole input mask. The committed output transform is kept.
+        --------------------------------------------------
+clear_mask_curves()
+
+  - Straighten every edge of the active input mask by zeroing all mask curve handles. Nothing happens while that mask is locked.
         --------------------------------------------------
 clear_output()
 
@@ -34714,6 +34769,10 @@ has_font_size()
 
   - Check if custom font size is set.
         --------------------------------------------------
+has_mask_curves()
+
+  - Check whether any edge of the active input mask is bent by a curve handle right now.
+        --------------------------------------------------
 height(
     value - int
 )
@@ -34822,7 +34881,7 @@ mask_at(
         --------------------------------------------------
 mask_bounds()
 
-  - Get the input mask bounding box as [min, max] vec2 values in input UV.
+  - Get the input mask bounding box of the active mask as [min, max] vec2 values in input UV. Bent edges count too, so the box covers the outline that is drawn and not only its corner points.
         --------------------------------------------------
 mask_contour_count()
 
@@ -34831,6 +34890,20 @@ mask_contour_count()
 mask_count()
 
   - Get how many masks this widget has. All of them composite into the one output texture.
+        --------------------------------------------------
+mask_curve_handle(
+    index - int Mask point index,
+    outgoing - bool true reads the handle of the edge leaving this point, false the handle of the edge arriving from the previous one
+)
+
+  - Get the editable handle position of one input mask curve as a vec2 value in input UV. It is the inner control point of that edge's cubic Bezier, so a straight edge has its handle on the edge itself, at one third or two thirds of it.
+        --------------------------------------------------
+mask_curve_offset(
+    index - int Mask point index,
+    outgoing - bool true reads the edge leaving this point, false the edge arriving from the previous one
+)
+
+  - Get the curve offset of one input mask edge of the active mask as a vec2 value. Offsets are relative to the flat one third position of the edge, so 0, 0 is a straight edge, and both ends of an edge have to agree for the selection outline to stay watertight.
         --------------------------------------------------
 mask_invert(
     value - bool
@@ -35156,6 +35229,23 @@ set_destination(
 
   - Move one committed output point.
         --------------------------------------------------
+set_mask_curve_handle(
+    index - int Mask point index,
+    outgoing - bool true moves the handle of the edge leaving this point, false the handle of the edge arriving from the previous one,
+    position - vec2 New handle position in input UV,
+    mirror - bool Also mirror the paired handle about the corner (default false)
+)
+
+  - Move the handle of one input mask curve of the active mask, which bends that selection edge exactly like dragging the handle in the widget. Set mirror to also place the paired handle point symmetric about the corner, which keeps that corner smooth instead of creased. Fails while the mask is locked.
+        --------------------------------------------------
+set_mask_curve_offset(
+    index - int Mask point index,
+    outgoing - bool true bends the edge leaving this point, false the edge arriving from the previous one,
+    offset - vec2 Bend relative to the flat handle position
+)
+
+  - Bend one input mask edge of the active mask by setting its curve offset, which curves the selected area of the input texture. The offset is measured from the flat one third position of that edge, is clamped to one input unit per axis, and fails while the mask is locked. The bend reaches the rendered output with the next transfer.
+        --------------------------------------------------
 set_mask_vertex(
     index - int Mask point index,
     uv - vec2 Input UV (0..1)
@@ -35178,7 +35268,7 @@ show_curve_handles(
     value - bool
 )
 
-  - Get or set whether the output transform draws its curve handles. Hiding them only hides the knobs, the curvature itself stays active, and hidden handles can no longer be grabbed with the mouse.
+  - Get or set whether the editing stage draws its curve handles: the input view draws the handles of the active mask, the output view draws the handles of the committed transform. Hiding them only hides the knobs, the curvature itself stays active, and hidden handles can no longer be grabbed with the mouse.
         --------------------------------------------------
 show_handles(
     value - bool
