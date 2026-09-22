@@ -3900,7 +3900,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -4684,7 +4684,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -5462,7 +5462,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6238,7 +6238,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -6934,7 +6934,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -7674,7 +7674,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -8490,7 +8490,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -9668,7 +9668,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -10418,7 +10418,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11212,7 +11212,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -11988,7 +11988,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -12698,7 +12698,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -13378,7 +13378,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -14068,7 +14068,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -14816,7 +14816,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -15508,7 +15508,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -16696,7 +16696,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -17460,7 +17460,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -18254,7 +18254,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -19048,7 +19048,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -19830,7 +19830,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -20606,7 +20606,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -21370,7 +21370,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -22158,7 +22158,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -22922,7 +22922,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -23694,7 +23694,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -24518,7 +24518,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -25186,7 +25186,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -25945,7 +25945,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -26653,7 +26653,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -27593,7 +27593,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -28278,7 +28278,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -28988,7 +28988,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -29734,7 +29734,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -30509,7 +30509,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -31259,7 +31259,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -31985,7 +31985,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -32847,7 +32847,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -33563,7 +33563,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -34243,7 +34243,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -34297,6 +34297,10 @@ Object: nanogui.warp_mapper
 absolute_position()
 
   - Get the absolute widget position.
+        --------------------------------------------------
+active_mask()
+
+  - Get the index of the mask currently being edited.
         --------------------------------------------------
 add_mask_hole()
 
@@ -34565,6 +34569,10 @@ cycle_warp_mode()
 
   - Switch to the next warp mode, the same as the Warp button and the W key.
         --------------------------------------------------
+delete_mask()
+
+  - Delete the active mask. The last remaining mask can never be deleted.
+        --------------------------------------------------
 deserialize(
     preset - object or string
 )
@@ -34582,6 +34590,10 @@ dragdrop_enabled(
 )
 
   - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+duplicate_mask()
+
+  - Copy the active mask into a new mask and select the copy.
         --------------------------------------------------
 enabled(
     value - bool
@@ -34796,11 +34808,17 @@ layout(
         --------------------------------------------------
 lock_mask()
 
-  - Freeze the input mask without changing the output transform.
+  - Freeze the input mask of every mask without changing any output transform.
         --------------------------------------------------
 mapping()
 
   - Get the mask model object (stage 1 mask + stage 2 output transform).
+        --------------------------------------------------
+mask_at(
+    index - int Mask index
+)
+
+  - Get the mask model object of one mask, without selecting it.
         --------------------------------------------------
 mask_bounds()
 
@@ -34810,6 +34828,10 @@ mask_contour_count()
 
   - Number of input mask contours (border first, then holes).
         --------------------------------------------------
+mask_count()
+
+  - Get how many masks this widget has. All of them composite into the one output texture.
+        --------------------------------------------------
 mask_invert(
     value - bool
 )
@@ -34818,7 +34840,7 @@ mask_invert(
         --------------------------------------------------
 mask_locked()
 
-  - Check whether the input mask is frozen.
+  - Check whether the input mask of the active mask is frozen.
         --------------------------------------------------
 mask_rect(
     min_uv - vec2 Top left input UV,
@@ -34826,6 +34848,12 @@ mask_rect(
 )
 
   - Replace the input mask with a rectangle.
+        --------------------------------------------------
+mask_snap_radius(
+    pixels - float Radius in widget pixels
+)
+
+  - Get or set how many widget pixels away a neighbouring mask point has to be before it attracts the point being moved. 0 disables the attraction.
         --------------------------------------------------
 mask_vertex(
     index - int Mask point index
@@ -34910,9 +34938,17 @@ move_mask(
 
   - Move the whole input mask.
         --------------------------------------------------
+new_mask()
+
+  - Add a mask covering the whole input and select it. Its output transform is seeded from that rect, so it behaves like the first mask of a new widget.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
+        --------------------------------------------------
+next_mask()
+
+  - Select the next mask in the list.
         --------------------------------------------------
 on_destroy(
     callback - function
@@ -35012,6 +35048,10 @@ position(
 
   - Get or set widget position.
         --------------------------------------------------
+previous_mask()
+
+  - Select the previous mask in the list.
+        --------------------------------------------------
 pull_mask()
 
   - Copy the current output shape back into the input mask and unlock stage 1 again.
@@ -35086,6 +35126,12 @@ serialize()
 
   - Save the complete widget state (mask model plus editor settings) into a JSON object. Use json.string() or json.compact_string() to store it as text.
         --------------------------------------------------
+set_active_mask(
+    index - int Mask index
+)
+
+  - Select which mask is being edited.
+        --------------------------------------------------
 set_curve_handle(
     index - int Output vertex index,
     outgoing - bool true moves the handle of the edge leaving this vertex, false the handle of the edge arriving from the previous one,
@@ -35140,6 +35186,12 @@ show_handles(
 
   - Get or set whether editor handles are drawn.
         --------------------------------------------------
+show_inactive_masks(
+    enable - bool
+)
+
+  - Get or set whether the masks that are not currently selected are drawn dimmed in the editor.
+        --------------------------------------------------
 show_triangulation(
     value - bool
 )
@@ -35161,6 +35213,12 @@ slider(
 snap_points()
 
   - Snap the selected point of the visible stage to the grid, or every point of that stage when none is selected. Returns how many points moved.
+        --------------------------------------------------
+snap_to_masks(
+    enable - bool
+)
+
+  - Get or set whether points snap onto the points and edges of the other masks, which is what makes seamless mask sets easy to build.
         --------------------------------------------------
 source_vertex(
     index - int Output point index
@@ -35228,15 +35286,21 @@ tooltip(
 
   - Get or set tooltip.
         --------------------------------------------------
-transfer_mask(
-    reset_output - bool Rebuild the output vertices on the current mask instead (default false)
+transfer_all_masks(
+    reset_output - bool Rebuild every output transform on its current mask instead (default false)
 )
 
-  - Freeze the input mask and commit it to the output transform. Repeated transfers keep the output vertices where they are, only the committed mask shape updates.
+  - Transfer every mask to its output transform in one call. Masks without a closed contour are skipped.
+        --------------------------------------------------
+transfer_mask(
+    reset_output - bool Rebuild every output transform on its current mask instead (default false)
+)
+
+  - Transfer every mask of the widget to its output transform in one go, lock them all and switch to the output stage. Masks without a closed contour are skipped. Repeated transfers keep already transformed output vertices where they are, only the committed mask shape updates.
         --------------------------------------------------
 unlock_mask()
 
-  - Unlock the input mask so stage 1 can be edited again.
+  - Unlock the input mask of every mask so stage 1 can be edited again.
         --------------------------------------------------
 used_antialias_samples()
 
@@ -35278,7 +35342,7 @@ warp_fit_valid()
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 warp_mode(
     mode - string 'affine', 'smooth' or 'projective'
@@ -35952,7 +36016,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -36626,7 +36690,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -37304,7 +37368,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
@@ -38082,7 +38146,7 @@ vscroll(
         --------------------------------------------------
 warp_mapper() -> nanogui.warp_mapper
 
-  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage.
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
         --------------------------------------------------
 widget() -> nanogui.widget
 
