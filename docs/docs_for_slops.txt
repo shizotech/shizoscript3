@@ -15973,7 +15973,7 @@ transfer(
     reset_output - bool Discard the previous output first (default false)
 )
 
-  - Commit the input mask to the output transform. Each output vertex keeps the input UV it samples, so the warp can then be edited without touching the mask.
+  - Commit the input mask to the output transform. Each output vertex keeps the input UV it samples, so the warp can then be edited without touching the mask. An output that is only the seed of a brand new mask is always rebuilt from the mask points.
         --------------------------------------------------
 triangle(
     index - int Triangle index
@@ -24185,7 +24185,9 @@ get_control_by_path(
 
   - Get a control by its relative path (e.g., 'node1/control1').
         --------------------------------------------------
-get_control_paths()
+get_control_paths(
+    recursive - boolean
+)
 
   - Get all controls in this node and its subnodes as relative paths.
         --------------------------------------------------
@@ -34791,6 +34793,16 @@ image(
 
   - Create a child image widget.
         --------------------------------------------------
+image_snap_available()
+
+  - Check whether the widget can read pixels out of the bound input texture. False means the input format cannot be sampled for edges, so image snapping has no effect.
+        --------------------------------------------------
+image_snap_radius(
+    pixels - float Search radius in input texture pixels
+)
+
+  - Get or set how many input texture pixels around the point being edited are searched for an edge. A wider radius reaches further but samples more of the picture.
+        --------------------------------------------------
 input(
     source - shader / shader view / image / spout receiver
 )
@@ -35304,6 +35316,12 @@ snap_points()
 
   - Snap the selected point of the visible stage to the grid, or every point of that stage when none is selected. Returns how many points moved.
         --------------------------------------------------
+snap_to_image(
+    enable - bool
+)
+
+  - Get or set whether input mask points snap onto edges read out of the bound input picture. The texture around the point being edited is searched and the point is placed on the strongest edge found there, which fits a mask to the material being projected. Only the input stage snaps to the image.
+        --------------------------------------------------
 snap_to_masks(
     enable - bool
 )
@@ -35380,13 +35398,13 @@ transfer_all_masks(
     reset_output - bool Rebuild every output transform on its current mask instead (default false)
 )
 
-  - Transfer every mask to its output transform in one call. Masks without a closed contour are skipped.
+  - Transfer every mask to its output transform in one call. Masks without a closed contour are skipped, and a mask whose output is still only its seed is rebuilt from its mask points.
         --------------------------------------------------
 transfer_mask(
     reset_output - bool Rebuild every output transform on its current mask instead (default false)
 )
 
-  - Transfer every mask of the widget to its output transform in one go, lock them all and switch to the output stage. Masks without a closed contour are skipped. Repeated transfers keep already transformed output vertices where they are, only the committed mask shape updates.
+  - Transfer every mask of the widget to its output transform in one go, lock them all and switch to the output stage. Masks without a closed contour are skipped. Repeated transfers keep already transformed output vertices where they are, only the committed mask shape updates, while a mask that has never been transferred gets its output rebuilt from its points.
         --------------------------------------------------
 unlock_mask()
 
