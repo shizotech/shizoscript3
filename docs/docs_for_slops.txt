@@ -34822,10 +34822,10 @@ image_snap_available()
   - Check whether the widget can read pixels out of the bound input texture. False means the input format cannot be sampled for edges, so image snapping has no effect.
         --------------------------------------------------
 image_snap_radius(
-    pixels - float Search radius in input texture pixels
+    pixels - float Search radius in editor pixels
 )
 
-  - Get or set how many input texture pixels around the point being edited are searched for an edge. A wider radius reaches further but samples more of the picture.
+  - Get or set how wide the edge search around a point being edited is, in editor pixels, so the same radius reaches the same distance on screen whatever the source resolution or the view zoom. A wider radius samples more of the picture.
         --------------------------------------------------
 input(
     source - shader / shader view / image / spout receiver
