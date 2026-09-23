@@ -15893,6 +15893,18 @@ rotate_output(
 
   - Turn the output transform around the center of the output space in quarter steps. Negative values turn the other way.
         --------------------------------------------------
+scale_mask(
+    factor - float Scale multiplier, 1 keeps the size (1.05 is one mouse wheel notch)
+)
+
+  - Uniformly scale the input mask about its own center. Bent edges keep their proportion, and a value below 1 shrinks the mask. Nothing happens while the mask is locked.
+        --------------------------------------------------
+scale_output(
+    factor - float Scale multiplier, 1 keeps the size (1.05 is one mouse wheel notch)
+)
+
+  - Uniformly scale the output transform about its own center, which is the free factor version of fit_output. Overscan outside 0..1 is allowed.
+        --------------------------------------------------
 selected_mask_vertex(
     index - int Mask point index
 )
@@ -15990,6 +16002,18 @@ triangle_kept(
 )
 
   - Check whether a triangle is drawn into the output (true) or cut out of it (false).
+        --------------------------------------------------
+turn_mask(
+    degrees - float Angle in degrees, positive turns counter clockwise in UV space (15 is one mouse wheel notch)
+)
+
+  - Turn the whole input mask around its own center by any angle. Curve handles turn with it, and the points stay clamped to the input. Nothing happens while the mask is locked.
+        --------------------------------------------------
+turn_output(
+    degrees - float Angle in degrees, positive turns counter clockwise in UV space (15 is one mouse wheel notch)
+)
+
+  - Turn the whole output transform around its own center by any angle, which is the free angle version of rotate_output. Only destinations and their curve handles move, the frozen input UVs stay as they are.
         --------------------------------------------------
 vertex_contour_count()
 
@@ -35179,11 +35203,31 @@ reset()
 
   - Reset both stages to the full rectangle, the same as the Reset button. Grid settings and subdivisions are kept.
         --------------------------------------------------
+reset_curves()
+
+  - Straighten every edge of every mask in both stages at once, which is the same as the Straight button of the mask row. clear_curves and clear_mask_curves only touch the active mask.
+        --------------------------------------------------
+reset_view()
+
+  - Fit the editing area back to the whole stage and clear its pan, which is the same as the Z key.
+        --------------------------------------------------
 rotate_output(
     quarter_turns - int Number of 90 degree steps
 )
 
   - Turn the output transform around the center of the output space in quarter steps. Negative values turn the other way.
+        --------------------------------------------------
+scale_mask(
+    factor - float Scale multiplier, 1 keeps the size (1.05 is one mouse wheel notch)
+)
+
+  - Uniformly scale the input mask of the active mask about its own center. Nothing happens while that mask is locked.
+        --------------------------------------------------
+scale_output(
+    factor - float Scale multiplier, 1 keeps the size (1.05 is one mouse wheel notch)
+)
+
+  - Uniformly scale the output transform of the active mask about its own center.
         --------------------------------------------------
 screen() -> nanogui.screen
 
@@ -35406,6 +35450,18 @@ transfer_mask(
 
   - Transfer every mask of the widget to its output transform in one go, lock them all and switch to the output stage. Masks without a closed contour are skipped. Repeated transfers keep already transformed output vertices where they are, only the committed mask shape updates, while a mask that has never been transferred gets its output rebuilt from its points.
         --------------------------------------------------
+turn_mask(
+    degrees - float Angle in degrees, positive turns counter clockwise in UV space (15 is one mouse wheel notch)
+)
+
+  - Turn the input mask of the active mask around its own center by any angle. Curve handles turn with it. Nothing happens while that mask is locked.
+        --------------------------------------------------
+turn_output(
+    degrees - float Angle in degrees, positive turns counter clockwise in UV space (15 is one mouse wheel notch)
+)
+
+  - Turn the output transform of the active mask around its own center by any angle, which is the free angle version of rotate_output.
+        --------------------------------------------------
 unlock_mask()
 
   - Unlock the input mask of every mask so stage 1 can be edited again.
@@ -35423,6 +35479,18 @@ view(
 )
 
   - Get or switch the editor stage. Valid names are 'input' (mask creation) and 'output' (mask transform).
+        --------------------------------------------------
+view_pan(
+    offset - vec2 Pan of the editing area (optional, without a parameter the current pan is returned only)
+)
+
+  - Get or set how far the editing area is shifted away from its centered position, in widget pixels.
+        --------------------------------------------------
+view_zoom(
+    zoom - float New zoom factor (optional, without a parameter the current zoom is returned only)
+)
+
+  - Get or set the zoom of the editing area. 1 fits the whole stage in the widget, the value is limited to 0.25..16, and zooming is only a view setting: it never changes the mask or the output resolution.
         --------------------------------------------------
 visible(
     value - bool
