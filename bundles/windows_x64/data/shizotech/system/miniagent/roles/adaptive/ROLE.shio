@@ -85,11 +85,6 @@ format_task_hierachy(hierarchy)
 
 add_tools(agt)
 {
-	agt.add_read_tools();
-	agt.add_code_read_tools();
-	agt.add_write_tools();
-	agt.add_skill_tools();
-
 	agt.add_tool(
 		"start_task",
 		"Create/delegate work",
@@ -146,6 +141,23 @@ add_tools(agt)
 				build_task_hierachy(executor)
 			);
 			
+			if(!agt.env_shared.running_agent_count)
+				agt.env_shared.running_agent_count = 0;
+			
+			if(agt.model_config.max_running_agents > 0) {
+				first = true;
+				for(agt.env_shared.running_agent_count >= agt.model_config.max_running_agents) {
+					if(first)
+						std.print("MAX PARALLEL AGENT COUNT!");
+						first = false;
+					std.sleep(10);
+				}					
+			}
+			
+			std.print("\n\n---NEW TASK---\n");
+			
+			agt.env_shared.running_agent_count += 1;
+			
 			for(!task.finished) {
 				
 				//TODO: build simple task hierachy based on _parent recursively (just task names no details)
@@ -166,6 +178,8 @@ add_tools(agt)
 					//Todo: add fail counter
 				}
 			}
+			
+			agt.env_shared.running_agent_count -= 1;
 			
 			if(!task.report) {
 				if(!task.milestones) {
@@ -266,14 +280,14 @@ add_tools(agt)
 					return [
 						task_id = task.id,
 						finish_reason = task.finish_reason,
-						report = "The task did not emit any reports, furthermore no milestones are available.\nThat means that the task might have failed or crashed during execution.\nManual verification of the task's progress is required.",
+						report = "The task did not emit a report, furthermore no milestones are available.\nThat means that the task might have failed or crashed during execution.\nManual verification of the task's progress is required.",
 					];
 				}
 				
 				return [
 					task_id = task.id,
 					finish_reason = task.finish_reason,
-					report = "The task did emit any reports.\nThat means that the task might have failed or crashed after the last milestones.\nFurther verification of the last steps and the actual tasks progress is required.",
+					report = "The task did not emit a report.\nThat means that the task might have failed or crashed after the last milestones.\nFurther verification of the last steps and the actual tasks progress is required.",
 				];
 			}
 			
@@ -319,7 +333,41 @@ add_tools(agt)
 				agt.env.active_task.milestones.push_back(args.description);
 			}
 			
-			return "I've made a checkpoint; continue working.";
+			return "I've made the checkpoint; continue working.";
 		}
 	);
+	
+	agt.add_tool(
+		"wait_for",
+		"Sleep for a while, use this to wait a specific period, for example to wait for an event.",
+		[
+			seconds = "int(): OPTIONAL How many seconds to wait",
+			minutes = "int(): OPTIONAL How many minutes to wait",
+			hours = "int(): OPTIONAL How many hours to wait",
+		],
+		[](agt, args)
+		{		
+			period = 0;
+			
+			if(args.seconds)
+				period += args.seconds * 1000;
+			if(args.minutes)
+				period += args.minutes * 60 * 1000;
+			if(args.hours)
+				period += args.hours * 60 * 60 * 1000;
+		
+			period = math.max(period, 0);
+		
+			std.sleep(period);
+			
+			return "Time after sleep: " + std.timestamp();
+		}
+	);
+
+	agt.add_read_tools();
+	agt.add_code_read_tools();
+	agt.add_write_tools();
+	agt.add_skill_tools();
+	agt.add_command_tools();
+
 }

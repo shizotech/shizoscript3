@@ -309,50 +309,158 @@ The repository is authoritative: a new agent must verify the actual state before
 ## Task Start 
  
 Before you start working on the task, gather the required context. 
- 
-### 1. Agent Space 
- 
-Check `.agentspace/` first. 
- 
-`.agentspace/` is the shared persistent workspace for all agents working on this repository. 
- 
-It contains information intended to be shared across the entire task hierarchy. 
- 
-It is a virtual directory and does not exist *physical* (only resists in memory, not a part of the actual filesystem) 
- 
-You can still use most filesystem tools on it, but you cannot create subdirectories in it. 
- 
-Always check the standard files when they exist: 
- 
-* `.agentspace/contracts.md` — API, interface, module, and integration contracts. 
-* `.agentspace/workflows.md` — established workflows, procedures, and how things should be done. 
-* `.agentspace/avoid.md` — known pitfalls, mistakes, incompatible approaches, and things that should be avoided. 
-* `.agentspace/roadmap.md` — high-level project progress, completed work, current direction, and planned work, inspiration and ideas. 
-* `.agentspace/docs.md` — Resolved external documentation needed for the project, to avoid looking up required libraries and functions again and again. 
- 
-You may create this directory and the basic files when the task is appropriately complex and it doesnt exist yet (but do not forcefully create it for simple tasks). 
- 
-You may also create additional files inside `.agentspace/` when useful. 
- 
-You may start research subtasks to populate/find documentation that you need in order to keep your context clean and free of expensive search loops. 
- 
-When you discover important information that future agents should know, record it in the appropriate `.agentspace/` file. 
- 
-Do not put temporary notes or task-specific noise into the shared files, keep them compact. 
- 
-Summarize or compact information when necessary, remove wrong or invalid statements. 
-If something smells like bullshit -> nuke it. 
- 
-Same if you discover yourself struggling over something and finally find a working solution, then document the **working** workflow for other agents! This is a supportive community. 
- 
-### 2. Skills 
+
+### 1. Skills 
  
 Check available Skills and load relevant skills using the skill tools. 
- 
-### 3. Project Documentation 
+
+### 2. Project Documentation 
  
 Read `AGENTS.MD` and other relevant markdown files from the root directory and all other relevant paths. 
- 
+
+### 3. Agent Swarm Mind
+
+Check `mind://`.
+
+`mind://` is the shared persistent-in-memory workspace ("Mind") for all agents working within the current task hierarchy.
+
+It is a virtual filesystem and does not exist physically in the project repository. It is shared between agents during the current task hierarchy and is intended for agent working knowledge.
+
+The Mind mirrors the structure of the actual project repository.
+
+For example:
+
+```text
+Project:
+src/
+├── renderer/
+│   ├── shader.cpp
+│   └── pipeline.cpp
+└── audio/
+    └── mixer.cpp
+
+Mind:
+mind://
+├── roadmap.md
+└── src/
+    ├── renderer/
+    │   ├── notes.md
+    │   └── discoveries.md
+    └── audio/
+        └── notes.md
+```
+
+The Mind does not contain copies of source files. It only mirrors the project structure so agents can place temporary knowledge next to the code it concerns.
+
+You can use most filesystem tools on `mind://`.
+
+#### Durable project knowledge vs. Mind knowledge
+
+There are two different kinds of information:
+
+**Durable project knowledge**
+
+Information that should remain part of the project after the current agent task is finished belongs in the actual repository.
+
+Examples:
+
+* public API and interface contracts;
+* architectural decisions;
+* documented workflows that future developers must follow;
+* permanent compatibility requirements;
+* project-level documentation;
+* stable design decisions.
+
+The actual repository is authoritative for this information.
+
+Do not put durable project requirements only into `mind://`.
+
+**Mind knowledge**
+
+Information that is useful to agents while working on the current task hierarchy, but does not need to become permanent project documentation, belongs in `mind://`.
+
+Examples:
+
+* temporary implementation thoughts;
+* discoveries made while investigating the current task;
+* debugging observations;
+* hypotheses;
+* partial solutions;
+* temporary decisions;
+* context that helps another agent continue your work;
+* notes about work currently in progress.
+
+Mind knowledge is supporting information, not authoritative project documentation.
+
+If a temporary discovery turns out to be a durable project fact, move or document it in the actual repository as appropriate.
+
+#### Mind organization
+
+Use the mirrored repository structure for subsystem-specific knowledge.
+
+For example:
+
+```text
+mind://src/renderer/notes.md
+```
+
+contains temporary notes about `src/renderer`.
+
+Keep general task-hierarchy information at the Mind root when appropriate:
+
+```text
+mind://roadmap.md
+```
+
+Do not create large collections of files without a reason. Use the smallest structure that keeps the information easy to find.
+
+#### Standard Mind files
+
+When they exist, always check:
+
+* `mind://roadmap.md` — current task-hierarchy progress, direction, important discoveries, and useful ideas.
+* `mind://notes.md` — general temporary working notes that do not belong to a specific repository area.
+* `mind://avoid.md` — temporary pitfalls, failed approaches, and things that should currently be avoided.
+* `mind://docs.md` — external documentation or resolved technical facts useful during the current task hierarchy.
+
+Subsystem-specific information should normally go into the corresponding mirrored repository path instead of these global files.
+
+For example:
+
+```text
+mind://src/renderer/contracts.md
+mind://src/renderer/notes.md
+mind://src/renderer/avoid.md
+```
+
+may contain temporary agent knowledge concerning that subsystem.
+
+Do not assume that a Mind `contracts.md` is an authoritative project contract. Permanent API contracts belong in the actual repository.
+
+#### Rules
+
+Check the relevant part of the Mind before starting work so you do not repeat investigations or mistakes already made by another agent.
+
+When you discover useful information that other agents in the current task hierarchy should know, record it in the appropriate `mind://` location.
+
+Keep Mind files compact.
+
+Do not put temporary noise, verbose reasoning, or information that another agent does not need into the Mind.
+
+Summarize or compact information when necessary.
+
+Remove information that is wrong, obsolete, or no longer useful.
+
+If something smells like bullshit -> nuke it.
+
+If you struggled with something and eventually found a working solution, document the **working** solution so other agents do not repeat the same investigation.
+
+Remember:
+
+> **The repository stores durable project knowledge. The Mind stores temporary shared agent knowledge.**
+
+The repository is authoritative whenever the two disagree.
+
 ### 4. Implementation 
  
 Check the actual source files and references last. 
@@ -363,7 +471,7 @@ The repository's actual implementation is authoritative over documentation or ag
  
 **Avoid reading unrelated files.** 
  
-Start with `.agentspace/` and the relevant project documentation, then inspect only the source files and references necessary to understand and complete the current task. 
+Start with `mind://` and the relevant project documentation, then inspect only the source files and references necessary to understand and complete the current task. 
  
 Do not indiscriminately read the entire repository. 
 
@@ -392,7 +500,7 @@ Before finishing:
 * verify it; 
 * create subtasks for remaining substantial required work; 
 * record useful optional work as deferred tasks. 
-* check if `.agentspace/` needs any updates. 
+* check if `mind://` needs any updates. 
 * make sure the latest meaningful progress has been recorded in a milestone. 
  
 Finish the task by writing a short snappy conclusion before calling `signal()`. 

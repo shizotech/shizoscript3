@@ -34,6 +34,7 @@
   - Object Type: eigen.vec4f
   - Object Type: eigen.vec4i
   - Object Type: fileio.container
+  - Object Type: fileio.virtual
   - Object Type: ipc.ipc
   - Object Type: json.bool
   - Object Type: leveldb.db
@@ -73,6 +74,8 @@
   - Object Type: nanogui.mididevice
   - Object Type: nanogui.mididevicehandler
   - Object Type: nanogui.modmatrixnode
+  - Object Type: nanogui.ndi_receiver
+  - Object Type: nanogui.ndi_sender
   - Object Type: nanogui.permanent_tab
   - Object Type: nanogui.screen
   - Object Type: nanogui.scrollarea
@@ -383,6 +386,12 @@ fileio.size(
 )
 
   - Get size of a file or directory in bytes
+        --------------------------------------------------
+fileio.virtual(
+    label: string (optional) - Name of the virtual root
+) -> fileio.virtual
+
+  - Virtual filesystem that only exists in RAM (no disk access). Files can be streamed to/from disk with import_file/import_dir/export_file/export_dir/save/load.
         --------------------------------------------------
 fileio.write_file(
     path: string - File path to write to,
@@ -701,6 +710,32 @@ nanogui.mididevicehandler(
 ) -> nanogui.mididevicehandler
 
   - Start a new midi handler and set callback for when a MIDI device is connected.
+        --------------------------------------------------
+nanogui.ndi_available(
+    return - bool
+)
+
+  - Check whether the NDI run-time could be loaded.
+        --------------------------------------------------
+nanogui.ndi_sender(
+    source_name - string,
+    groups - string
+) -> nanogui.ndi_sender
+
+  - Create an NDI sender that publishes textures as an NDI source.
+        --------------------------------------------------
+nanogui.ndi_sources(
+    timeout_ms - int (optional, default 200),
+    return - json
+)
+
+  - Discover the NDI sources available on the network.
+        --------------------------------------------------
+nanogui.ndi_version(
+    return - string
+)
+
+  - Get the version of the loaded NDI run-time, or an empty string when it is unavailable.
         --------------------------------------------------
 nanogui.serialize_controls()
 
@@ -1263,6 +1298,10 @@ std.year()
 Namespace: subprocess
 ==================================================
 
+        --------------------------------------------------
+subprocess.platform()
+
+  - Operating system this subprocess module was built for: windows, macos or linux.
         --------------------------------------------------
 subprocess.process() -> subprocess.process
 
@@ -2969,6 +3008,308 @@ write_text(
 
 
 ==================================================
+Object: fileio.virtual
+==================================================
+
+        --------------------------------------------------
+clear()
+
+  - Delete everything held in the virtual filesystem
+        --------------------------------------------------
+copy(
+    src: string - Source virtual path,
+    dest: string - Destination virtual path
+)
+
+  - Copy file or directory (missing directories are created)
+        --------------------------------------------------
+copy_if_changed(
+    src: string - Source virtual path,
+    dest: string - Destination virtual path
+)
+
+  - Copy file or directory only if the destination content differs from the source
+        --------------------------------------------------
+count()
+
+  - Number of files and directories stored
+        --------------------------------------------------
+deserialize(
+    data: binary - Serialized container blob,
+    append: bool (default: false) - true = merge into the existing contents instead of replacing them
+)
+
+  - Deserialize a binary buffer produced by serialize() back into the virtual filesystem. The label stored in the blob replaces the current label.
+        --------------------------------------------------
+dirs(
+    path: string - Directory to list,
+    recursive: bool (default: true) - true = include subfolders; false = top-level only
+)
+
+  - List directories inside a directory
+        --------------------------------------------------
+empty(
+    path: string - Virtual path to the file or directory
+)
+
+  - Check if a file or directory is empty or does not exist
+        --------------------------------------------------
+exists(
+    path: string - Virtual path to test
+)
+
+  - Check if a file or directory exists
+        --------------------------------------------------
+export_dir(
+    path: string - Virtual directory to export,
+    disk_path: string (optional) - Destination directory on disk (defaults to the virtual path),
+    recursive: bool (default: true) - true = include subfolders
+)
+
+  - Write a virtual directory tree to disk, streamed in 64KB chunks. Returns the number of files exported.
+        --------------------------------------------------
+export_file(
+    path: string - Virtual path to export,
+    disk_path: string (optional) - Destination path on disk (defaults to the virtual path)
+)
+
+  - Write one virtual file to disk, streamed straight out of the stored buffer in 64KB chunks
+        --------------------------------------------------
+file_dir(
+    path: string - The file path to extract directory from
+)
+
+  - Extracts the directory from a given file path
+        --------------------------------------------------
+file_ext(
+    path: string - File path to extract extension from
+)
+
+  - Extracts the file extension from a given path string
+        --------------------------------------------------
+file_info(
+    path: string - Virtual file or directory path
+)
+
+  - Get file/directory info as JSON object (size, exists, is_directory, is_file, last_write_time, path)
+        --------------------------------------------------
+file_name(
+    path: string - File path to extract filename from
+)
+
+  - Extracts the filename from a given path string
+        --------------------------------------------------
+files(
+    path: string - Directory to list,
+    recursive: bool (default: true) - true = include subfolders; false = top-level only,
+    absolute_paths: bool (default: false) - true = return full virtual paths instead of paths relative to 'path'
+)
+
+  - List files in directory
+        --------------------------------------------------
+get_limit()
+
+  - Get the maximum allowed size of the virtual filesystem (0 = unlimited)
+        --------------------------------------------------
+get_size()
+
+  - Get total bytes currently held in RAM
+        --------------------------------------------------
+grep(
+    pattern: string - Search pattern (regex),
+    path: string - Virtual directory path,
+    case_sensitive: bool (default: true) - true = case sensitive, false = case insensitive,
+    recursive: bool (default: true) - true = include subfolders, false = top-level only,
+    extensions: list (optional) - List of file extensions to search (e.g., ['.txt', '.cpp', '.h']). Defaults to common text file extensions if not provided.,
+    max_file_size: int (default: 1048576 = 1MB) - Maximum file size in bytes to process
+)
+
+  - Search for pattern in text files held in RAM (regex only)
+        --------------------------------------------------
+hash(
+    path: string - Virtual path
+)
+
+  - Get a quick hash of file contents (or of a whole directory tree) (XXH3_64bits)
+        --------------------------------------------------
+import_dir(
+    path: string - Directory path on disk,
+    virtual_path: string (optional) - Virtual directory to import into (defaults to the root),
+    recursive: bool (default: true) - true = include subfolders
+)
+
+  - Load a whole directory tree from disk into RAM, one 64KB chunk at a time. Returns the number of files imported.
+        --------------------------------------------------
+import_file(
+    path: string - File path on disk,
+    virtual_path: string (optional) - Virtual path to store it as (defaults to the disk path)
+)
+
+  - Load one file from disk into RAM, streamed in 64KB chunks (no full file blob is buffered twice)
+        --------------------------------------------------
+is_directory(
+    path: string - Virtual path to test
+)
+
+  - Check if path is a directory
+        --------------------------------------------------
+is_file(
+    path: string - Virtual path to test
+)
+
+  - Check if path is a file
+        --------------------------------------------------
+is_valid(
+    path: string - Virtual path to test
+)
+
+  - Check if a path exists or could be created (every existing ancestor must be a directory)
+        --------------------------------------------------
+load(
+    path: string - Container file path on disk,
+    append: bool (default: false) - true = merge into the existing contents instead of replacing them
+)
+
+  - Deserialize a container file from disk into RAM. Streams in 64KB chunks, so no full container blob is ever allocated. The label stored in the container replaces the current label.
+        --------------------------------------------------
+mkdir(
+    path: string - Virtual directory path
+)
+
+  - Create a directory (and any missing parent directories)
+        --------------------------------------------------
+move(
+    src: string - Virtual path to file or directory,
+    dest: string - New location or name
+)
+
+  - Move file or directory (overwrites the destination)
+        --------------------------------------------------
+pure_name(
+    path: string - File path to extract filename from
+)
+
+  - Extracts the filename from a given path string (without extension)
+        --------------------------------------------------
+read_file(
+    path: string - Virtual path
+)
+
+  - Read file into binary buffer
+        --------------------------------------------------
+read_json(
+    path: string - Virtual path to the JSON file
+)
+
+  - Read JSON file and return parsed object
+        --------------------------------------------------
+read_string(
+    path: string - Virtual path to read as text
+)
+
+  - Read text file into string
+        --------------------------------------------------
+read_text(
+    path: string - Virtual path to read as text
+)
+
+  - Read text file into string
+        --------------------------------------------------
+relative_path(
+    root: string - Base virtual path,
+    path: string - Target virtual path inside root
+)
+
+  - Get relative path from root to target path (returns empty string if target is outside root)
+        --------------------------------------------------
+relative_path_cwd(
+    path: string - Host path to make relative to the current working directory
+)
+
+  - Get relative path from the current working directory to a host path (host helper, does not read the RAM store)
+        --------------------------------------------------
+remove(
+    path: string|list - Virtual file(s) or directory to delete
+)
+
+  - Remove files or directories (recursive)
+        --------------------------------------------------
+rename(
+    src: string - Virtual path of the existing file,
+    dest: string - New name or destination path
+)
+
+  - Rename file or directory (fails if the destination already exists)
+        --------------------------------------------------
+resolve(
+    path: string - Path to normalize
+)
+
+  - Normalize a virtual path (resolves '.', '..', backslashes and duplicate slashes)
+        --------------------------------------------------
+save(
+    path: string - Destination file path on disk
+)
+
+  - Serialize the whole virtual filesystem to a file on disk. Streams in 64KB chunks, so no full container blob is ever allocated.
+        --------------------------------------------------
+serialize()
+
+  - Serialize the whole virtual filesystem into a single binary buffer (in memory)
+        --------------------------------------------------
+set(
+    label: string - Optional name for the virtual root
+)
+
+  - Set the label/name of this virtual filesystem (no disk access)
+        --------------------------------------------------
+set_limit(
+    limit: int - Maximum total bytes stored in RAM
+)
+
+  - Set a hard size limit in bytes for the virtual filesystem (0 = unlimited). Writes that would exceed it fail.
+        --------------------------------------------------
+size(
+    path: string - Virtual path to file or directory
+)
+
+  - Get size of a file or directory in bytes
+        --------------------------------------------------
+stats()
+
+  - Get a JSON summary of the virtual filesystem (label, files, directories, size, limit)
+        --------------------------------------------------
+write_file(
+    path: string - Virtual path to write to,
+    data: object - Object to serialize and store as binary
+)
+
+  - Write binary data from a serializable object into RAM, returning true if the write succeeds
+        --------------------------------------------------
+write_json(
+    path: string - Virtual path to the destination file,
+    data: string - JSON string to write
+)
+
+  - Writes a JSON string to a file in RAM. IMPORTANT: Do NOT MODIFY the json that is passed, in another thread! Always pass unique non-mutable jsons (copy before if needed).
+        --------------------------------------------------
+write_string(
+    path: string - Destination virtual path,
+    data: string - Text string to be written
+)
+
+  - Write string to file in RAM
+        --------------------------------------------------
+write_text(
+    path: string - Destination virtual path,
+    data: string - Text string to be written
+)
+
+  - Write string to file in RAM
+        --------------------------------------------------
+
+
+==================================================
 Object: ipc.ipc
 ==================================================
 
@@ -3632,6 +3973,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -4400,6 +4747,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -5188,6 +5541,12 @@ movable_y(
 )
 
   - Get or set Y-axis move.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -5983,6 +6342,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -6705,6 +7070,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -7412,6 +7783,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -8190,6 +8567,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -9395,6 +9778,12 @@ multi_select(
 
   - Get or set multi selection support.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -10158,6 +10547,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -10951,6 +11346,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -11721,6 +12122,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -12455,6 +12862,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -13147,6 +13560,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -13836,6 +14255,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -14557,6 +14982,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -15276,6 +15707,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -16498,6 +16935,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -17275,6 +17718,12 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -18058,6 +18507,12 @@ name()
 
   - Get control name.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -18839,6 +19294,12 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -19640,6 +20101,12 @@ name()
 
   - Get control name.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -20422,6 +20889,12 @@ name()
 
   - Get control name.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -21185,6 +21658,12 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -21968,6 +22447,12 @@ name()
 
   - Get control name.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -22738,6 +23223,12 @@ name()
 
   - Get control name.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -23507,6 +23998,12 @@ mouse_motion_default(
 name()
 
   - Get control name.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -24360,6 +24857,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -24630,6 +25133,864 @@ y(
 )
 
   - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.ndi_receiver
+==================================================
+
+    attr -> variable
+
+        --------------------------------------------------
+absolute_position()
+
+  - Get the absolute widget position.
+        --------------------------------------------------
+allow_fields(
+    allow_fields - bool
+)
+
+  - Get or set whether interlaced fields are delivered instead of being de-interlaced.
+        --------------------------------------------------
+anchor(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Set all anchors.
+        --------------------------------------------------
+anchor_bottom(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set bottom anchor.
+        --------------------------------------------------
+anchor_left(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set left anchor.
+        --------------------------------------------------
+anchor_right(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set right anchor.
+        --------------------------------------------------
+anchor_top(
+    value - float,
+    mode - string (pixels|percent|none), default pixels
+)
+
+  - Get or set top anchor.
+        --------------------------------------------------
+bandwidth(
+    bandwidth - int
+)
+
+  - Get or set the NDI bandwidth preference (0 = lowest, 100 = highest).
+        --------------------------------------------------
+begin_dragdrop(
+    payload - std.json with at least type field
+)
+
+  - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+button(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+button_popup(
+    title - string
+) -> nanogui.button_popup
+
+  - Create a child popup button.
+        --------------------------------------------------
+capture(
+    filename - string, scale - float (defaults to the screen's pixel ratio)
+)
+
+  - Render this widget (and only its subtree) to an offscreen framebuffer and save it as a PNG file.
+        --------------------------------------------------
+child_count()
+
+  - Get number of child widgets.
+        --------------------------------------------------
+children(
+    index - int (optional)
+)
+
+  - Get list of child widgets.
+        --------------------------------------------------
+children_visible(
+    visible - bool
+)
+
+  - Set visibility of child widgets.
+        --------------------------------------------------
+clear_anchor_bottom()
+
+  - Clear bottom anchor.
+        --------------------------------------------------
+clear_anchor_left()
+
+  - Clear left anchor.
+        --------------------------------------------------
+clear_anchor_right()
+
+  - Clear right anchor.
+        --------------------------------------------------
+clear_anchor_top()
+
+  - Clear top anchor.
+        --------------------------------------------------
+clear_anchors()
+
+  - Clear all anchors.
+        --------------------------------------------------
+clear_children()
+
+  - Remove all child widgets.
+        --------------------------------------------------
+codebox(
+    text - string
+) -> nanogui.codebox
+
+  - Create a child codebox widget.
+        --------------------------------------------------
+collapsable(
+    title - string
+) -> nanogui.collapsable
+
+  - Create a child collapsable widget.
+        --------------------------------------------------
+color_selector() -> nanogui.color_selector
+
+  - Create a child color selector widget.
+        --------------------------------------------------
+combobox(
+    title - string
+) -> nanogui.combobox
+
+  - Create a child combobox.
+        --------------------------------------------------
+connect(
+    source_name - string (optional),
+    return - bool
+)
+
+  - Connect to an NDI source. Without a name the first discovered source is used.
+        --------------------------------------------------
+connections(
+    return - int
+)
+
+  - Get how many sources this receiver is connected to.
+        --------------------------------------------------
+contains(
+    p - vec2i Point
+)
+
+  - Check if point is inside the widget.
+        --------------------------------------------------
+content() -> nanogui.widget
+
+  - Get content widget.
+        --------------------------------------------------
+control(
+    name - string,
+    group - string
+) -> nanogui.midicontrolio
+
+  - Create a child MIDI control IO (generic value holder).
+        --------------------------------------------------
+controlbutton(
+    name - string,
+    group - string
+) -> nanogui.midicontrolbutton
+
+  - Create a child MIDI control button.
+        --------------------------------------------------
+controlcombo(
+    name - string,
+    group - string
+) -> nanogui.midicontrolcombo
+
+  - Create a child MIDI control combo box.
+        --------------------------------------------------
+controlfloat(
+    name - string,
+    group - string
+) -> nanogui.midicontrolfloat
+
+  - Create a child MIDI control float.
+        --------------------------------------------------
+controlint(
+    name - string,
+    group - string
+) -> nanogui.midicontrolint
+
+  - Create a child MIDI control integer.
+        --------------------------------------------------
+controlslider(
+    name - string,
+    group - string
+) -> nanogui.midicontrolslider
+
+  - Create a child MIDI control slider.
+        --------------------------------------------------
+controltext(
+    name - string,
+    group - string
+) -> nanogui.midicontroltext
+
+  - Create a child MIDI control text box.
+        --------------------------------------------------
+controlvector(
+    name - string,
+    group - string
+) -> nanogui.midicontrolvector
+
+  - Create a child MIDI control vector.
+        --------------------------------------------------
+cursor(
+    value - int
+)
+
+  - Get or set cursor.
+        --------------------------------------------------
+disconnect(
+    return - self
+)
+
+  - Stop receiving and release the NDI receiver.
+        --------------------------------------------------
+dragdrop_enabled(
+    value - bool
+)
+
+  - Get or set automatic dragdrop start state.
+        --------------------------------------------------
+enabled(
+    value - bool
+)
+
+  - Get or set enabled state.
+        --------------------------------------------------
+filebrowser(
+    path - string
+) -> nanogui.filebrowser
+
+  - Create a child file browser.
+        --------------------------------------------------
+find_widget(
+    p - vec2i Point
+)
+
+  - Find widget at position.
+        --------------------------------------------------
+fixed_height(
+    value - int
+)
+
+  - Get or set fixed widget height.
+        --------------------------------------------------
+fixed_size(
+    value - vec2i Size
+)
+
+  - Get or set the fixed size.
+        --------------------------------------------------
+fixed_width(
+    value - int
+)
+
+  - Get or set fixed widget width.
+        --------------------------------------------------
+floatbox(
+    value - string
+) -> nanogui.floatbox
+
+  - Create a child float box.
+        --------------------------------------------------
+focus(
+    focused - bool
+)
+
+  - Call focus handler.
+        --------------------------------------------------
+focus_default(
+    focused - bool
+)
+
+  - Call default focus handler.
+        --------------------------------------------------
+focused(
+    value - bool
+)
+
+  - Get or set focused state.
+        --------------------------------------------------
+font_size(
+    value - int
+)
+
+  - Get or set font size.
+        --------------------------------------------------
+frame_count(
+    return - int
+)
+
+  - Get how many frames have been received.
+        --------------------------------------------------
+frame_rate(
+    return - float
+)
+
+  - Get the frame rate reported by the last received frame.
+        --------------------------------------------------
+graph(
+    caption - string
+) -> nanogui.graph
+
+  - Create a child graph widget.
+        --------------------------------------------------
+gridview() -> nanogui.gridview
+
+  - Create a child grid view widget.
+        --------------------------------------------------
+has_font_size()
+
+  - Check if custom font size is set.
+        --------------------------------------------------
+height(
+    value - int
+)
+
+  - Get or set widget height.
+        --------------------------------------------------
+hscroll(
+    scroll - float
+) -> nanogui.hscroll
+
+  - Create a child horizontal scroll panel.
+        --------------------------------------------------
+image(
+    path - string
+) -> nanogui.image
+
+  - Create a child image widget.
+        --------------------------------------------------
+intbox(
+    value - string
+) -> nanogui.intbox
+
+  - Create a child integer box.
+        --------------------------------------------------
+invert(
+    invert_y - bool
+)
+
+  - Get or set whether received frames are flipped vertically.
+        --------------------------------------------------
+is_connected(
+    return - bool
+)
+
+  - Check if the receiver is connected to a source.
+        --------------------------------------------------
+keyboard(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call keyboard handler.
+        --------------------------------------------------
+keyboard_character(
+    codepoint - int
+)
+
+  - Call keyboard character handler.
+        --------------------------------------------------
+keyboard_character_default(
+    codepoint - int
+)
+
+  - Call default keyboard character handler.
+        --------------------------------------------------
+keyboard_default(
+    key - int, scancode - int, action - int, modifiers - int
+)
+
+  - Call default keyboard handler.
+        --------------------------------------------------
+label(
+    text - string
+) -> nanogui.label
+
+  - Create a child label.
+        --------------------------------------------------
+layout(
+    name - string (vertical|horizontal)
+)
+
+  - Get current layout or set layout by name.
+        --------------------------------------------------
+matrixnode(
+    name - string,
+    guid - string
+) -> nanogui.modmatrixnode
+
+  - Create a child modmatrix node.
+        --------------------------------------------------
+metadata(
+    return - string
+)
+
+  - Get the last metadata the source sent.
+        --------------------------------------------------
+mouse_button(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call mouse button handler.
+        --------------------------------------------------
+mouse_button_default(
+    p - vec2f Point, button - int, down - bool, modifiers - int
+)
+
+  - Call default mouse button handler.
+        --------------------------------------------------
+mouse_drag(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse drag handler.
+        --------------------------------------------------
+mouse_drag_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse drag handler.
+        --------------------------------------------------
+mouse_enter(
+    p - vec2f Point, enter - bool
+)
+
+  - Call mouse enter/leave handler.
+        --------------------------------------------------
+mouse_enter_default(
+    p - vec2f Point, enter - bool
+)
+
+  - Call default mouse enter/leave handler.
+        --------------------------------------------------
+mouse_motion(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call mouse motion handler.
+        --------------------------------------------------
+mouse_motion_default(
+    p - vec2f Point, rel - vec2f Delta, button - int, modifiers - int
+)
+
+  - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
+new_texture() -> nanogui.texture
+
+  - Create a child GLSL texture.
+        --------------------------------------------------
+on_destroy(
+    callback - function
+)
+
+  - Set or clear the on destroy callback.
+        --------------------------------------------------
+on_dragdrop(
+    callback - function(payload_json, local_pos)
+)
+
+  - Set or clear dragdrop drop callback.
+        --------------------------------------------------
+on_dragdrop_hover(
+    callback - function(payload_json, local_pos) -> bool
+)
+
+  - Set or clear dragdrop hover callback.
+        --------------------------------------------------
+on_draw(
+    callback - function
+)
+
+  - Set or clear the draw callback.
+        --------------------------------------------------
+on_focus(
+    callback - function
+)
+
+  - Set or clear the focus callback.
+        --------------------------------------------------
+on_keyboard(
+    callback - function
+)
+
+  - Set or clear the keyboard callback.
+        --------------------------------------------------
+on_keyboard_character(
+    callback - function
+)
+
+  - Set or clear the keyboard character callback.
+        --------------------------------------------------
+on_layout(
+    callback - function
+)
+
+  - Set or clear the layout callback.
+        --------------------------------------------------
+on_mouse_button(
+    callback - function
+)
+
+  - Set or clear the mouse button callback.
+        --------------------------------------------------
+on_mouse_drag(
+    callback - function
+)
+
+  - Set or clear the mouse drag callback.
+        --------------------------------------------------
+on_mouse_enter(
+    callback - function
+)
+
+  - Set or clear the mouse enter/leave callback.
+        --------------------------------------------------
+on_mouse_motion(
+    callback - function
+)
+
+  - Set or clear the mouse motion callback.
+        --------------------------------------------------
+on_scroll(
+    callback - function
+)
+
+  - Set or clear the scroll callback.
+        --------------------------------------------------
+parent() -> nanogui.widget
+
+  - Get parent widget.
+        --------------------------------------------------
+position(
+    value - vec2i Position
+)
+
+  - Get or set widget position.
+        --------------------------------------------------
+pushbutton(
+    title - string
+) -> nanogui.button
+
+  - Create a child button.
+        --------------------------------------------------
+refresh_layout()
+
+  - Mark this widget for layout refresh.
+        --------------------------------------------------
+refresh_size()
+
+  - Mark this widget for size refresh.
+        --------------------------------------------------
+screen() -> nanogui.screen
+
+  - Get parent widget.
+        --------------------------------------------------
+scroll(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call scroll handler.
+        --------------------------------------------------
+scroll_default(
+    p - vec2f Point, rel - vec2f Scroll delta
+)
+
+  - Call default scroll handler.
+        --------------------------------------------------
+scrollarea(
+    scale - float
+) -> nanogui.scrollarea
+
+  - Create a child scroll area widget.
+        --------------------------------------------------
+set_source_name(
+    source_name - string
+)
+
+  - Set the NDI source name to receive.
+        --------------------------------------------------
+shader(
+    source - string,
+    render_size - vec2
+) -> nanogui.shader
+
+  - Create a child GLSL shader widget.
+        --------------------------------------------------
+shader_view() -> nanogui.shader_view
+
+  - Create a child GLSL shader view widget.
+        --------------------------------------------------
+size(
+    value - vec2i Size
+)
+
+  - Get or set the widget size.
+        --------------------------------------------------
+slider(
+    caption - string
+) -> nanogui.slider
+
+  - Create a child slider widget.
+        --------------------------------------------------
+source_aspect_ratio(
+    return - float
+)
+
+  - Get the display aspect ratio of the received frames (width / height when the source uses square pixels).
+        --------------------------------------------------
+source_height(
+    return - int
+)
+
+  - Get the height of the received frames.
+        --------------------------------------------------
+source_name(
+    return - string
+)
+
+  - Get the NDI source name this receiver uses.
+        --------------------------------------------------
+source_size(
+    return - vec2
+)
+
+  - Get the size of the received frames.
+        --------------------------------------------------
+source_width(
+    return - int
+)
+
+  - Get the width of the received frames.
+        --------------------------------------------------
+sources(
+    timeout_ms - int (optional, default 200),
+    return - json
+)
+
+  - Get the list of available NDI sources. Returns source name list.
+        --------------------------------------------------
+spout_receiver(
+    name - string
+) -> nanogui.spout_receiver
+
+  - Create a child Spout receiver widget.
+        --------------------------------------------------
+tabwidget(
+    first_tab_name - string
+) -> nanogui.tabwidget
+
+  - Create a child tab widget.
+        --------------------------------------------------
+textarea(
+    text - string
+) -> nanogui.textarea
+
+  - Create a child textarea widget.
+        --------------------------------------------------
+textbox(
+    value - string
+) -> nanogui.textbox
+
+  - Create a child textbox.
+        --------------------------------------------------
+texture(
+    return - texture
+)
+
+  - Get the texture the received frames are uploaded to.
+        --------------------------------------------------
+theme(
+    value - nanogui.theme
+) -> nanogui.theme
+
+  - Get or set theme.
+        --------------------------------------------------
+timeline(
+    caption - string
+) -> nanogui.timeline
+
+  - Create a child timeline widget.
+        --------------------------------------------------
+timeline_item(
+    beat - float,
+    length - float,
+    caption - string
+) -> nanogui.timeline_item
+
+  - Create a child timeline item.
+        --------------------------------------------------
+tooltip(
+    value - string
+)
+
+  - Get or set tooltip.
+        --------------------------------------------------
+valid(
+    return - bool
+)
+
+  - Check if the receiver has a texture with received pixels.
+        --------------------------------------------------
+visible(
+    value - bool
+)
+
+  - Get or set visibility.
+        --------------------------------------------------
+visible_recursive()
+
+  - Check visibility including parents.
+        --------------------------------------------------
+vscroll(
+    scroll - float
+) -> nanogui.vscroll
+
+  - Create a child vertical scroll panel.
+        --------------------------------------------------
+warp_mapper() -> nanogui.warp_mapper
+
+  - Create a child projection mapping editor: one input source, an input mask stage and an output mask transform stage, with any number of masks composited into one output.
+        --------------------------------------------------
+widget() -> nanogui.widget
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_solid(
+    background_color - vec4f
+) -> nanogui.widget_solid
+
+  - Create a child shz_widget.
+        --------------------------------------------------
+widget_unique(
+    guid - string
+) -> nanogui.widget_unique
+
+  - Create a child unique widget.
+        --------------------------------------------------
+width(
+    value - int
+)
+
+  - Get or set widget width.
+        --------------------------------------------------
+window(
+    title - string
+) -> nanogui.window
+
+  - Create a child Window.
+        --------------------------------------------------
+x(
+    value - float
+)
+
+  - Get or set widget X position.
+        --------------------------------------------------
+y(
+    value - float
+)
+
+  - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: nanogui.ndi_sender
+==================================================
+
+        --------------------------------------------------
+clock_video(
+    enabled - bool
+)
+
+  - Get or set whether NDI paces sends to the reported frame rate (blocking).
+        --------------------------------------------------
+close(
+    return - self
+)
+
+  - Stop the NDI sender and free the source name.
+        --------------------------------------------------
+connections(
+    return - int
+)
+
+  - Get how many receivers are connected to this source.
+        --------------------------------------------------
+groups(
+    groups - string
+)
+
+  - Get or set the comma separated NDI groups this source belongs to.
+        --------------------------------------------------
+metadata(
+    metadata - string
+)
+
+  - Get or set the connection metadata XML advertised to receivers.
+        --------------------------------------------------
+recreate(
+    return - self
+)
+
+  - Recreate the sender, for example after another process released the name.
+        --------------------------------------------------
+send(
+    texture - texture,
+    fps - float (optional frame rate, default 60)
+)
+
+  - Send a texture to this NDI source.
+        --------------------------------------------------
+source_name(
+    source_name - string
+)
+
+  - Get or set the NDI source name. Setting the name recreates the sender.
+        --------------------------------------------------
+tally(
+    return - json
+)
+
+  - Get the preview and program tally state reported by switchers.
+        --------------------------------------------------
+valid(
+    return - bool
+)
+
+  - Check whether the NDI sender is active.
         --------------------------------------------------
 
 
@@ -25037,6 +26398,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -25767,6 +27134,72 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_active(
+    return - bool
+)
+
+  - Check whether the screen NDI sender is live.
+        --------------------------------------------------
+ndi_capture_size(
+    return - vec2f
+)
+
+  - Get the pixel size of the frames published over NDI.
+        --------------------------------------------------
+ndi_connections(
+    return - int
+)
+
+  - Get how many receivers are connected to this screen source.
+        --------------------------------------------------
+ndi_enabled(
+    enabled - bool
+)
+
+  - Get or set whether this screen is published as an NDI source. The published frame is the fully composed window, GUI widgets included.
+        --------------------------------------------------
+ndi_frame_rate(
+    fps - float
+)
+
+  - Get or set how often the screen is published over NDI. The value is also reported to receivers; 0 keeps the last value.
+        --------------------------------------------------
+ndi_groups(
+    groups - string
+)
+
+  - Get or set the comma separated NDI groups this source belongs to.
+        --------------------------------------------------
+ndi_metadata(
+    metadata - string
+)
+
+  - Get or set the connection metadata XML advertised to receivers.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
+ndi_recreate(
+    return - bool
+)
+
+  - Recreate the screen NDI sender (for example after a duplicate source name conflict).
+        --------------------------------------------------
+ndi_source_name(
+    source_name - string
+)
+
+  - Get or set the NDI source name. Setting the name recreates the sender so the new name is advertised immediately.
+        --------------------------------------------------
+ndi_tally(
+    return - json
+)
+
+  - Get the preview and program tally state reported by switchers.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -26492,6 +27925,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -27261,6 +28700,60 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_connections(
+    return - int
+)
+
+  - Get how many NDI receivers are connected to this shader.
+        --------------------------------------------------
+ndi_enabled(
+    enabled - bool
+)
+
+  - Get or set whether this shader publishes its output over NDI.
+        --------------------------------------------------
+ndi_frame_rate(
+    fps - float
+)
+
+  - Get or set the frame rate advertised in NDI metadata.
+        --------------------------------------------------
+ndi_groups(
+    groups - string
+)
+
+  - Get or set the comma separated NDI groups this source belongs to.
+        --------------------------------------------------
+ndi_metadata(
+    metadata - string
+)
+
+  - Get or set the connection metadata XML advertised to NDI receivers.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
+ndi_recreate(
+    return - self
+)
+
+  - Recreate the NDI source, for example after another process released the name.
+        --------------------------------------------------
+ndi_source_name(
+    name - string
+)
+
+  - Get or set the NDI source name this shader publishes. Setting the name recreates the source.
+        --------------------------------------------------
+ndi_tally(
+    return - json
+)
+
+  - Get the preview and program tally reported by NDI switchers.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -28131,6 +29624,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -28821,6 +30320,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -29543,6 +31048,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -30291,6 +31802,12 @@ movable(
 )
 
   - Get or set tab drag-reorder mode.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -31075,6 +32592,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -31808,6 +33331,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -32675,6 +34204,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -33409,6 +34944,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -34082,6 +35623,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -35047,6 +36594,12 @@ move_mask(
 
   - Move the whole input mask.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_mask()
 
   - Add a mask covering the whole input and select it. Its output transform is seeded from that rect, so it behaves like the first mask of a new widget.
@@ -35973,6 +37526,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -36647,6 +38206,12 @@ mouse_motion_default(
 
   - Call default mouse motion handler.
         --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
+        --------------------------------------------------
 new_texture() -> nanogui.texture
 
   - Create a child GLSL texture.
@@ -37320,6 +38885,12 @@ mouse_motion_default(
 )
 
   - Call default mouse motion handler.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -38048,6 +39619,12 @@ movable_y(
 )
 
   - Get or set Y-axis move.
+        --------------------------------------------------
+ndi_receiver(
+    source_name - string
+) -> nanogui.ndi_receiver
+
+  - Create a child NDI receiver widget. The received frames are available as a texture and can be used as a shader input.
         --------------------------------------------------
 new_texture() -> nanogui.texture
 
@@ -39513,25 +41090,81 @@ Object: subprocess.process
 ==================================================
 
         --------------------------------------------------
+close_stdin()
+
+  - Close the stdin pipe so the process reads an end-of-file.
+        --------------------------------------------------
+codepage(
+    Windows codepage id of the process console, for example 65001 for UTF-8 or 437 for the default DOS codepage.
+)
+
+  - Set the console encoding used when exchanging text with the process (0 transfers raw bytes).
+        --------------------------------------------------
+communicate(
+    Text to write to the stdin pipe before closing it (default empty).,
+    Milliseconds to wait for the process, negative waits without limit (default -1).
+)
+
+  - Send optional input, wait for the process to finish and return its stdout, stderr and returncode as a json object.
+        --------------------------------------------------
 exited()
 
-  - Returns true if the process exited.
+  - Returns true if the process exited. Also true when it was never started or can no longer be tracked.
         --------------------------------------------------
 kill()
 
-  - Force kill the process (SIGKILL / TerminateProcess).
+  - Force kill the process and everything it started (SIGKILL on the process group / TerminateJobObject).
         --------------------------------------------------
 pid()
 
   - Get process id.
         --------------------------------------------------
+pipes(
+    Pipe the stdin of the process so write() can send data to it (default true).,
+    Pipe the stdout of the process so read() can retrieve it (default true).,
+    Pipe the stderr of the process so read() can retrieve it (default true).
+)
+
+  - Enable console pipes of the process so write()/read() can be used. Must be called before start().
+        --------------------------------------------------
 poll()
 
   - Check process status. Returns return code or none if still running.
         --------------------------------------------------
+read(
+    Stream to read: "stdout" or "stderr" (default "stdout").,
+    Maximum amount of bytes to return, negative returns all available data (default -1).
+)
+
+  - Read everything currently available in a pipe of the process without blocking.
+        --------------------------------------------------
+read_all(
+    Stream to read: "stdout" or "stderr" (default "stdout").,
+    Milliseconds to wait for the output to end, negative waits without limit (default -1).
+)
+
+  - Wait until a pipe of the process is closed and return everything that was written to it.
+        --------------------------------------------------
+read_line(
+    Stream to read: "stdout" or "stderr" (default "stdout").,
+    Milliseconds to wait for a line, negative waits until the process ends (default -1).
+)
+
+  - Wait for one text line from a pipe of the process. Returns an empty string on timeout or end of output.
+        --------------------------------------------------
+read_ready(
+    Stream to check: "stdout" or "stderr" (default "stdout").
+)
+
+  - Check if a pipe of the process has data waiting to be read.
+        --------------------------------------------------
 returncode()
 
   - Get cached return code (or none if not finished).
+        --------------------------------------------------
+running()
+
+  - Returns true only while the process is alive. Returns false when it exited, was killed, was never started or can no longer be tracked. Use this instead of pipe state to decide if a process is still running.
         --------------------------------------------------
 start(
     args: list - Argument list. If shell=true, use a single string in args[0].,
@@ -39542,21 +41175,37 @@ start(
 
   - Start a subprocess (similar to Python subprocess.Popen).
         --------------------------------------------------
+status()
+
+  - Return the full process state as a json object without blocking. Members: started, running, exited, returncode, pid, stdin_open, stdin_piped, stdout_piped, stderr_piped, stdout_eof, stderr_eof, stdout_readable, stderr_readable, stdout_pending, stderr_pending.
+        --------------------------------------------------
 stop()
 
   - Send Ctrl+C / SIGINT to request graceful shutdown.
         --------------------------------------------------
 terminate()
 
-  - Request process termination (SIGTERM / TerminateProcess).
+  - Request process termination (Ctrl+C / SIGTERM). On Windows this signals the whole process group and only falls back to a forced kill when the signal can not be delivered.
         --------------------------------------------------
 terminate_on_destroy()
 
   - Set whether the process should be terminated when the object is destroyed.
         --------------------------------------------------
-wait()
+wait(
+    Maximum milliseconds to wait, negative waits until the process exits (default -1).
+)
 
-  - Wait until process exits and return its exit code.
+  - Wait until process exits and return its exit code, or none if the timeout elapsed first. Piped output is drained while waiting so the process can not block on a full output pipe.
+        --------------------------------------------------
+write()
+
+  - Write a string to the stdin pipe of the process and return the amount of bytes written.
+        --------------------------------------------------
+write_line(
+    Text to send to the process. An empty string only sends the line feed.
+)
+
+  - Write a string followed by a line feed to the stdin pipe of the process.
         --------------------------------------------------
 
 
