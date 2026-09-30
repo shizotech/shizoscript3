@@ -4003,6 +4003,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -4772,6 +4776,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -5544,6 +5552,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -6375,6 +6387,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -7117,6 +7133,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -7824,6 +7844,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -8582,6 +8606,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -9467,6 +9495,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -10226,6 +10258,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -10988,6 +11024,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -11795,6 +11835,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -12559,6 +12603,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -13275,6 +13323,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -13960,6 +14012,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -14666,6 +14722,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -15422,6 +15482,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -16626,6 +16690,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -17377,6 +17445,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 broadcast_value()
 
@@ -18156,6 +18228,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 broadcast_value()
 
@@ -18966,6 +19042,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 broadcast_value()
 
   - Broadcast the current value to linked controls and MIDI devices.
@@ -19775,6 +19855,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 broadcast_value()
 
   - Broadcast the current value to linked controls and MIDI devices.
@@ -20572,6 +20656,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 broadcast_value()
 
   - Broadcast the current value to linked controls and MIDI devices.
@@ -21363,6 +21451,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 broadcast_value()
 
   - Broadcast the current value to linked controls and MIDI devices.
@@ -22141,6 +22233,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 broadcast_value()
 
@@ -22945,6 +23041,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 broadcast_value()
 
   - Broadcast the current value to linked controls and MIDI devices.
@@ -23723,6 +23823,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 broadcast_value()
 
@@ -24625,6 +24729,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -25354,6 +25462,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -26201,6 +26313,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -26884,6 +27000,10 @@ begin_resize(
 )
 
   - Start native window resize from a given edge/corner.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -27700,6 +27820,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -28443,6 +28567,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -29420,6 +29548,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -30104,6 +30236,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -30820,6 +30956,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -31586,6 +31726,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -32372,6 +32516,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -33121,6 +33269,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -33984,6 +34136,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 bucket_size(
     beats - float
 )
@@ -34728,6 +34884,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -35437,6 +35597,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -36161,6 +36325,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -37340,6 +37508,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -38020,6 +38192,10 @@ begin_dragdrop(
 
   - Begin a dragdrop operation from this widget.
         --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
+        --------------------------------------------------
 button(
     title - string
 )
@@ -38693,6 +38869,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
@@ -39377,6 +39557,10 @@ begin_dragdrop(
 )
 
   - Begin a dragdrop operation from this widget.
+        --------------------------------------------------
+bring_to_front()
+
+  - Bring this widget to the front of its parent's child list.
         --------------------------------------------------
 button(
     title - string
