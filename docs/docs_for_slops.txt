@@ -4645,6 +4645,18 @@ tooltip(
 
   - Get or set tooltip.
         --------------------------------------------------
+transparent(
+    value - bool
+)
+
+  - Get or set button transparency.
+        --------------------------------------------------
+transparent_name(
+    value - bool
+)
+
+  - Get or set button name transparency.
+        --------------------------------------------------
 visible(
     value - bool
 )
@@ -5438,6 +5450,18 @@ tooltip(
 )
 
   - Get or set tooltip.
+        --------------------------------------------------
+transparent(
+    value - bool
+)
+
+  - Get or set button transparency.
+        --------------------------------------------------
+transparent_name(
+    value - bool
+)
+
+  - Get or set button name transparency.
         --------------------------------------------------
 visible(
     value - bool
@@ -9294,6 +9318,18 @@ tooltip(
 )
 
   - Get or set tooltip.
+        --------------------------------------------------
+transparent(
+    value - bool
+)
+
+  - Get or set button transparency.
+        --------------------------------------------------
+transparent_name(
+    value - bool
+)
+
+  - Get or set button name transparency.
         --------------------------------------------------
 visible(
     value - bool
@@ -17332,6 +17368,18 @@ tooltip(
 
   - Get or set tooltip.
         --------------------------------------------------
+transparent(
+    value - bool
+)
+
+  - Get or set button transparency.
+        --------------------------------------------------
+transparent_name(
+    value - bool
+)
+
+  - Get or set button name transparency.
+        --------------------------------------------------
 visible(
     value - bool
 )
@@ -24488,6 +24536,12 @@ tooltip(
 )
 
   - Get or set tooltip.
+        --------------------------------------------------
+transparent(
+    value - bool
+)
+
+  - Get or set transparent state.
         --------------------------------------------------
 unlink_from(
     control - The midicontrol_base to unlink from.
