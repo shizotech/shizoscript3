@@ -4249,6 +4249,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -4328,6 +4332,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -5039,6 +5047,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -5118,6 +5130,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -5815,6 +5831,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -5892,6 +5912,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -6665,6 +6689,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -6732,6 +6760,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -7391,6 +7423,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -7464,6 +7500,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -8103,6 +8143,10 @@ g(
 
   - Get or set the green channel (0.0-1.0).
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -8182,6 +8226,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -8885,6 +8933,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -8970,6 +9022,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -9779,6 +9835,10 @@ forward()
 
   - Navigate to next directory in history.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -9846,6 +9906,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -10547,6 +10611,10 @@ format(
 
   - Get or set regex validation format.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -10614,6 +10682,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -11343,6 +11415,10 @@ foreground_color(
 
   - Get or set graph foreground color.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -11422,6 +11498,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -12129,6 +12209,10 @@ get_item_at(
 
   - Get item at row,col.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -12208,6 +12292,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -12879,6 +12967,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -12946,6 +13038,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -13587,6 +13683,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -13654,6 +13754,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -14289,6 +14393,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -14354,6 +14462,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -15011,6 +15123,10 @@ format(
 
   - Get or set regex validation format.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -15078,6 +15194,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -15753,6 +15873,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -15820,6 +15944,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -16972,6 +17100,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -17051,6 +17183,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -17750,6 +17886,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -17829,6 +17969,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -18539,6 +18683,10 @@ get_button(
 
   - Get the button widget.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -18630,6 +18778,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -19346,6 +19498,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -19431,6 +19587,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -20159,6 +20319,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -20238,6 +20402,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -20960,6 +21128,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -21039,6 +21211,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -21755,6 +21931,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -21834,6 +22014,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -22544,6 +22728,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -22623,6 +22811,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -23345,6 +23537,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -23424,6 +23620,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -24134,6 +24334,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -24213,6 +24417,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -25039,6 +25247,10 @@ get_node_by_path(
 
   - Get a node by its path (e.g., 'node1/subnode2').
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -25112,6 +25324,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -25776,6 +25992,10 @@ frame_rate(
 
   - Get the frame rate reported by the last received frame.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -25855,6 +26075,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -26595,6 +26819,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -26662,6 +26890,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -27299,6 +27531,10 @@ garbage_cleared()
 
   - Check if all disposed widgets are cleared
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -27366,6 +27602,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -28112,6 +28352,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -28179,6 +28423,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -28886,6 +29134,10 @@ fragment_source(
 
   - Get or set fragment shader source.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -28976,6 +29228,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -29836,6 +30092,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -29909,6 +30169,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -30531,6 +30795,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -30598,6 +30866,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -31257,6 +31529,10 @@ framesync(
 
   - Get or set non-blocking Spout frame synchronization.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -31342,6 +31618,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -32015,6 +32295,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -32094,6 +32378,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -32826,6 +33114,10 @@ foreground_color(
 
   - Get or set foreground color used for appended text.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -32893,6 +33185,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -33570,6 +33866,10 @@ format(
 
   - Get or set regex validation format.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -33637,6 +33937,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -34436,6 +34740,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -34519,6 +34827,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -35178,6 +35490,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -35251,6 +35567,10 @@ lane(
 )
 
   - Get or set the vertical lane index of this timeline item.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -35880,6 +36200,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -35947,6 +36271,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -36689,6 +37017,10 @@ force_render()
 
   - Force the warp output to be re-rendered on the next frame.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -36830,6 +37162,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -37790,6 +38126,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -37857,6 +38197,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -38474,6 +38818,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -38541,6 +38889,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -39152,6 +39504,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -39225,6 +39581,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
@@ -39850,6 +40210,10 @@ font_size(
 
   - Get or set font size.
         --------------------------------------------------
+global_frame_index()
+
+  - Get the global frame index.
+        --------------------------------------------------
 graph(
     caption - string
 )
@@ -39927,6 +40291,10 @@ label(
 )
 
   - Create a child label.
+        --------------------------------------------------
+last_frame_index()
+
+  - Get the last frame index when this widget was drawn.
         --------------------------------------------------
 layout(
     name - string (vertical|horizontal)
