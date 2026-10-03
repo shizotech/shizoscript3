@@ -1626,6 +1626,13 @@ std.second()
 
   - Get current second as number (0-60)
         --------------------------------------------------
+std.set_env(
+    name: string - Environment variable name,
+    value: string - Value to assign to the environment variable
+)
+
+  - Set an environment variable for this process and its child processes
+        --------------------------------------------------
 std.sleep(
     milliseconds: Duration to pause execution
 )
