@@ -41203,11 +41203,11 @@ Object: std.buffer
         --------------------------------------------------
 clear()
 
-  - Returns the number of elements in a JSON array or the number of keys in a JSON object.
+  - Removes all bytes from the buffer and returns the buffer.
         --------------------------------------------------
 size()
 
-  - Returns the number of elements in a JSON array or the number of keys in a JSON object.
+  - Returns the number of bytes stored in the buffer.
         --------------------------------------------------
 
 
