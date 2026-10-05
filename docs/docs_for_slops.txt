@@ -3276,7 +3276,8 @@ file_name(
         --------------------------------------------------
 files(
     path: string - Directory relative to local root,
-    recursive: bool (default: true) - true = include subfolders; false = top-level onlyabsolute_paths: bool (default: false)
+    recursive: bool (default: true) - true = include subfolders; false = top-level only,
+    absolute_paths: bool (default: false)
 )
 
   - List files in directory (local root)
@@ -3399,10 +3400,10 @@ set_limit(
   - Set size limit in bytes (0 = unlimited)
         --------------------------------------------------
 size(
-    path: string - Path to file or directory
+    path: string - Path relative to local root
 )
 
-  - Get size of a file or directory in bytes
+  - Get size of a file or directory in bytes (local root)
         --------------------------------------------------
 write_file(
     path: string - Path relative to local root,
@@ -41290,7 +41291,7 @@ compact_string()
         --------------------------------------------------
 copy()
 
-  - Creates a deep copy of the JSON object.
+  - Creates a deep copy of the JSON object. If the JSON references itself, the copy contains the same self-reference instead of failing.
         --------------------------------------------------
 debug_refs(
     compact: int - flag to produce compact string (0) or pretty-printed (non-zero)
@@ -42374,8 +42375,8 @@ Object: webserver.http_server
         --------------------------------------------------
 hash_password(
     password: string - plaintext password,
-    iterations: int (optional) - PBKDF2 iterations, default 100000,
-    salt_len: int (optional) - salt length in bytes, default 16
+    iterations: int (optional) - PBKDF2 iterations, default 100000 (min 1000, max 10000000),
+    salt_len: int (optional) - salt length in bytes, default 16 (min 8, max 1024)
 )
 
   - Hash a password using PBKDF2-HMAC-SHA256
@@ -42448,8 +42449,8 @@ Object: webserver.https_server
         --------------------------------------------------
 hash_password(
     password: string - plaintext password,
-    iterations: int (optional) - PBKDF2 iterations, default 100000,
-    salt_len: int (optional) - salt length in bytes, default 16
+    iterations: int (optional) - PBKDF2 iterations, default 100000 (min 1000, max 10000000),
+    salt_len: int (optional) - salt length in bytes, default 16 (min 8, max 1024)
 )
 
   - Hash a password using PBKDF2-HMAC-SHA256
