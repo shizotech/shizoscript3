@@ -621,27 +621,33 @@ math.pow(
         --------------------------------------------------
 math.rand()
 
-  - Random float in range [0,1]
+  - Random float in range [0,1)
         --------------------------------------------------
 math.random_float(
     min: float - Minimum value,
     max: float - Maximum value
 )
 
-  - Random float in range [min,max]
+  - Random float in range [min,max) (min/max may be swapped)
         --------------------------------------------------
 math.random_int(
     min: int - Minimum value,
     max: int - Maximum value
 )
 
-  - Random integer in range [min,max]
+  - Random integer in range [min,max] (min/max may be swapped)
         --------------------------------------------------
 math.round(
     value: float - Floating point number to round
 )
 
   - Return the nearest integer value to the given number
+        --------------------------------------------------
+math.seed(
+    seed: int - Optional seed value
+)
+
+  - Seed the math random number generator (math.seed(n) for reproducible runs, math.seed() for a random seed)
         --------------------------------------------------
 math.sign(
     x: float - Returns +1, 0, or -1
@@ -1391,7 +1397,7 @@ std.day()
         --------------------------------------------------
 std.error()
 
-  - Print to console output
+  - Print to error output
         --------------------------------------------------
 std.exitprocess(
     code: int - Exit code to return to the operating system
@@ -1405,9 +1411,11 @@ std.float(
 
   - Convert input value to float
         --------------------------------------------------
-std.free()
+std.free(
+    object: Object, string, buffer or json variable to free
+)
 
-  - Delete an object
+  - Delete an object. String, buffer and json variables are reset to None instead of being destroyed.
         --------------------------------------------------
 std.global()
 
@@ -1612,7 +1620,7 @@ std.resolve_source_text(
         --------------------------------------------------
 std.runtime_error()
 
-  - Print to console output
+  - Throw a runtime error
         --------------------------------------------------
 std.save_config(
     package: string - Config package/folder name (safe token),
@@ -1701,7 +1709,7 @@ std.vtype(
         --------------------------------------------------
 std.warn()
 
-  - Print to console output
+  - Print warning output
         --------------------------------------------------
 std.wd()
 
