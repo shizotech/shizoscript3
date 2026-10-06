@@ -1155,9 +1155,17 @@ prolink.device()
 
   - CDJ data (Pro DJ Link) from the prolink-bridge ESP32 over USB
         --------------------------------------------------
+prolink.net_relay()
+
+  - Name of the relay ESP32 that sent the last lines over ShizoNet, empty if none yet.
+        --------------------------------------------------
 prolink.ports()
 
   - Serial ports with USB ids; esp = true for the CH343P of the ESP32-P4 boards.
+        --------------------------------------------------
+prolink.take_net_audio()
+
+  - Audio a relay ESP32 sent over ShizoNet ("prolink_pcm") since the last call, at most ~2 s: list of [rate, seq, source (1 listener behind the relay, 2 relay), us, ageMs, samples, data, values] as with take_audio(). The first call starts the module's ShizoNet node.
         --------------------------------------------------
 
 
@@ -1286,6 +1294,7 @@ shzdocs.get_path(
         --------------------------------------------------
 shzdocs.load_all_modules()
 
+  - Initialize all registered namespaces, so their functions show up in the documentation.
         --------------------------------------------------
 shzdocs.lookup(
     Path: string - Dot separated path like 'std', 'nanogui.context', 'math.sin()' or 'std.io'.,
@@ -40812,6 +40821,10 @@ master()
 
   - The tempo master deck (effectiveBpm, beatPhase, barPhase, beatsToCue, cueRamp, track ...), None if there is none.
         --------------------------------------------------
+network()
+
+  - Take the lines from a relay ESP32 in the network (ShizoNet) instead of USB. The module receives them itself (own ShizoNet node "VibeVJ-prolink") and sends requests and send() back to the relay.
+        --------------------------------------------------
 on_beat(
     callback: function
 )
@@ -40864,6 +40877,10 @@ send(
 state()
 
   - Everything: connection, ESP32 info, master number and all present players.
+        --------------------------------------------------
+take_audio()
+
+  - Audio the ESP32 sent over USB ("audio mic|line" in the firmware) since the last call, at most ~2 s: list of [rate, seq, source, us, ageMs, samples, data, values]: data = binary int16 little-endian mono, values = the same samples as floats -1..1. Only one object per connection should take it.
         --------------------------------------------------
 track(
     id: string - track id from player(n).track.id
@@ -41250,17 +41267,31 @@ analyzer()
 
   - Creates a new audio analyzer object.
         --------------------------------------------------
+feed(
+    samples - binary int16 LE or list of floats,
+    offset - byte offset into binary data (default 0)
+)
+
+  - Pushes mono samples after start_external(): binary int16 little-endian (optionally from a byte offset) or a list of floats -1..1. Returns the number of whole periods processed.
+        --------------------------------------------------
 fft()
 
   - Creates a new audio fft object.
         --------------------------------------------------
 start(
-    callback - audio callback,
-    callback - audio input callback,
-    config - audio config as json
+    callback - output monitor callback (or None),
+    callback - audio input callback (or None),
+    config - audio config as json: periodSize (16 - 65536, default 512), sampleRate (8000 - 384000, default 48000)
 )
 
-  - Starts the audio device.
+  - Starts the audio device (once per audio object). The output callback only receives a copy of each played block; writing to that buffer does not change what is played.
+        --------------------------------------------------
+start_external(
+    callback - audio input callback, called once per period like with start(),
+    config - [sampleRate=48000, periodSize=512]
+)
+
+  - Uses samples pushed with feed() instead of a sound card (e.g. audio received over the network). Can be called again to change the sample rate.
         --------------------------------------------------
 
 
@@ -42179,8 +42210,8 @@ running()
 start(
     args: list - Argument list. If shell=true, use a single string in args[0].,
     cwd: string - Working directory (optional).,
-    shell: bool - Run via shell (cmd.exe /C or /bin/sh -c).,
-    env: list - Optional environment entries as "KEY=VALUE".
+    shell: bool - Run via shell (cmd.exe /C or /bin/sh -c). Shell metacharacters in args[0] are interpreted by the shell.,
+    env: list - Optional environment entries as "KEY=VALUE", added to (or replacing entries of) the inherited environment.
 )
 
   - Start a subprocess (similar to Python subprocess.Popen).
@@ -42516,7 +42547,7 @@ close()
   - Close and delete the temporary file.
         --------------------------------------------------
 init(
-    prefix: string - Prefix for the temp file name (default: "tmp").,
+    prefix: string - Prefix for the temp file name (default: "tmp"; Windows uses only its first 3 characters).,
     ext: string - File extension (default: "").
 )
 
@@ -42752,6 +42783,6 @@ save(
     path: string - File path to save the zip file
 )
 
-  - Save zip file to specified path
+  - Save zip file to specified path. Returns true, or reports an error.
         --------------------------------------------------
 
