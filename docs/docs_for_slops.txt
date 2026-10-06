@@ -10,6 +10,7 @@
   - Namespace: mqtt
   - Namespace: nanogui
   - Namespace: opencv
+  - Namespace: prolink
   - Namespace: python
   - Namespace: shizonet
   - Namespace: shzdocs
@@ -96,6 +97,7 @@
   - Object Type: nanogui.widget_solid
   - Object Type: nanogui.widget_unique
   - Object Type: nanogui.window
+  - Object Type: prolink.device
   - Object Type: shizonet.artnet_device
   - Object Type: shizonet.client
   - Object Type: shizonet.device
@@ -1145,6 +1147,21 @@ opencv.testfn()
 
 
 ==================================================
+Namespace: prolink
+==================================================
+
+        --------------------------------------------------
+prolink.device()
+
+  - CDJ data (Pro DJ Link) from the prolink-bridge ESP32 over USB
+        --------------------------------------------------
+prolink.ports()
+
+  - Serial ports with USB ids; esp = true for the CH343P of the ESP32-P4 boards.
+        --------------------------------------------------
+
+
+==================================================
 Namespace: python
 ==================================================
 
@@ -1473,6 +1490,13 @@ std.input(
 
   - Reads a line of text from standard input, optionally displaying a prompt message.
         --------------------------------------------------
+std.instanceof(
+    value: any - Value to check,
+    classtype: class definition or class name - Class to check against
+)
+
+  - Check if the value is an instance of the class or of a class derived from it (also through several bases).
+        --------------------------------------------------
 std.int(
     value: any - Value to convert to integer
 )
@@ -1657,10 +1681,10 @@ std.set_env(
   - Set an environment variable for this process and its child processes
         --------------------------------------------------
 std.sleep(
-    milliseconds: Duration to pause execution
+    milliseconds: Duration to pause execution, -1 = forever
 )
 
-  - Suspend script execution for a duration (async). Negative durations are clamped to 0.
+  - Suspend script execution for a duration (async). -1 sleeps forever (keeps the script alive), other negative durations are clamped to 0.
         --------------------------------------------------
 std.stacktrace()
 
@@ -40742,6 +40766,110 @@ y(
 )
 
   - Get or set widget Y position.
+        --------------------------------------------------
+
+
+==================================================
+Object: prolink.device
+==================================================
+
+        --------------------------------------------------
+artwork(
+    n: int - device number
+)
+
+  - Artwork of the track on a deck as JPEG bytes, None if there is none.
+        --------------------------------------------------
+close()
+
+  - Close the port or stop the replay.
+        --------------------------------------------------
+connected()
+
+  - True while lines from the ESP32 (or the replay) arrive.
+        --------------------------------------------------
+deck_texture(
+    n: int - device number
+)
+
+  - RGBA8 pixels (width x height from deck_texture_info) for texture.upload_data(): detail waveform rows, marker rows (beats, cues, loops), preview waveform row, preview marker row.
+        --------------------------------------------------
+deck_texture_info(
+    n: int - device number
+)
+
+  - Size and revision of the waveform texture of a deck (None = no waveform yet). Upload deck_texture(n) again when rev changes.
+        --------------------------------------------------
+error()
+
+  - Last connection problem, empty if none.
+        --------------------------------------------------
+events()
+
+  - Events since the last call (beat, cue, master, track, meta, device, media, connected, disconnected, restart, warn, error).
+        --------------------------------------------------
+master()
+
+  - The tempo master deck (effectiveBpm, beatPhase, barPhase, beatsToCue, cueRamp, track ...), None if there is none.
+        --------------------------------------------------
+on_beat(
+    callback: function
+)
+
+  - Callback fn(beat) for every beat of every deck (beat.master tells the master).
+        --------------------------------------------------
+on_cue(
+    callback: function
+)
+
+  - Callback fn(cue) when a deck reaches a memory cue (e.g. the drop).
+        --------------------------------------------------
+on_event(
+    callback: function
+)
+
+  - Callback fn(event) for every event, event.type tells which.
+        --------------------------------------------------
+open(
+    port: string - COM port or /dev/tty*, empty = find the ESP32 (CH343P) automatically,
+    baud: int - baud rate of the firmware (default 2000000)
+)
+
+  - Connect to the prolink-bridge ESP32 over USB. Runs in the background and reconnects by itself. Objects with the same port share one connection.
+        --------------------------------------------------
+player(
+    n: int - device number
+)
+
+  - State of one player (1-6) or mixer (33+), None if unknown.
+        --------------------------------------------------
+port()
+
+  - Port in use, empty while not connected.
+        --------------------------------------------------
+replay(
+    path: string - JSONL recording,
+    speed: float - playback speed (default 1.0),
+    loop: bool - start again at the end (default true)
+)
+
+  - Play a recording (bridge.py --log) instead of reading the ESP32, e.g. to build visuals without CDJs.
+        --------------------------------------------------
+send(
+    command: string
+)
+
+  - Send a command line to the firmware, e.g. "info", "demo 1", "fetch 2" (docs/usb-protokoll.md).
+        --------------------------------------------------
+state()
+
+  - Everything: connection, ESP32 info, master number and all present players.
+        --------------------------------------------------
+track(
+    id: string - track id from player(n).track.id
+)
+
+  - Metadata of a track id (title, artist, key, genre ...), None if not known.
         --------------------------------------------------
 
 
