@@ -104,6 +104,8 @@
   - Object Type: simpleaudio.audio_analyzer
   - Object Type: simpleaudio.buffer
   - Object Type: std.buffer
+  - Object Type: std.critical_section
+  - Object Type: std.critical_section_named
   - Object Type: std.global
   - Object Type: std.json
   - Object Type: std.log_capture
@@ -1339,7 +1341,7 @@ std.base64_decode(
     data: string - Base64-encoded input string
 )
 
-  - Decode a Base64-encoded string to binary
+  - Decode a Base64-encoded string to binary. Returns None and raises a runtime error if the input is not valid Base64 (invalid character, wrong padding or a length that is not a multiple of 4). Whitespace is ignored.
         --------------------------------------------------
 std.base64_encode(
     data: string|binary - Input data to encode
@@ -1366,7 +1368,7 @@ std.config_path(
     key: string - Config key/file name without extension (safe token)
 )
 
-  - Get the file path for a config file (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+  - Get the file path for a config file (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux/macOS: $XDG_CONFIG_HOME/shizoscript/Configs or ~/.config/shizoscript/Configs). The directory name is 'Configs' with a capital C on every platform.
         --------------------------------------------------
 std.count(
     value: Container, string, or object
@@ -1379,17 +1381,27 @@ std.cout()
   - Print to terminal directly
         --------------------------------------------------
 std.critical_section(
-    string - optional, create a named critical section, if no name specified, creates a code-local critical section.
-For explanation: named critical section can be across different code sections, while non-named critical sections are bound to the scope in which they are in.
+    name: string - Optional. Creates a named critical section (a std.critical_section_named object). Without a name a code-local std.critical_section is created.
+A named section is shared by every script location that uses the same name, an unnamed section is bound to the code block it was created in.
 )
 
   - Create a critical section object (locked state). This can be used to lock parts of the code so that only one task can execute it at a time.
+The section is held until the variable holding it is reassigned or goes out of scope - call c.release() to end it earlier.
+Re-entering a section from the task that already owns it succeeds immediately (recursive, depth counted per task), so creating a section inside a loop is safe.
+        --------------------------------------------------
+std.critical_section_named(
+    name: string - Section name (defaults to "global"). Tasks contend per name, across different code blocks.
+)
+
+  - Create a named critical section object (locked state) shared by every script location that uses the same name.
+The section is held until the variable holding it is reassigned or goes out of scope - call c.release() to end it earlier.
+Re-entering a section from the task that already owns it succeeds immediately (recursive, depth counted per task).
         --------------------------------------------------
 std.date(
     format: string - Format string (e.g. "%Y-%m-%d %H:%M:%S")
 )
 
-  - Format current date/time using strftime-style format specifiers
+  - Format current date/time using strftime-style format specifiers. An empty format string returns an empty string.
         --------------------------------------------------
 std.day()
 
@@ -1426,10 +1438,10 @@ std.has_admin_privilege()
   - Returns true if run as administrator.
         --------------------------------------------------
 std.hex_to_char(
-    hex_str: string - A string representing a hexadecimal number
+    hex_str: string - A string representing a hexadecimal number (00-FF)
 )
 
-  - Convert a hexadecimal string (e.g. '41') to its corresponding character code (e.g. 65 for 'A')
+  - Convert a hexadecimal string (e.g. '41') to its corresponding character code (e.g. 65 for 'A'). Values above 255 are rejected.
         --------------------------------------------------
 std.hideconsole()
 
@@ -1468,11 +1480,11 @@ std.int(
   - Convert value to integer
         --------------------------------------------------
 std.is_class(
-    value: any - Value to check if it is a class,
-    classtype: - Check for a specific class type
+    value: any - Value to check if it is a class instance,
+    classtype: class definition - Optional, check for a specific class type
 )
 
-  - Check if the provided value is a function
+  - Check if the provided value is a class instance. With a second argument, checks against a specific class type.
         --------------------------------------------------
 std.is_function(
     value: any - Value to check if it is a function
@@ -1493,10 +1505,10 @@ std.is_list(
   - Check if value is a list
         --------------------------------------------------
 std.is_none(
-    value: any - Value to check if it's a JSON object
+    value: any - Value to check if it is None
 )
 
-  - Check if the value is a JSON object
+  - Check if the value is None
         --------------------------------------------------
 std.is_string(
     value: any - Value to check if it's a string
@@ -1529,14 +1541,14 @@ std.load_config(
     key: string - Config key/file name without extension (safe token)
 )
 
-  - Load JSON config from user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+  - Load JSON config from the user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux/macOS: $XDG_CONFIG_HOME/shizoscript/Configs or ~/.config/shizoscript/Configs). The directory name is 'Configs' with a capital C on every platform. Returns None when the file does not exist.
         --------------------------------------------------
 std.local_app_path(
     Vendorname: string - Vendor name (safe token),
     Productname: string - Product name (safe token)
 )
 
-  - Get the file path for App data (Windows: %USERPROFILE%/Documents/Shizoscript/Apps, Linux: $XDG_CONFIG_HOME/shizoscript/apps or ~/.config/shizoscript/apps)
+  - Get the file path for App data (Windows: %USERPROFILE%/Documents/Shizoscript/Apps, Linux/macOS: $XDG_CONFIG_HOME/shizoscript/Apps or ~/.config/shizoscript/Apps). The directory name is 'Apps' with a capital A on every platform.
         --------------------------------------------------
 std.local_executable()
 
@@ -1597,9 +1609,11 @@ std.print()
     +-------------------------------------------+
 
         --------------------------------------------------
-std.random_hash()
+std.random_hash(
+    length: int - Optional number of characters to generate (default 16, max 1048576)
+)
 
-  - Get current date and time in DD-MM-YYYY HH:MM:SS format
+  - Generate a random hexadecimal string (lowercase hex characters)
         --------------------------------------------------
 std.resolve_source_file(
     path: string - Path to the script file,
@@ -1628,7 +1642,8 @@ std.save_config(
     json: json - JSON value to serialize and write to disk
 )
 
-  - Save JSON config to user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+  - Save JSON config to the user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux/macOS: $XDG_CONFIG_HOME/shizoscript/Configs or ~/.config/shizoscript/Configs). The directory name is 'Configs' with a capital C on every platform.
+The file is written crash-atomically: content goes to '<key>.json.tmp' first and is then renamed over the target, so an interrupted write can never leave a half-written config behind.
         --------------------------------------------------
 std.second()
 
@@ -1645,7 +1660,7 @@ std.sleep(
     milliseconds: Duration to pause execution
 )
 
-  - Suspend script execution for a duration (async)
+  - Suspend script execution for a duration (async). Negative durations are clamped to 0.
         --------------------------------------------------
 std.stacktrace()
 
@@ -1663,7 +1678,8 @@ std.system(
     print_output: int/bool - Optional. Only used when capture=1. 1 prints captured output to console, 0 suppresses it
 )
 
-  - Execute a shell command. If capture is enabled, returns the command output (stdout+stderr). Otherwise returns the exit code.
+  - Execute a shell command. If capture is enabled, returns the command output (stdout+stderr). Otherwise returns the exit code (0 on success).
+Capture mode returns the output only - the exit code of a captured command is reported as a runtime warning when it is non-zero.
         --------------------------------------------------
 std.system_path(
     path: string - Path with environment variables
@@ -1688,12 +1704,9 @@ std.type(
 
   - Get the type of a variable
         --------------------------------------------------
-std.user_path(
-    package: string - Config package/folder name (safe token),
-    key: string - Config key/file name without extension (safe token)
-)
+std.user_path()
 
-  - Get the user config path (Windows: %USERPROFILE%/Documents/Shizoscript/Configs, Linux: $XDG_CONFIG_HOME/shizoscript/configs or ~/.config/shizoscript/configs)
+  - Get the Shizoscript user data root - the parent of the config directory (Windows: %USERPROFILE%/Documents/Shizoscript, Linux/macOS: $XDG_CONFIG_HOME/shizoscript or ~/.config/shizoscript). Takes no parameters; use config_path()/local_app_path() for a specific file or folder.
         --------------------------------------------------
 std.vaddress(
     value: Variable to inspect
@@ -41221,6 +41234,36 @@ size()
 
 
 ==================================================
+Object: std.critical_section
+==================================================
+
+        --------------------------------------------------
+is_holding()
+
+  - True while this object still holds (one level of) the critical section.
+        --------------------------------------------------
+release()
+
+  - Release the critical section now instead of waiting for the variable to go out of scope or to be reassigned. Returns true if this call released the section.
+        --------------------------------------------------
+
+
+==================================================
+Object: std.critical_section_named
+==================================================
+
+        --------------------------------------------------
+is_holding()
+
+  - True while this object still holds (one level of) the critical section.
+        --------------------------------------------------
+release()
+
+  - Release the critical section now instead of waiting for the variable to go out of scope or to be reassigned. Returns true if this call released the section.
+        --------------------------------------------------
+
+
+==================================================
 Object: std.global
 ==================================================
 
@@ -41719,37 +41762,37 @@ regex_findall(
     pattern: string - Regular expression pattern to search for
 )
 
-  - Find all matches of a regex pattern in the string
+  - Find all matches of a regex pattern in the string. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 regex_match(
     pattern: string - Regular expression pattern to match against
 )
 
-  - Check if the string matches a regular expression pattern
+  - Check if the string matches a regular expression pattern. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 regex_replace(
     pat: string - Regular expression pattern to search for
 )
 
-  - Replace all occurrences of a regular expression pattern in the string
+  - Replace all occurrences of a regular expression pattern in the string. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 regex_replace_inplace(
     pattern: string - Regular expression pattern to search for
 )
 
-  - Replace all occurrences of a regular expression pattern in the string with a replacement text
+  - Replace all occurrences of a regular expression pattern in the string with a replacement text. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 regex_search(
     pattern: string - Regular expression pattern to search for
 )
 
-  - Search for a regular expression pattern in the string and return the starting position of the match
+  - Search for a regular expression pattern in the string and return the starting position of the match. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 regex_split(
     pattern: string - Regular expression pattern to split the string
 )
 
-  - Split string using regular expression pattern and return results as JSON array
+  - Split string using regular expression pattern and return results as JSON array. Input longer than the limit for the pattern (8 KB - 256 KB, see the docs) is rejected with a runtime error (issue #102)
         --------------------------------------------------
 removechars(
     chars: string - Characters to remove from the string
@@ -41789,11 +41832,11 @@ replace_first(
   - Replaces the first occurrence of a substring with another substring
         --------------------------------------------------
 replace_ignoring_whitespace(
-    search_or_map: string|json - Substring to search for or json map of replacements,
+    search: string - Substring to search for and replace,
     replace: string - Replacement string
 )
 
-  - Replace all occurrences of a substring
+  - Replace all occurrences of a substring, ignoring whitespace
         --------------------------------------------------
 replace_inplace(
     search: string - Substring to search for and replace
