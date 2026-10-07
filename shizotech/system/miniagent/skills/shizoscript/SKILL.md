@@ -378,7 +378,7 @@ break;
 continue;
 ```
 
-NO `while` (`while(x) { }` is a syntax error with a misleading message: "parameter keywords not supported yet").
+NO `while` and NO `switch`: both are syntax errors (`'while' is not supported, use 'for (condition) { ... }'`). `new Foo()` and `null` are syntax errors too, write `Foo()` and `None`.
 
 ---
 
@@ -676,6 +676,21 @@ for(i = 0; i < 10; i++)
 
 are NOT mistakes, the scopes can be defined by the indentation OR brackets.
 
+Indentation only scopes a body that starts on a NEW line. An unbraced body that starts on the same line
+as the `if` / `else` / `for` / `try` / `catch` is exactly ONE statement (up to its `;`). Everything after it
+is the next statement and runs unconditionally:
+
+```
+if(n <= 1) return n; return 42;      // "return 42;" is NOT part of the if
+if(c) a(); b();                      // b() always runs
+if(c) a(); else b();                 // else on the same line is fine
+for(i = 0; i < 3; i++) n++; done();  // done() runs once, after the loop
+if(c) a();
+	b();                             // NOT part of the if either, the body was already complete
+```
+
+Like in C, an `else` belongs to the nearest `if`: in `if(a) if(b) x(); else y();` the `else` belongs to `if(b)`.
+
 ---
 
 ## 19. Common Mistakes
@@ -707,14 +722,14 @@ Before generating code:
 
 ## 21. Runtime Pitfalls
 
-- Single-line indentation-scoped `if`/`for` blocks are valid and can be easy to misread; use braces for clarity when needed.
+- Single-line indentation-scoped `if`/`for` blocks are valid and can be easy to misread; use braces for clarity when needed. An unbraced body on the same line as the `if`/`else`/`for` is exactly one statement: in `if(c) a(); b();` only `a()` is conditional (see Indentation vs Brackets).
 - `??` is binary and truthiness-based (`a ?? b`), not a dedicated `None`-only coalescing operator.
 - Integer division truncates (`7 / 2 == 3`).
 - Division by zero returns `0` (`x / 0 == 0`) and prints a runtime error report (`Division by zero!`, `Modulo by zero!` for `%`). The error is NOT fatal: the script continues and `try`/`catch` does NOT catch it.
 - `-1 % 4 == -1` and `math.mod(-1, 4) == -1` (sign follows the left operand, like C).
 - Endless recursion raises a runtime error once the call depth limit is reached (see Functions).
 - Mixed-type comparisons may coerce unexpectedly (`"5" == 5` is `1`); keep both sides the same type.
-- A method call directly on a JSON literal is a syntax error: `[1,2].size()` does not compile, assign the literal to a variable first.
+- Methods can be called directly on literals: `[1,2].size()`, `"ab".uppercase()`, `[a=1].has("a")`, `[5,6,7][1]`.
 - Variables created inside a block do not exist after it (see Variable Scope).
 - `std.error(...)` logs an error message and does not throw.
 - `std.warn(...)` logs a warning message and does not throw.
