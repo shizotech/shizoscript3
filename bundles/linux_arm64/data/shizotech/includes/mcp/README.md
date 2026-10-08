@@ -90,7 +90,7 @@ registries, several servers can run side by side on different ports.
 ### Tools
 
 ```
-server.add_tool(name, description, parameters, callback);
+server.add_tool(name, description, parameters, callback, with_context = false);
 server.remove_tool(name);  server.has_tool(name);  server.clear_tools();
 server.list_tools();       // the tools/list entries
 ```
@@ -111,6 +111,8 @@ server.list_tools();       // the tools/list entries
   | `[nested = "...", ...]` | required nested object |
 
 - `callback(server, args)` returns a string or a json (written as text).
+  With `with_context = true` it is called as `callback(server, args, ctx)`
+  (see Hooks for `ctx`), e.g. to tell clients apart.
   A runtime error inside the callback becomes a tool result with `isError`
   and the error message, so the model learns what went wrong. Unknown tools
   are a JSON-RPC error `-32602`.

@@ -72,6 +72,16 @@ server.add_tool(
 	}
 );
 
+server.add_tool(
+	"whoami",
+	"Returns the client name of the request",
+	None,
+	[](svr, args, ctx) {
+		return ctx.client + " via " + ctx.transport;
+	},
+	true
+);
+
 server.add_resource_file("file:///notes/welcome.txt", "Welcome", "Example plain text resource", __DIR__ + "/docs/welcome.txt", "text/plain");
 server.add_resource("shz://static", "Static", "Static text", "text/plain", "static text");
 server.add_resource_callback("shz://state", "State", "Generated text", "text/plain", [](svr, uri) {
@@ -157,13 +167,18 @@ check("2025 notification: 202 without body", r.http_code == 202 && !r.body, r.ht
 
 r = post(base_url, rpc(3, "tools/list"), h25);
 j = parsed(r);
-check("2025 tools/list", j.result.tools.size() == 3 && j.result.tools[0].name == "echo", r.body);
+check("2025 tools/list", j.result.tools.size() == 4 && j.result.tools[0].name == "echo", r.body);
 check("2025 tools/list: input schema", j.result.tools[0].inputSchema.required[0] == "message", r.body);
 check("2025 tools/list: float parameters are JSON schema numbers", r.body.find("\"type\":\"number\"") >= 0, r.body);
 
 r = post(base_url, rpc(4, "tools/call", "{\"name\":\"echo\",\"arguments\":{\"message\":\"hi\"}}"), h25);
 j = parsed(r);
 check("2025 tools/call", j.result.content[0].text == "hi" && !j.result.has("isError"), r.body);
+
+h_agent = h25.copy();
+h_agent["User-Agent"] = "selftest-agent";
+r = post(base_url, rpc(41, "tools/call", "{\"name\":\"whoami\"}"), h_agent);
+check("tools/call with_context: ctx reaches the callback", parsed(r).result.content[0].text == "selftest-agent via streamable-http", r.body);
 
 r = post(base_url, rpc(5, "tools/call", "{\"name\":\"fail\",\"arguments\":{}}"), h25);
 j = parsed(r);
@@ -194,7 +209,7 @@ r = post(base_url, rpc(13, "resources/read", "{\"uri\":\"shz://static\"}"), h25)
 check("2025 resources/read: static", parsed(r).result.contents[0].text == "static text", r.body);
 
 r = post(base_url, rpc(14, "resources/read", "{\"uri\":\"shz://state\"}"), h25);
-check("2025 resources/read: callback", parsed(r).result.contents[0].text == "tools=3", r.body);
+check("2025 resources/read: callback", parsed(r).result.contents[0].text == "tools=4", r.body);
 
 r = post(base_url, rpc(15, "resources/read", "{\"uri\":\"shz://missing\"}"), h25);
 check("2025 resources/read: unknown uri -32003", parsed(r).error.code == JSONRPC_RESOURCE_NOT_FOUND, r.body);
@@ -221,7 +236,7 @@ h_session = h25.copy();
 h_session["Mcp-Session-Id"] = session_id;
 h_session["MCP-Protocol-Version"] = "2025-06-18";
 r = post(base_url, rpc(19, "tools/list"), h_session);
-check("2025 known Mcp-Session-Id: 200", r.http_code == 200 && parsed(r).result.tools.size() == 3, r.http_code);
+check("2025 known Mcp-Session-Id: 200", r.http_code == 200 && parsed(r).result.tools.size() == 4, r.http_code);
 
 h_bad_version = h25.copy();
 h_bad_version["MCP-Protocol-Version"] = "1999-01-01";
@@ -249,7 +264,7 @@ check("2026 server/discover: cache hints", j.result.has("ttlMs") && j.result.cac
 
 r = post(base_url, rpc(31, "tools/list"), headers_26("tools/list"));
 j = parsed(r);
-check("2026 tools/list", j.result.tools.size() == 3 && j.result.has("ttlMs"), r.body);
+check("2026 tools/list", j.result.tools.size() == 4 && j.result.has("ttlMs"), r.body);
 
 r = post(base_url, rpc(32, "tools/call", "{\"name\":\"echo\",\"arguments\":{\"message\":\"hi26\"}}"), headers_26("tools/call", "echo"));
 check("2026 tools/call", parsed(r).result.content[0].text == "hi26", r.body);

@@ -84,6 +84,9 @@ class mcpserver
 	resources = None;
 	prompts = None;
 
+	// Tools whose callback also gets the request context (add_tool with_context)
+	context_tools = [];
+
 	protocol_25 = None;
 	protocol_26 = None;
 
@@ -104,6 +107,7 @@ class mcpserver
 		tools = toolset();
 		tools.tools = [];
 		tools.tool_callbacks = [];
+		context_tools = [];
 		resources = resource_registry();
 		prompts = prompt_registry();
 
@@ -224,13 +228,20 @@ class mcpserver
 	//   [path = "&string(): Path of the file", count = "int(1,10): How many"]
 	//   (& = required). None for a tool without arguments.
 	// callback(server, args) -> string or json (the tool result).
+	//   with_context = true: callback(server, args, ctx), ctx describes the
+	//   request (protocol, version, client, transport), e.g. to tell clients apart.
 	//   A runtime error inside the callback becomes a tool result with isError
 	//   and the error message.
 	// =========================================================================
 
-	add_tool(tool_name, description, parameters, callback)
+	add_tool(tool_name, description, parameters, callback, with_context = false)
 	{
 		tools.add_tool(tool_name, description, parameters, callback);
+
+		if(with_context)
+			context_tools[tool_name] = true;
+		else if(context_tools.has(tool_name))
+			context_tools.erase(tool_name);
 	}
 
 	has_tool(tool_name)
@@ -246,6 +257,8 @@ class mcpserver
 			{
 				tools.tools.erase(i);
 				tools.tool_callbacks.erase(tool_name);
+				if(context_tools.has(tool_name))
+					context_tools.erase(tool_name);
 				return true;
 			}
 		}
@@ -256,6 +269,7 @@ class mcpserver
 	{
 		tools.tools = [];
 		tools.tool_callbacks = [];
+		context_tools = [];
 	}
 
 	// =========================================================================
@@ -433,6 +447,8 @@ class mcpserver
 		cb = tools.tool_callbacks[tool_name];
 
 		try {
+			if(context_tools.has(tool_name))
+				return mcp_ok(create_tool_result(cb(this, args, ctx)));
 			return mcp_ok(create_tool_result(cb(this, args)));
 		}
 		catch(e) {
