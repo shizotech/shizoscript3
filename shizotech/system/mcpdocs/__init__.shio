@@ -185,21 +185,21 @@ shz_run_shz(arguments)
 	out = std.system(command, 1, 0);
 
 	text = std.string(out);
-		code = -1;
-		marker = "[shz_exit:";
-		idx = text.rfind(marker);
-		if (idx >= 0)
-		{
-			tail = text.substr(idx + marker.size());
-			end = tail.find("]");
-			digits = tail;
-			if (end >= 0)
-				digits = tail.substr(0, end);
-			code = std.int(digits);
-			text = text.substr(0, idx);
-		}
-		result = std.string(text);
-		return [ exit_code = code, output = result.trim() ];
+	code = -1;
+	marker = "[shz_exit:";
+	idx = text.rfind(marker);
+	if (idx >= 0)
+	{
+		tail = text.substr(idx + marker.size());
+		end = tail.find("]");
+		digits = tail;
+		if (end >= 0)
+			digits = tail.substr(0, end);
+		code = std.int(digits);
+		text = text.substr(0, idx);
+	}
+	result = std.string(text);
+	return [ exit_code = code, output = result.trim() ];
 }
 
 //Format a tool result: the captured output plus the exit code, and a
