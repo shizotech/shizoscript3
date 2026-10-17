@@ -1,0 +1,205 @@
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  Mind host — runnable entry point for the Receptionist + Mind runtime
+//
+//  Usage:   shz node.shio                       interactive (shizonet is on too)
+//           shz node.shio --name Box --description "GPU box"   headless AI node
+//           shz node.shio --webserver --port 13337             + JSON web API
+//           shz node.shio --port 13337 --api-token secret
+//
+//  The host owns:
+//    - one Receptionist agent (the router for user requests)
+//    - the event dispatcher (runs Minds as short-lived LLM invocations)
+//
+//  ShizoNet is the de-facto transport: every node runs the AI node service
+//  (shizonet_ai.shio, contract in router_api.md) so routers on the network can
+//  delegate work, read the overview and receive ai_event pushes.
+//
+//  In --webserver / --port mode the node ALSO serves a headless JSON web API:
+//  POST /api/request with {"prompt": "..."} and poll /api/request/poll for the
+//  deltas. Every endpoint is documented in node_api.shio.
+//
+//  Host commands:
+//    /overview            all Minds and their lifecycle states
+//    /actions [n]         compressed recent action history
+//    /status              dispatcher + store statistics
+//    /mind <id>           full detail of one Mind
+//    /message <id> <text> enqueue a message into a Mind's mailbox
+//    /stop <id>           request a Mind to stop
+//    /notify [level]      show/set event notification level: all | notify | off
+//    /clear               clear the receptionist transcript
+//    /exit                quit
+// ═════════════════════════════════════════════════════════════════════════════
+
+#include "megamind"
+#include "mcp/mcp_server"
+#include "node_api"
+#include "shizonet_ai"
+
+cfg_path = std.config_path("miniagent", "default_model");
+
+cfg = ModelConfig();
+
+mind_host_get_cfg() {
+	if(cfg.load(cfg_path))
+		return true;
+
+	api_url = "";
+	auth_token = "";
+	model_name = "";
+	max_ctx = 128000;
+	max_running_agents = 4;
+
+	for(1) {
+		std.print("Enter v1 url ( e.g. http://localhost:8000 )");
+		api_url = std.input(">>> ");
+
+		std.print("Enter model name (OPTIONAL)");
+		model_name = std.input(">>> ");
+
+		std.print("Enter auth token (OPTIONAL)");
+		auth_token = std.input(">>> ");
+
+		std.print("Enter model context length (OPTIONAL)");
+		max_ctx_num = std.int(std.input(">>> "));
+		if(max_ctx_num > 0)
+			max_ctx = max_ctx_num;
+
+		std.print("Enter max simultaneous agents (OPTIONAL)");
+		max_running_agents = std.int(std.input(">>> "));
+
+		api_url = api_url.removesuffix("/v1/");
+		api_url = api_url.removesuffix("/v1");
+		api_url = api_url.removesuffix("/");
+
+		if(cfg.set(api_url, auth_token, model_name, max_ctx, max_running_agents))
+			break;
+
+		std.print("Could not get an answer from the API.");
+	}
+
+	cfg.save(cfg_path);
+
+	return true;
+}
+
+last_state = "";
+
+mind_host_print(action) {
+	if(action.text) {
+		if(last_state != "text")
+			last_state = "text";
+			std.cout("\n");
+		stdfcol("white");
+		std.cout(action.text);
+	}
+
+	if(action.reasoning) {
+		if(last_state != "reasoning")
+			last_state = "reasoning";
+			std.cout("\n");
+		stdfcol("yellow");
+		std.cout(action.reasoning);
+	}
+
+	if(action.tool_start) {
+		stdfcol("yellow");
+		std.cout("\n\n[TOOL] ", action.tool_start.name, "\n");
+		stdfcol("white");
+	}
+}
+
+mind_host_report(agt) {
+	std.cout("\nTOKEN USAGE:\n");
+	token_usage_global = std.global("_global_token_usage");
+	std.cout(token_usage_global["usage"]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+mind_host_get_cfg();
+
+host = Megamind(cfg);
+host.on_action(mind_host_print);
+
+// ── shizonet AI node service: always on, the de-facto transport ─────────────
+//  shizonet_ai.shio implements the router_api.md contract on this server:
+//  ai_request / ai_overview / ai_task_* answers + ai_event pushes.
+//  The JSON web API is opt-in and runs ALONGSIDE the shizonet node.
+
+var node_name = std.argvoption("--name");
+var node_desc = std.argvoption("--description");
+
+node = shizonet.server(node_name);
+
+ai = ai_node_attach(node, host, [
+	name = node_name,
+	description = node_desc,
+]);
+
+std.print("Shizonet AI node online: " + ai.node_name());
+
+// ── interactive mode: no arguments ──────────────────────────────────────────
+
+if(std.argc() == 1) {
+	for(1) {
+		std.color("green");
+		std.cout("\n>>> (user) ");
+
+		cmd = std.input().strip();
+
+		if(cmd == "exit" || cmd == "/exit")
+			break;
+
+		if(cmd.empty())
+			std.sleep(100);
+			continue;
+		
+		try {
+			host.request(cmd);
+		}
+		catch(e) {
+			std.error("receptionist run failed: ", e);
+		}
+
+	}
+}
+
+// ── optional JSON web API, alongside shizonet ────────────────────────────────
+else if(std.argvoption("--webserver") || std.argvoption("--port")) {
+	// ── headless JSON web API mode ───────────────────────────────────────────
+	var port_opt = std.argvoption("--port");
+	var token_opt = std.argvoption("--api-token");
+
+	api_port = std.int(port_opt);
+	api_token = "";
+
+	if(api_port <= 0)
+		api_port = 13337;
+
+	if(token_opt)
+		api_token = std.string(token_opt);
+
+	std.print("Starting API server at " + api_port);
+
+	api = node_api_start(host, cfg, api_port, api_token);
+
+	if(!api)
+		std.error("Could not start the API server on port ", api_port, ".");
+	else {
+		std.print("Node JSON API: http://localhost:" + api_port + "/api/health\n");
+
+		for(host.running)
+			std.sleep(250);
+
+		api.stop();
+	}
+}
+else {
+	// headless AI node: shizonet is up, nothing to do but stay alive
+	std.print("Headless AI node. Ctrl+C to stop.\n");
+	std.sleep(-1);
+}
+
+ai.stop();
+std.cout("\nHost stopped.\n");
