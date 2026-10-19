@@ -691,6 +691,10 @@ for(i = 0; i < need.size(); i++) {
 
 check("the router role registers all ten tools", all_tools, tool_names);
 
+check("the router role offers get_goals", callbacks.has("get_goals"), "");
+goals_res = callbacks["get_goals"]([]);
+check("get_goals asks every node (stub nodes have no .agentspace)", std.string(goals_res).contains(GPU_NAME) && std.string(goals_res).contains("no .agentspace"), std.string(goals_res));
+
 // tool_callbacks[name](args): the registered callback takes the args json only.
 nodes_res = callbacks["get_nodes"]([]);
 check("get_nodes lists the fleet", std.string(nodes_res).contains(GPU_NAME) && std.string(nodes_res).contains(WEB_NAME), std.string(nodes_res));

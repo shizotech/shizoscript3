@@ -1236,7 +1236,10 @@ class GoalScheduler {
 	}
 
 	notify(msg) {
-		if(!notify_enabled || !host)
+		if(!notify_enabled)
+			return;
+		std.print("[goals] " + msg);
+		if(!host)
 			return;
 		try {
 			host.notify_user(msg);
@@ -1895,7 +1898,7 @@ class GoalScheduler {
 		// between is recovered as "interrupted" instead of being forgotten
 		ledger.save();
 
-		prompt = build_prompt(def, a, kind);
+		prompt = build_prompt(def, a, kind, n);
 		name = (kind == "verify" ? "Verify-" : "Goal-") + def.id;
 		taskid = "";
 
@@ -1923,7 +1926,11 @@ class GoalScheduler {
 		ledger.event("run_started", def.id, (kind == "verify" ? "verification" : "run " + n) + " dispatched (task " + name + ")", [akey = a.akey, taskid = taskid]);
 	}
 
-	build_prompt(def, a, kind) {
+	// run_n: the number of the run the prompt is for (None = the next one)
+	build_prompt(def, a, kind, run_n = None) {
+		if(std.is_none(run_n))
+			run_n = a.runs.size() + 1;
+
 		zone = gt_zone(def.schedule.timezone);
 		t_now = clock_now();
 		left_min = (a.end - t_now) / 60;
@@ -1932,7 +1939,7 @@ class GoalScheduler {
 		p += "You run unattended, started by the goal scheduler of this node (not by a person in a chat).\n";
 		p += "Work window: " + goal_window_text(def, a) + " — about " + left_min + " minutes left. ";
 		p += "Plan for it: at the end you are asked to checkpoint (save progress, report what is left).\n";
-		p += "Definition revision " + def.revision + " · " + (kind == "verify" ? "verification run" : "work run " + (a.runs.size() + (kind == "work" ? 0 : 0))) + " · goal file: " + def.path + "\n\n";
+		p += "Definition revision " + def.revision + " · " + (kind == "verify" ? "verification run " + run_n : "run " + run_n + " of this window") + " · goal file: " + def.path + "\n\n";
 
 		if(kind == "verify") {
 			p += "## Your job: verify\n\nCheck the acceptance criteria below against the actual state of the work (files, tests, branches), not against the report. ";
@@ -1968,7 +1975,7 @@ class GoalScheduler {
 
 		others = [];
 		for(r : a.runs) {
-			if(goal_run_open(r))
+			if(goal_run_open(r) && gj(r, "n", 0) != run_n)
 				others.push_back("- run " + gj(r, "n", 0) + " (" + gj_str(r, "kind", "work") + ")");
 		}
 		if(others.size()) {
@@ -2028,6 +2035,21 @@ class GoalScheduler {
 	}
 
 	// ── requests from the CLI (another process): .runtime/requests/*.json ──
+
+	// queue a manual run; the tick thread starts it (safe from any thread)
+	request_run(id, dry_run = false) {
+		f = space.find(id);
+		if(!f)
+			return [ok = false, error = "no goal '" + id + "'"];
+		if(f.status != "active")
+			return [ok = false, error = "goal '" + id + "' is " + f.status + ", activate it first"];
+
+		dir = space.runtime_dir() + "/requests";
+		goal_mkdir(dir);
+		path = dir + "/" + std.string(gt_now()) + "-" + std.random_hash(4) + ".json";
+		ok = goal_write_atomic(path, [action = "run", goal = id, dry_run = dry_run ? 1 : 0, at = gt_now()].string());
+		return ok ? [ok = true, queued = true] : [ok = false, error = "could not write " + path];
+	}
 
 	process_requests() {
 		dir = space.runtime_dir() + "/requests";

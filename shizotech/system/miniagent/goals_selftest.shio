@@ -8,7 +8,7 @@
 //  .agentspace under the current directory.
 // ═════════════════════════════════════════════════════════════════════════════
 
-#include "goal_engine"
+#include "goal_tools"
 
 passed = 0;
 failed = 0;
@@ -690,6 +690,47 @@ check("02:30 on the fall back day runs once, not twice", wins.size() == 2, std.s
 
 manual = sch4.run_now("dst", 1800, true);
 check("run_now --dry-run returns the prompt without dispatching", manual.ok && manual.prompt.contains("DST."), "");
+
+// ═════════════════════════════════════════════════════════════════════════════
+section("agent tools (what the receptionist calls)");
+
+ctx = goal_tool_list(sch4);
+check("get_goals gives the time zone and the named windows", ctx.timezone == "Europe/Berlin" && ctx.windows.has("tonight") && ctx.now.length() > 0, std.string(ctx.timezone));
+
+cr = goal_tool_create(sch4, [title = "Try a new app idea", instructions = "Explore an app idea for musicians.", schedule_type = "once", date = "2026-11-02", window = "tonight"]);
+check("create_goal: 'tonight' becomes a once goal 04:00-10:00", cr.ok && cr.schedule.contains("04:00-10:00") && cr.schedule.contains("Europe/Berlin"), gj_str(cr, "error", std.string(cr)));
+check("create_goal without activate is proposed", cr.ok && cr.status == "proposed" && fileio.exists(ROOT + "/goals/proposed/try-a-new-app-idea/goal.md"), "");
+
+dup = goal_tool_create(sch4, [title = "Try a new app idea", instructions = "again", schedule_type = "once", date = "2026-11-03", window = "tonight"]);
+check("create_goal refuses the same goal twice", !dup.ok && gj_str(dup, "duplicate_of", "") == "try-a-new-app-idea", gj_str(dup, "error", ""));
+
+sim = goal_tool_create(sch4, [id = "app-idea-2", title = "Try new app idea", instructions = "Explore an app idea for musicians.", schedule_type = "once", date = "2026-11-03", window = "tonight"]);
+check("create_goal refuses a near duplicate", !sim.ok && gj_str(sim, "duplicate_of", "") == "try-a-new-app-idea", gj_str(sim, "error", ""));
+
+bad = goal_tool_create(sch4, [title = "Broken", instructions = "x", schedule_type = "recurring", days = "funday", start = "05:00"]);
+check("create_goal reports validation errors and writes nothing", !bad.ok && gj_str(bad, "error", "").contains("funday") && !sch4.space.find("broken"), gj_str(bad, "error", ""));
+
+hi = goal_tool_create(sch4, [title = "Release on Fridays", instructions = "Tag and publish a release.", schedule_type = "recurring", days = "friday", start = "16:00", end = "18:00", allow = "edit,release", activate = "yes"]);
+check("a goal that may release stays proposed even with activate=yes", hi.ok && hi.status == "proposed", std.string(hi));
+
+act = goal_tool_create(sch4, [title = "Fix GitHub issues", instructions = "Fix eligible issues.", schedule_type = "windowed", days = "weekdays", window = "tonight", start = "05:00", end = "10:00", activate = "yes"]);
+check("an explicit 05:00-10:00 wins over 'tonight' and is active", act.ok && act.status == "active" && act.schedule.contains("05:00-10:00"), std.string(act));
+
+up = goal_tool_update(sch4, [id = "fix-github-issues", revision = "stale", end = "09:00"]);
+check("update_goal with a stale revision is refused", !up.ok && gj(up, "conflict", false), gj_str(up, "error", ""));
+up = goal_tool_update(sch4, [id = "fix-github-issues", revision = act.revision, end = "09:00"]);
+check("update_goal with the current revision changes only that field", up.ok && up.schedule.contains("05:00-09:00") && goal_read(ROOT + "/goals/active/fix-github-issues/goal.md").contains("Fix eligible issues."), gj_str(up, "error", std.string(up)));
+
+st = goal_tool_set_status(sch4, [id = "fix-github-issues", status = "pause"]);
+check("set_goal_status pause moves it to paused/", st.ok && st.to == "paused" && fileio.exists(ROOT + "/goals/paused/fix-github-issues/goal.md"), std.string(st));
+rn = goal_tool_run_now(sch4, [id = "fix-github-issues"]);
+check("run_goal_now refuses a paused goal", !rn.ok, std.string(rn));
+goal_tool_set_status(sch4, [id = "fix-github-issues", status = "resume"]);
+rn = goal_tool_run_now(sch4, [id = "fix-github-issues"]);
+check("run_goal_now queues a run for the scheduler", rn.ok && fileio.files(ROOT + "/.runtime/requests", false).size() == 1, std.string(rn));
+before = count_activations(sch4, "fix-github-issues");
+sch4.tick();
+check("the scheduler starts the queued run", count_activations(sch4, "fix-github-issues") == before + 1 && fileio.files(ROOT + "/.runtime/requests", false).size() == 0, "");
 
 // ═════════════════════════════════════════════════════════════════════════════
 

@@ -16,7 +16,16 @@ class Megamind {
 	
 	request_queue = [];
 	
-	__init__(cfg, worker_cfg = None, max_workers = 1) {
+	//Worker threads, for background_capacity()
+	max_workers = 1;
+	//Last request a person sent (std.millis), the goal scheduler yields to it
+	last_interactive_ms = 0;
+	//GoalScheduler of this node (goal_engine.shio), None without an .agentspace
+	goals = None;
+	
+	__init__(cfg, worker_cfg = None, _max_workers = 1) {
+		
+		max_workers = _max_workers;
 		
 		receptionist = miniagent(cfg, "receptionist");
 		receptionist.set_reasoning_effort("low");
@@ -49,7 +58,11 @@ class Megamind {
 		}
 	}
 	
-	request(prompt, on_finish_cb = None, on_action_cb = None) {
+	//interactive = false for requests the node sends itself (health checks)
+	request(prompt, on_finish_cb = None, on_action_cb = None, interactive = true) {
+		if(interactive)
+			last_interactive_ms = std.millis();
+		
 		new_request = [
 			id = std.random_hash(),
 			prompt = prompt,
@@ -199,12 +212,49 @@ class Megamind {
 		_task_finish_cb = cb;
 	}
 	
+	//Additional finished-task listeners (on_task_finished keeps its single slot
+	//for the shizonet node service; the goal scheduler listens here).
+	add_task_finished_listener(cb) {
+		_task_finish_listeners.push_back(cb);
+	}
+	
+	_emit_task_finished(task) {
+		if(_task_finish_cb)
+			_task_finish_cb(task);
+		
+		for(i = 0; i < _task_finish_listeners.size(); i++) {
+			try {
+				_task_finish_listeners[i](task);
+			}
+			catch(e) {
+				std.error("task finished listener failed: ", e);
+			}
+		}
+	}
+	
+	//Room for background work (goal_engine.shio GoalScheduler.capacity_ok)
+	background_capacity() {
+		idle = 1000000000;
+		
+		if(last_interactive_ms > 0)
+			idle = (std.millis() - last_interactive_ms) / 1000;
+		
+		if(_receptionist_active || request_queue.size())
+			idle = 0;
+		
+		return [
+			workers = max_workers,
+			busy = tasks.size() + tasks_scheduled.size(),
+			interactive_idle_secs = idle,
+		];
+	}
+	
 	health_thread() {
 		for(this.running) {
 			std.sleep(1000 * 60 * 30);
 			if(!tasks.size())
 				continue;
-			request("Check the status of the running tasks (check for stuck tasks or infinite repetition loops, stop stuck tasks, do not touch healthy tasks).");
+			request("Check the status of the running tasks (check for stuck tasks or infinite repetition loops, stop stuck tasks, do not touch healthy tasks).", None, None, false);
 		}
 	}
 	
@@ -253,6 +303,12 @@ class Megamind {
 				for(this._receptionist_active) {
 					std.sleep(1);
 				}
+				
+				//The root of the task takes a max_running_agents slot from the pool;
+				//its subagents borrow it while the root waits for them.
+				//(the stop flag of the previous task's signal() must not skip the wait)
+				worker.stopped = false;
+				root_slot = agent_slot(worker, None);
 				
 				try {
 					worker.clear_chat();
@@ -330,10 +386,11 @@ class Megamind {
 							break;
 					}
 
+					root_slot.release();
+					
 					std.print("--- " + task.name + " " + task.state + " ---");
 					
-					if(_task_finish_cb)
-						_task_finish_cb(task);
+					_emit_task_finished(task);
 					
 					if(task.state == "failed") {
 						tasks_failed.push_back(task);
@@ -349,7 +406,11 @@ class Megamind {
 				}
 				catch(e) {
 					std.print(e);
+					root_slot.release();
 					task.state = "failed";
+					task.worker = None;
+					if(!task.report)
+						task.report = "The worker crashed: " + std.string(e);
 					for(i = 0; i < tasks.size(); i++) {
 						if(tasks[i].taskid == task.taskid)
 							tasks.erase(i);
@@ -358,6 +419,10 @@ class Megamind {
 					tasks_failed.push_back(task);
 					if(tasks_failed.size() > 5)
 						tasks_failed.erase(0);
+					
+					//A crash is a finished task too: routers and the goal scheduler
+					//must hear about it instead of waiting for a task that is gone.
+					_emit_task_finished(task);
 				}
 			}
 			
@@ -368,4 +433,5 @@ class Megamind {
 	_receptionist_active = false;
 	_notify_cb = None;
 	_task_finish_cb = None;
+	_task_finish_listeners = [];
 }

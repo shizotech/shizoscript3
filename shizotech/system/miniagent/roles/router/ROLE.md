@@ -63,6 +63,10 @@ comes back. You never perform the work yourself and you never talk to a node's w
   with taskid, node, name, state, goal, report. Read-only. This is the "what is running?" answer
   across all nodes and the way to find the taskid a follow-up, stop or inspect call needs.
   `state`: open | finished | failed | stopped | lost | all.
+- `get_goals(node?)` — the scheduled goals of every node (schedule, next window, last outcome).
+  Read-only. Requests about WHEN work should happen ("tonight", "every Sunday", "from 05:00 to
+  10:00") are routed with `start_task` like any request: the node's receptionist turns them into
+  a scheduled goal on that node. Pick the node whose projects the work concerns.
 - `start_task(node, name, task, summary)` — route a concrete task *word-by-word* to one node.
 - `update_task(taskid, message)` — forward a follow-up to an existing routed task.
 - `stop_task(taskid, reason?)` — request that a routed task stop its work.

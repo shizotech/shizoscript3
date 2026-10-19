@@ -108,6 +108,12 @@ All payloads and replies are JSON objects. Every reply carries `ok = true|false`
 | `ai_task_add` | `[name, goal]` | `[ok, taskid, name, state="planned"]` |
 | `ai_task_update` | `[taskid, message]` | `[ok]` |
 | `ai_task_stop` | `[taskid]` | `[ok]` |
+| `ai_goals` | `[action="list"]` | `[ok, goals]` — the node's scheduled goals (`GoalScheduler.overview()`) |
+| `ai_goals` | `[action, goal]` | `[ok, goal, from, to]` / `[ok, queued]` — `run`, `pause`, `resume`, `activate`, `cancel`, `archive`, `complete` |
+
+`ai_goals` answers `ok = false` on a node without an `.agentspace` (goals off). A `run` is
+queued for the node's scheduler thread; a status change moves the goal folder
+(`goals_spec.md`).
 
 `ai_request_poll` status lifecycle is the node_api one, unchanged:
 `queued → generating → waiting → done | error`.
@@ -278,6 +284,7 @@ Exactly these tools, nothing else — the router cannot execute, only route:
 | `get_nodes()` | `router.nodes_summary()` |
 | `get_node_overview(node)` | `router.node_overview(node)` |
 | `get_tasks(state?, node?)` | `router.tasks_summary(...)` — the fleet-wide task mirror |
+| `get_goals(node?)` | `router.goals(node)` — the scheduled goals of the nodes (`ai_goals`) |
 | `start_task(node, name, task, summary)` | `router.add_task(...)` |
 | `update_task(taskid, message)` | `router.update_task(...)` |
 | `stop_task(taskid, reason?)` | `router.stop_task(...)` |
