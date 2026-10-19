@@ -318,6 +318,7 @@ class Megamind {
 					worker.on_action = [task](action) {
 						
 						task.last_update = std.timestamp();
+						task.last_update_ms = std.millis();
 						
 						if(action.reasoning)
 							task.raw_output += action.reasoning;
@@ -337,6 +338,7 @@ class Megamind {
 					task.worker = worker;	
 					
 					task.start_time = std.timestamp();
+					task.last_update_ms = std.millis();
 					
 					worker.task("# Instruction\nI will give you a task description and you will research what is needed to complete the task.\nYou should not start the task or look for solutions right now, just gather context and required files and code lines and emit a report via signal().\nNOTE: If the task is simple or trivial, just return immediately via signal().\n\n# Task Description\n" + task.task);
 					

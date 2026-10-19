@@ -23,7 +23,7 @@ GoalScheduler.tick()  ── windows, misfires, retries, stop policy, limits ─
 | `goal_tools.shio` | the agent operations: `get_goals`, `create_goal`, `update_goal`, `set_goal_status`, `run_goal_now` |
 | `goals.shio` | the CLI: `shz miniagent.goals ...` |
 | `agentspace_template/` | what `goals init` creates |
-| `goals_selftest.shio` | 117 checks, fake host + fake clock, no LLM |
+| `goals_selftest.shio` | 124 checks, fake host + fake clock, no LLM |
 
 ## The tree
 
@@ -76,6 +76,7 @@ policy:
   checkpoint_grace: 15m
   max_attempts: 3                  # consecutive failures per window
   retry_backoff: 10m
+  stall_timeout: 30m               # no agent action this long: stop + retry (default: preferences)
   verify: true                     # a verification run checks the acceptance criteria
   dry_run: true                    # write the prompt to history.md, dispatch nothing
   pause_stops: false               # pausing also applies the stop policy to a running run
@@ -132,6 +133,8 @@ scheduling a few weeks ahead needs.
    `inspect_task` polls. `finished` → success (and a verification run if `verify`);
    `question` → the window is `blocked` and the owner is asked; `failed` / `lost` → retry after
    `retry_backoff` while `max_attempts` allows; a stop the scheduler asked for is no failure.
+   A running task with no agent action for `stall_timeout` (`Megamind` task `last_update_ms`)
+   is stopped and counts as a failed attempt — a deterministic watchdog, no LLM check.
 3. **Window end**: no new runs; open runs follow the stop policy — `drain` lets them finish,
    `checkpoint` sends an update ("save your progress, report what is left") and stops after
    `checkpoint_grace`, `cancel` stops at once. A stop request is not a stop: the run stays open
@@ -147,6 +150,9 @@ scheduling a few weeks ahead needs.
    last request (`Megamind.background_capacity()`), per goal `max_parallel_workers`. A run is
    written to the ledger before `add_task` (outbox): after a crash it is found and settled as
    `interrupted`, then retried while its window is open.
+
+After every tick that changed something, `state/overview.md` is rewritten: every goal with
+its schedule, current or next window, last outcome and file (generated, never read back).
 
 A once-goal whose window succeeded moves to `goals/completed/`. Every activation, missed
 window, finished / failed run, verification and invalid edit is a node notification
@@ -208,4 +214,5 @@ normal routing: the router delegates the request, the node's receptionist owns t
   allocation (phase 2 / 5): runs are local to the node that owns the `.agentspace`.
 - PostgreSQL / multi-node shared ledger: the ledger is one JSON file per node.
 - Recursive planning budgets and project monitors (phase 6): `monitors.md` is documentation.
-- Dashboards (phase 7): `goals list/status`, `/goals` and `history.md` are the views today.
+- Dashboards (phase 7): `goals list/status`, `/goals`, `state/overview.md` and `history.md`
+  are the views today.

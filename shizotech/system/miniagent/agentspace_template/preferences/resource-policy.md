@@ -5,6 +5,7 @@ yield_after_interactive: 10m
 default_stop_policy: checkpoint
 default_max_attempts: 3
 checkpoint_grace: 15m
+stall_timeout: 30m
 ---
 
 # Resource policy
@@ -18,5 +19,7 @@ checkpoint_grace: 15m
   `drain` (let it finish), `checkpoint` (ask it to save progress and report, then stop after
   `checkpoint_grace`), `cancel` (stop at once).
 * `default_max_attempts`: attempts per window before a goal's window counts as failed.
+* `stall_timeout`: a run that shows no progress (no agent action) this long is stopped and
+  retried - a deterministic watchdog, no LLM health check involved.
 
 The model endpoint's own parallel limit is `max_running_agents` in the model config.

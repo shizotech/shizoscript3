@@ -1205,8 +1205,12 @@ class TelegramRouter : Router
 
         out = std.string(res.answer ?? "");
 
-		// a task was delegated: that is a success, whatever the turn result claims
+		// a task was delegated: that is a success, whatever the turn result claims.
+		// The completion arrives later as its own message - say so.
 		if(res.routed && res.node) {
+			if(!out.lowercase().contains("when it is done")) {
+				out += (out ? "\n\n" : "") + "I'll write here when it is done (" + std.string(res.node) + ").";
+			}
 			return out;
 		}
 
