@@ -1994,6 +1994,7 @@ class GoalScheduler {
 		else
 			p += "- Do not edit plan.md or goal.md.\n";
 		p += "- Never edit goal.md or anything under .agentspace/.runtime/ (the scheduler owns them).\n";
+		p += "- Your memory across runs of this goal is the Mind topic .megamind/goal_" + def.id.replace("-", "_") + "/ (read its index.md first, update it before you finish).\n";
 		p += "- End with signal(): finished (what was done, what is left, evidence such as tests run), question (you need the owner), or failed (why).\n";
 
 		return p;
