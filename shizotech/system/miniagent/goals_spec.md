@@ -23,7 +23,7 @@ GoalScheduler.tick()  ── windows, misfires, retries, stop policy, limits ─
 | `goal_tools.shio` | the agent operations: `get_goals`, `create_goal`, `update_goal`, `set_goal_status`, `run_goal_now` |
 | `goals.shio` | the CLI: `shz miniagent.goals ...` |
 | `agentspace_template/` | what `goals init` creates |
-| `goals_selftest.shio` | 124 checks, fake host + fake clock, no LLM |
+| `goals_selftest.shio` | 127 checks, fake host + fake clock, no LLM |
 
 ## The tree
 
@@ -149,14 +149,19 @@ scheduling a few weeks ahead needs.
    `reserve_interactive_workers`, no new run within `yield_after_interactive` of the owner's
    last request (`Megamind.background_capacity()`), per goal `max_parallel_workers`. A run is
    written to the ledger before `add_task` (outbox): after a crash it is found and settled as
-   `interrupted`, then retried while its window is open.
+   `interrupted`, then retried while its window is open. A dispatch the host **refuses** (no
+   taskid) is a failed attempt: `dispatch_failed` in the ledger **and** a notification to the
+   owner naming the goal, the run and the time of the next attempt — the owner does not have to
+   wait for `max_attempts` to run out to learn that nothing can start on this node.
 
 After every tick that changed something, `state/overview.md` is rewritten: every goal with
 its schedule, current or next window, last outcome and file (generated, never read back).
 
 A once-goal whose window succeeded moves to `goals/completed/`. Every activation, missed
 window, finished / failed run, verification and invalid edit is a node notification
-(`notify_user` → routers → Telegram) and an entry in `history.md`.
+(`notify_user` → routers → Telegram) and an entry in `history.md`. A refused dispatch is
+notified as well — ledger event `dispatch_failed`, no `history.md` entry, because no run
+started.
 
 ### Status changes and running work
 
@@ -187,6 +192,10 @@ structured calls; code validates them.
 | `set_goal_status(id, status)` | the folder move |
 | `run_goal_now(id)` | queues a run (the tick thread starts it) |
 
+On a node without a goal system (no `.agentspace`) every one of these tools answers
+`ok = false` with the reason; the receptionist relays that answer to the owner instead of
+quietly starting the work as a normal task.
+
 Precedence: an explicit time in the request > a named window from the preferences >
 `default_window`. Preferences are only changed by the owner.
 
@@ -207,6 +216,14 @@ The CLI never writes the ledger: `run` drops a request file the node's scheduler
 `Router.goal_action(action, goal, node?)`, router role tool `get_goals`, Telegram `/goals`
 and `/goal <run|pause|resume|cancel|archive> <id> [node]`. Creating goals goes through the
 normal routing: the router delegates the request, the node's receptionist owns the goal.
+
+The node info (`AINodeInfo` / `ai_info`) advertises `goals = 1|0` — the node runs a scheduler —
+so `Router.nodes_summary()`, the router role's `get_nodes` and Telegram `/nodes` show per node
+whether scheduled work is possible there. On a node without an `.agentspace` every goal tool
+answers `ok = false` with the reason ("Goals are not enabled on this node: start it in a folder
+with an .agentspace (shz miniagent.goals init) or with --agentspace <dir>."); the receptionist
+relays that text into its turn report, and the router agent says it in its `finish(report)` —
+a scheduling request that cannot become a goal is reported, never quietly turned into plain work.
 
 ## Not done yet (issue #477 phases)
 

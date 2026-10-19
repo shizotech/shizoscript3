@@ -1952,6 +1952,9 @@ class GoalScheduler {
 			a.failures = gj(a, "failures", 0) + 1;
 			a.retry_at = t_now + def.policy.retry_backoff;
 			ledger.event("dispatch_failed", def.id, "the host did not accept the run", [akey = a.akey]);
+			// the owner must hear about a refused dispatch now, not only when the
+			// window runs out of attempts
+			notify("Goal " + def.id + ": " + (kind == "verify" ? "the verification run" : "run " + std.string(n)) + " could not start - the host refused the task. Next attempt " + gt_format_local(gt_zone(def.schedule.timezone), a.retry_at) + ".");
 			return;
 		}
 
