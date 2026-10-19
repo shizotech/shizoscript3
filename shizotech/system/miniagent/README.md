@@ -30,6 +30,11 @@ can be used.
 | `telegram_router.shio` | `TelegramRouter : Router` — the Telegram front end: trusted-chat access control + every node event pushed into the chat |
 | `shizonet_ai.shio` | the node ⇄ router wire protocol (both sides, one place) |
 | `node_api.shio` | optional JSON web API of a node (`--webserver` / `--port`) |
+| `goal_engine.shio` | scheduled goals: `.agentspace/` Markdown goals, validation, the deterministic `GoalScheduler` (`goals_spec.md`) |
+| `goal_time.shio` / `goal_frontmatter.shio` | time zones + DST, work windows / the front matter reader and writer |
+| `goal_tools.shio` | the receptionist's goal tools (create / update / pause / run) |
+| `goals.shio` | `shz miniagent.goals ...`: list, validate, run, pause, history, diff |
+| `agent_slots.shio` | `max_running_agents` accounting: a waiting parent lends its slot to a child |
 | `roles/` | the AI roles: `receptionist`, `router`, `adaptive`, `single_action/*`, `util/*` |
 
 ## Model configs
@@ -107,6 +112,41 @@ Then use:
 ```
 shz node.shio --config ./endpoints.json#default --worker-config ./endpoints.json#worker
 ```
+
+## Goals (scheduled autonomous work)
+
+A node can run work on its own at set times: "tonight, explore a new app idea", "every Sunday
+clean up the repository", "fix GitHub issues from 05:00 to 10:00". Goals are Markdown files in
+`.agentspace/goals/<status>/<id>/goal.md` (front matter = schedule + policy, body = the
+instructions); the node's scheduler — plain code — activates each window exactly once, applies
+the stop policy at the window end, retries, verifies and reports. Contract: `goals_spec.md`.
+
+```
+shz miniagent.goals init                 create .agentspace/ (preferences, examples, templates)
+shz miniagent.node                       a node started next to .agentspace/ runs the scheduler
+shz miniagent.node --agentspace <dir>    ... or point it there
+shz miniagent.goals list | show <id> | validate | run <id> [--dry-run] | pause <id> | history <id>
+```
+
+* Edit the files directly; an invalid edit is reported once and the last valid revision keeps
+  running. Moving a goal folder (`active/` → `paused/`) is the status change.
+* From the chat: "tonight, try X" reaches the node's receptionist, which resolves "tonight" with
+  `preferences/scheduling.md` and creates the goal through validated tools (`get_goals`,
+  `create_goal`, `update_goal`, `set_goal_status`, `run_goal_now`). Goals that may merge,
+  release or delete stay *proposed* until the owner says yes.
+* Background work stays out of the way: `preferences/resource-policy.md` limits it
+  (`max_background_tasks`, `reserve_interactive_workers`, `yield_after_interactive`).
+* Telegram: `/goals`, `/goal pause <id>`; every start, missed window, result and question of a
+  goal arrives as a node notification.
+
+## Parallel agents
+
+`max_running_agents` (model config) counts agents that **generate** at the same time. Agents
+form a tree and a parent that waits for its children does not generate, so a waiting parent
+lends its slot to one child: a chain root → child → grandchild uses one slot; only the second
+and further children running in parallel (fork siblings, batch items) take more. A Megamind
+worker task takes its slot from the pool, the receptionist does not (it stays responsive).
+`agent_slots.shio`, `tests/agent_slots_test.shio`.
 
 ## Router
 
@@ -195,7 +235,14 @@ shz telegram_router.shio --bot-token 123456:ABC...
   transition), and a `notify` from a node (its report, or its question to the owner).
   Node online/offline, queued/running progress and tool calls are **not** sent;
   `--verbose-events` restores the full event stream.
-* Commands: `/help` `/id` `/nodes` `/tasks [state]` `/status` `/allow` `/deny` `/forget`.
+* **Follow-ups and files.** Messages a chat sends in quick succession are one turn (Telegram
+  splits long texts, people correct themselves); every user message is recorded in the
+  router's action ring, so `get_last_actions` resolves "make it 6am instead". A reply quotes
+  the message it answers. A text document (`.md` plan, `.txt`, `.json`, code, up to 256 KB) is
+  read, kept in `telegram_inbox/` next to the trust file, shown to the router agent and
+  attached verbatim to the goal the turn delegates; its caption is the instruction.
+* Commands: `/help` `/id` `/nodes` `/tasks [state]` `/status` `/goals [node]`
+  `/goal <run|pause|resume|cancel|archive> <id> [node]` `/allow` `/deny` `/forget`.
 * Telegram HTTP never runs on the ShizoNet thread: `on_event` queues the text, the
   bot's own worker thread sends it (the `router_api.md` ground rule for handlers).
 
@@ -227,6 +274,7 @@ shz node.shio --name GPUBox --description "cuda training box"
 shz node.shio --receptionist-config chat --worker-config gpu
 shz node.shio --worker-config ./endpoints.json#worker --max-workers 4
 shz node.shio --webserver --port 13337 --api-token secret   + JSON web API
+shz node.shio --agentspace .agentspace               scheduled goals (auto when ./.agentspace exists)
 ```
 
 A node announces itself with the ShizoNet props `AINode` (protocol version) and
@@ -267,7 +315,7 @@ walks its subtree), so one call on the root ends generation everywhere.
 shz model_config_selftest.shio    config paths, cwd search, profiles, save/load
                                  -> 24 checks, ALL PASSED
 shz router_selftest.shio        full stack: Router + protocol + role tools, stub nodes,
-                                stub router-agent turn, no LLM  -> 94 checks, ALL PASSED
+                                stub router-agent turn, no LLM  -> 96 checks, ALL PASSED
 shz telegram_router_selftest.shio  Telegram front end against a fake bot + stub nodes:
                                 trusted-chat bootstrap, untrusted chats ignored,
                                 /allow /deny /forget /nodes /tasks /status, agent turn,
@@ -276,12 +324,22 @@ shz telegram_router_selftest.shio  Telegram front end against a fake bot + stub 
                                 new_draft_id shape handled (int/json/string/None/throw),
                                 a replayed update is one task, task-finished notification
                                 in every trusted chat, exactly once, node state /
-                                progress / tool calls silent by default
-                                -> 69 checks, ALL PASSED
+                                progress / tool calls silent by default, a burst of
+                                messages is one turn, replies quoted, a text file reaches
+                                the node verbatim, a binary file is refused, /goals
+                                -> 83 checks; "the answer promises the completion
+                                notification" fails on main too (open)
 shz shizonet_ai_selftest.shio   protocol only: node service + router service, no LLM
                                 -> 94 checks, ALL PASSED
 shz node_api_selftest.shio      node JSON API over real HTTP, stub host
                                  -> 37 checks, ALL PASSED
+shz goals_selftest.shio         time zones / DST, front matter, validation, the scheduler
+                                (activation once per window, restart recovery, misfire
+                                policies, retries, stop policy, invalid edits, conflicts,
+                                pause, dry run, verification, capacity) and the agent goal
+                                tools, fake host + fake clock -> 117 checks, ALL PASSED
+shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
+                                 -> 13 checks, ALL PASSED
 shz tests/stop_propagation_test.shio  miniagent.stop() across the agent tree, no LLM:
                                  every child and grandchild registered and stopped,
                                  no generation under a stopped ancestor, a child
