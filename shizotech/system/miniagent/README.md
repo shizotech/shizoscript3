@@ -327,8 +327,7 @@ shz telegram_router_selftest.shio  Telegram front end against a fake bot + stub 
                                 progress / tool calls silent by default, a burst of
                                 messages is one turn, replies quoted, a text file reaches
                                 the node verbatim, a binary file is refused, /goals
-                                -> 83 checks; "the answer promises the completion
-                                notification" fails on main too (open)
+                                -> 83 checks, ALL PASSED
 shz shizonet_ai_selftest.shio   protocol only: node service + router service, no LLM
                                 -> 94 checks, ALL PASSED
 shz node_api_selftest.shio      node JSON API over real HTTP, stub host
@@ -337,7 +336,8 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                 (activation once per window, restart recovery, misfire
                                 policies, retries, stop policy, invalid edits, conflicts,
                                 pause, dry run, verification, capacity) and the agent goal
-                                tools, fake host + fake clock -> 117 checks, ALL PASSED
+                                tools, stall watchdog, state/overview.md, fake host +
+                                fake clock -> 124 checks, ALL PASSED
 shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
                                  -> 13 checks, ALL PASSED
 shz tests/stop_propagation_test.shio  miniagent.stop() across the agent tree, no LLM:

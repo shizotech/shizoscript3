@@ -56,7 +56,7 @@ class FakeHost {
 		if(refuse)
 			return None;
 		id = "t" + std.string(tasks.size() + 1);
-		tasks.push_back([taskid = id, name = name, task = goal, state = "research", report = ""]);
+		tasks.push_back([taskid = id, name = name, task = goal, state = "research", report = "", last_update_ms = std.millis()]);
 		return id;
 	}
 
@@ -692,6 +692,54 @@ manual = sch4.run_now("dst", 1800, true);
 check("run_now --dry-run returns the prompt without dispatching", manual.ok && manual.prompt.contains("DST."), "");
 
 // ═════════════════════════════════════════════════════════════════════════════
+section("watchdog and overview");
+
+finish_open(host4, sch4);
+STALL = R"(---
+id: stall
+title: Stall
+schedule:
+  type: recurring
+  days: daily
+  start: "08:00"
+  end: "12:00"
+  timezone: Europe/Berlin
+policy:
+  stall_timeout: 5m
+  retry_backoff: 1m
+---
+
+Stall test.
+)";
+write_goal_file("active", "stall", STALL);
+clk.t = at(ber, "2026-10-28", "07:00");
+sch4.tick();
+clk.t = at(ber, "2026-10-28", "08:00") + 5;
+sch4.tick();
+st_task = host4.tasks[host4.tasks.size() - 1];
+check("the stall goal runs", st_task.name == "Goal-stall", st_task.name);
+sch4.tick();
+check("a task that makes progress is left alone", host4.stops.size() == 0 || host4.stops[host4.stops.size() - 1] != st_task.taskid, "");
+st_task.last_update_ms = std.millis() - 6 * 60 * 1000;
+stops_before = host4.stops.size();
+sch4.tick();
+check("no progress for stall_timeout: the task is stopped", host4.stops.size() == stops_before + 1 && host4.stops[host4.stops.size() - 1] == st_task.taskid && has_event(sch4, "run_stalled", "stall"), std.string(host4.stops));
+host4.finish(st_task.taskid, "stopped", "");
+clk.t += 30;
+sch4.tick();
+check("a stalled run counts as a failed attempt and is retried", has_event(sch4, "retry_scheduled", "stall"), "");
+before = host4.tasks.size();
+clk.t += 90;
+sch4.tick();
+check("the retry runs after the backoff", host4.tasks.size() == before + 1 && host4.tasks[host4.tasks.size() - 1].name == "Goal-stall", std.string(host4.tasks.size() - before));
+finish_open(host4, sch4);
+
+ov = goal_read(ROOT + "/state/overview.md");
+check("state/overview.md is generated", ov.contains("# Goals overview") && ov.contains("**stall**") && ov.contains("## active"), ov);
+check("the overview lists archived goals too", ov.contains("## archived") && ov.contains("**edit-me**"), "");
+space.move("stall", "archived");
+
+// ═════════════════════════════════════════════════════════════════════════════
 section("agent tools (what the receptionist calls)");
 
 ctx = goal_tool_list(sch4);
@@ -728,9 +776,17 @@ check("run_goal_now refuses a paused goal", !rn.ok, std.string(rn));
 goal_tool_set_status(sch4, [id = "fix-github-issues", status = "resume"]);
 rn = goal_tool_run_now(sch4, [id = "fix-github-issues"]);
 check("run_goal_now queues a run for the scheduler", rn.ok && fileio.files(ROOT + "/.runtime/requests", false).size() == 1, std.string(rn));
-before = count_activations(sch4, "fix-github-issues");
+manual_runs(sch, goal) {
+	n = 0;
+	for(k, a : sch.ledger.data.activations) {
+		if(a.goal == goal && a.kind == "manual")
+			n++;
+	}
+	return n;
+}
+before = manual_runs(sch4, "fix-github-issues");
 sch4.tick();
-check("the scheduler starts the queued run", count_activations(sch4, "fix-github-issues") == before + 1 && fileio.files(ROOT + "/.runtime/requests", false).size() == 0, "");
+check("the scheduler starts the queued run", manual_runs(sch4, "fix-github-issues") == before + 1 && fileio.files(ROOT + "/.runtime/requests", false).size() == 0, std.string(manual_runs(sch4, "fix-github-issues")));
 
 // ═════════════════════════════════════════════════════════════════════════════
 
