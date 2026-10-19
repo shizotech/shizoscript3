@@ -18,9 +18,6 @@
 //      progress streams as a draft
 //    * a task finished on ANY node is a notification in EVERY trusted chat,
 //      carrying the report, exactly once per chat (the Router de-duplicates)
-//    * one routed goal = ONE task, named by the NODE: the router announces no
-//      name of its own, the node's receptionist acknowledgement is never sent,
-//      and the completion arrives exactly once with the node's task name
 //    * node notify + node online/offline are forwarded
 //    * a reload reads the trust file from disk
 //
@@ -193,20 +190,6 @@ class tg_fake_bot {
         return n;
     }
 
-    // one broadcast reaches every trusted chat, so "exactly once" is per chat
-    count_with_for(chatid, needle) {
-        want = std.int(chatid);
-        n = 0;
-
-        for(i = 0; i < sent.size(); i++) {
-            if(std.int(sent[i].chatid) == want && std.string(sent[i].text).contains(needle)) {
-                n++;
-            }
-        }
-
-        return n;
-    }
-
     last_for(chatid) {
         want = std.int(chatid);
         out = "";
@@ -269,11 +252,9 @@ class tg_stub_host {
 
     _notify_cb = None;
     _task_finish_cb = None;
-    _task_start_cb = None;
 
     on_notify(cb) { _notify_cb = cb; }
     on_task_finished(cb) { _task_finish_cb = cb; }
-    on_task_started(cb) { _task_start_cb = cb; }
     on_action(cb) { }
 
     notify_user(msg) {
@@ -286,9 +267,6 @@ class tg_stub_host {
     request(prompt, on_finish_cb = None, on_action_cb = None) {
         _receptionist_active = true;
         requests.push_back(std.string(prompt));
-
-        if(prompt.starts("HANDOFF"))
-            add_task("Sushi-Goal", std.string(prompt));
 
         result = [
             ok = true,
@@ -315,12 +293,7 @@ class tg_stub_host {
 
     add_task(name, goal) {
         taskid = std.random_hash(16);
-        task = [name = name, task = goal, taskid = taskid, state = "planned"];
-        tasks_scheduled.push_back(task);
-
-        if(_task_start_cb)
-            _task_start_cb(task);
-
+        tasks_scheduled.push_back([name = name, task = goal, taskid = taskid, state = "planned"]);
         return taskid;
     }
 
@@ -529,7 +502,6 @@ rtr = TelegramRouter(
         trusted_chats = TRUSTED_FILE,
         poll_ms = 100,
         draft_ms = 0,
-        handoff_settle_ms = 500,
     ]
 );
 
