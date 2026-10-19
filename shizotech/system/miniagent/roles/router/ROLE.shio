@@ -180,6 +180,38 @@ add_tools(agt)
 	);
 
 	agt.add_tool(
+		"get_goals",
+		"The scheduled goals (autonomous work at set times) of every node, or of one node: id, title, status, schedule, next window, last outcome.\nRead-only. Requests that create or change a schedule are routed with start_task to the node that should do the work; its receptionist owns the goal.",
+		[
+			node = "string(): OPTIONAL node name from get_nodes (all nodes otherwise)",
+		],
+		[](agt, args)
+		{
+			if(!agt.env.router) {
+				return ROUTER_NO_ROUTER;
+			}
+
+			node = "";
+			if(args.has("node") && args.node) {
+				node = router_match_node(agt.env.router, args.node);
+				if(!node) {
+					return "Unknown node: '" + std.string(args.node) + "'. " + router_node_hint(agt.env.router);
+				}
+			}
+
+			res = None;
+			try {
+				res = agt.env.router.goals(node);
+			}
+			catch(e) {
+				return "The goal request failed: " + std.string(e);
+			}
+
+			return res;
+		}
+	);
+
+	agt.add_tool(
 		"start_task",
 		"Route a task to exactly ONE node. Forward the user's intent as given: do NOT pre-validate feasibility, do NOT research the task, do NOT inspect anything first. The node's receptionist investigates, plans, executes and reports.\n'node' must be a name from get_nodes — never invent one.\nReturns promptly with the taskid, the task name and the node. The goal is NOT executed by this call and you must not wait for it: completion arrives later as a system event.",
 		[
@@ -331,7 +363,7 @@ add_tools(agt)
 
 	agt.add_tool(
 		"get_last_actions",
-		"Retrieve the compressed list of this router's recent actions, newest first.\nUse it ONLY to resolve references such as 'do that again' or 'the one from before' when the current context does not already identify the action.\nIt identifies the action, its taskid and its node; it is not a historical search and it contains no implementation logs.",
+		"Retrieve the compressed list of this router's recent actions, newest first: the user's recent messages (action 'user_message', from the chat front end), your routing actions and your turn reports.\nUse it to resolve follow-ups and corrections such as 'make it 6am instead', 'do that again' or 'the one from before' when the current message does not identify the work on its own.\nIt identifies the action, its taskid and its node; it is not a historical search and it contains no implementation logs.",
 		[
 			limit = "int(1,100): OPTIONAL number of recent actions to return (default 20)",
 		],

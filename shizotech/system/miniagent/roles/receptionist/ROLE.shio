@@ -12,6 +12,10 @@
 //  Mind invocations happen in the dispatcher thread (runtime/mind_dispatcher).
 // ═════════════════════════════════════════════════════════════════════════════
 
+// Scheduled goals (get_goals, create_goal, update_goal, set_goal_status,
+// run_goal_now): validated by code, see goal_tools.shio / goals_spec.md.
+#include "../../goal_tools"
+
 reverse_list(list) {
 	res = [];
 	for(i = list.size()-1; i >= 0; i--) {
@@ -177,6 +181,8 @@ add_tools(agt)
 		}
 	);
 	
+	goal_tools_add(agt);
+
 	agt.add_tool(
 		"finish",
 		"Finish the turn and exit.",

@@ -183,6 +183,9 @@ class Router {
 	remote_tasks = [];			// mirrored remote task records
 	events = [];				// newest last, capped at AI_MAX_KEPT
 	request_queue = [];			// router-agent turns, Megamind.request style
+	turn_attachments = [];		// files of the current turn ([name, content]): appended
+								// verbatim to the goal this turn delegates, so a node
+								// gets an .md plan without the model copying it
 	last_actions = [];			// newest first, for the role's get_last_actions
 	threads = [];
 
@@ -327,6 +330,74 @@ class Router {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
+	//  Scheduled goals of the nodes (ai_goals, goal_engine.shio on the node)
+	// ─────────────────────────────────────────────────────────────────────────
+
+	// [[node, ok, goals | error]] for every online node (or one node)
+	goals(node_name = "") {
+		want = std.string(node_name ?? "").strip().lowercase();
+		out = [];
+
+		for(rec : nodes()) {
+			if(want && std.string(rec.name).lowercase() != want) {
+				continue;
+			}
+
+			reply = _node_get(rec, AI_CMD_GOALS, [action = "list"], AI_TIMEOUT_CONTROL);
+
+			if(!std.is_json(reply)) {
+				out.push_back([node = rec.name, ok = false, error = "no answer"]);
+			}
+			else if(!reply.ok) {
+				out.push_back([node = rec.name, ok = false, error = std.string(reply.error ?? "no details")]);
+			}
+			else {
+				out.push_back([node = rec.name, ok = true, goals = reply.goals ?? []]);
+			}
+		}
+
+		return out;
+	}
+
+	// action: run | pause | resume | activate | cancel | archive | complete.
+	// No node given: the node that has a goal with that id.
+	goal_action(action, goal, node_name = "") {
+		target = std.string(node_name ?? "").strip();
+
+		if(!target) {
+			for(entry : goals()) {
+				if(!entry.ok) {
+					continue;
+				}
+				for(g : entry.goals) {
+					if(std.string(g.id ?? "") == goal) {
+						target = entry.node;
+					}
+				}
+			}
+		}
+
+		if(!target) {
+			return [ok = false, error = "no node has a goal '" + goal + "'"];
+		}
+
+		rec = _find_node(target);
+
+		if(!rec || !_node_online(rec)) {
+			return [ok = false, error = "node offline: " + target];
+		}
+
+		reply = _node_get(rec, AI_CMD_GOALS, [action = action, goal = goal], AI_TIMEOUT_CONTROL);
+
+		if(!std.is_json(reply)) {
+			return [ok = false, error = "node " + target + " did not answer"];
+		}
+
+		reply.node = rec.name;
+		return reply;
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
 	//  Nodes
 	// ─────────────────────────────────────────────────────────────────────────
 
@@ -433,7 +504,7 @@ class Router {
 	// Explicit node, no model involved: the goal goes as an ai_request to that
 	// node's RECEPTIONIST. Programmatic / management path. -> [ok, taskid, node]
 	delegate(node_name, prompt) {
-		return _delegate(node_name, prompt, router_first_line(prompt));
+		return _delegate(node_name, _with_attachments(prompt), router_first_line(prompt));
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -501,6 +572,21 @@ class Router {
 	// The target node is the AGENT's decision (it picks it from get_nodes() and
 	// passes it here). An empty node is a routing error, not something this class
 	// guesses. -> taskid, None on failure.
+	// the delegated text: the goal plus the files of the current turn
+	_with_attachments(goal) {
+		if(!turn_attachments.size()) {
+			return goal;
+		}
+
+		out = std.string(goal) + "\n\n---\nFiles the user attached (verbatim):\n";
+
+		for(a : turn_attachments) {
+			out += "\n### " + std.string(a.name ?? "file") + "\n\n````\n" + std.string(a.content ?? "") + "\n````\n";
+		}
+
+		return out;
+	}
+
 	add_task(name, goal, node_name = None, mode = "receptionist") {
 		target = std.string(node_name ?? "").strip();
 
@@ -532,7 +618,7 @@ class Router {
 		}
 
 		if(mode != "worker") {
-			res = _delegate(rec.name, goal, name);
+			res = _delegate(rec.name, _with_attachments(goal), name);
 
 			if(!res.ok) {
 				std.error("[router] add_task: ", std.string(res.error ?? "delegation failed"));
@@ -542,7 +628,7 @@ class Router {
 			return res.taskid;
 		}
 
-		reply = _node_get(rec, AI_CMD_TASK_ADD, [name = name, goal = goal], AI_TIMEOUT_CONTROL);
+		reply = _node_get(rec, AI_CMD_TASK_ADD, [name = name, goal = _with_attachments(goal)], AI_TIMEOUT_CONTROL);
 
 		if(!std.is_json(reply) || !reply.ok) {
 			err = "node did not answer";

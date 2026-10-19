@@ -82,6 +82,14 @@ class tg_fake_bot {
     next_draft = 1;
     draft_id_mode = "int";      // int | json | string | none | raise — the shapes
                                 // new_draft_id can hand back (undocumented return)
+    files = [];                 // fileid -> content for download_file
+
+    download_file(fileid, destination = "") {
+        if(!files.has(fileid)) {
+            return [success = false];
+        }
+        return [success = true, content = files[fileid]];
+    }
 
     send_rich(chatdata, options) {
         cid = 0;
@@ -254,8 +262,11 @@ class tg_stub_host {
             _notify_cb(std.string(msg));
     }
 
+    requests = [];
+
     request(prompt, on_finish_cb = None, on_action_cb = None) {
         _receptionist_active = true;
+        requests.push_back(std.string(prompt));
 
         result = [
             ok = true,
@@ -697,6 +708,79 @@ bot.on_any_message([chatid = CHAT_A, text = dup_text]);
 
 after_window = wait_for([stub_agent]() { return stub_agent.turns == turns_pre + 2; }, 8000);
 check("the same text after the dedup window is a new turn", after_window, std.string(stub_agent.turns - turns_pre));
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  4e. Follow-ups and files: a burst of messages is one turn, every message is
+//      in the action ring, a reply quotes its message, a text file is shown to
+//      the agent and reaches the node verbatim, a binary file is not read.
+// ─────────────────────────────────────────────────────────────────────────────
+
+wait_turns(n) {
+    return wait_for([stub_agent, n]() { return stub_agent.turns >= n; }, 8000);
+}
+
+turns_pre = stub_agent.turns;
+bot.clear();
+bot.on_any_message([chatid = CHAT_A, text = "fix the http login page"]);
+bot.on_any_message([chatid = CHAT_A, text = "sorry, I meant the http signup page"]);
+
+check("a burst of messages is answered", wait_turns(turns_pre + 1), std.string(stub_agent.turns - turns_pre));
+std.sleep(TG_COALESCE_MS + 300);
+burst_prompt = stub_agent.prompts[stub_agent.prompts.size() - 1];
+check("a burst of messages is ONE turn", stub_agent.turns == turns_pre + 1, std.string(stub_agent.turns - turns_pre));
+check("the turn carries both messages in order", burst_prompt.contains("1. fix the http login page") && burst_prompt.contains("2. sorry, I meant the http signup page"), burst_prompt);
+
+user_logged = false;
+for(a : rtr.last_actions) {
+    if(std.string(a.action) == "user_message" && std.string(a.text).contains("signup page"))
+        user_logged = true;
+}
+check("the user's messages are in the action ring (get_last_actions)", user_logged, std.string(rtr.last_actions[0]));
+
+turns_pre = stub_agent.turns;
+bot.on_any_message([chatid = CHAT_A, text = "make it the http admin page instead", reply = [text = "picked WebBox", msgid = 5]]);
+wait_turns(turns_pre + 1);
+check("a reply quotes the message it answers", stub_agent.prompts[stub_agent.prompts.size() - 1].contains("(in reply to: \"picked WebBox\")"), stub_agent.prompts[stub_agent.prompts.size() - 1]);
+
+bot.files["F1"] = "# Plan\n- step one: the http status page\n";
+web_requests = hostB.requests.size();
+turns_pre = stub_agent.turns;
+bot.on_any_message([chatid = CHAT_A, caption = "implement this plan for the http site", document = [fileid = "F1", fileuid = "U1", filename = "plan.md", filesize = 40, mimetype = "text/markdown"]]);
+wait_turns(turns_pre + 1);
+file_prompt = stub_agent.prompts[stub_agent.prompts.size() - 1];
+check("the caption is the instruction", file_prompt.starts("implement this plan for the http site"), file_prompt);
+check("the agent sees the file content", file_prompt.contains("Attached file 'plan.md'") && file_prompt.contains("- step one: the http status page"), file_prompt);
+tg_file_delivered(host) {
+    for(r : host.requests) {
+        if(r.contains("Files the user attached") && r.contains("- step one: the http status page"))
+            return true;
+    }
+    return false;
+}
+delivered = wait_for([hostB]() { return tg_file_delivered(hostB); }, 8000);
+check("the node receives the file verbatim with the delegated goal", delivered, std.string(hostB.requests.size()));
+check("the file is kept in telegram_inbox/", fileio.files(rtr.tg_inbox, false).size() >= 1, rtr.tg_inbox);
+check("the attachments end with the turn", wait_for([rtr]() { return rtr.turn_attachments.size() == 0 && rtr.tg_active == None; }, 8000), "");
+
+turns_pre = stub_agent.turns;
+bot.on_any_message([chatid = CHAT_A, caption = "QUESTION: what is in this picture", document = [fileid = "F2", fileuid = "U2", filename = "photo.png", filesize = 4000, mimetype = "image/png"]]);
+wait_turns(turns_pre + 1);
+check("a binary file is not read, the agent is told why", stub_agent.prompts[stub_agent.prompts.size() - 1].contains("not a text file"), stub_agent.prompts[stub_agent.prompts.size() - 1]);
+
+bot.clear();
+bot.on_any_message([chatid = CHAT_A, text = "/goals"]);
+goals_answered = wait_for([bot]() { return bot.has_for(CHAT_A, GPU_NAME) && bot.has_for(CHAT_A, WEB_NAME); }, 8000);
+check("/goals asks every node (worker thread)", goals_answered, bot.last_for(CHAT_A));
+check("/goals says when a node has no .agentspace", bot.has_for(CHAT_A, "no .agentspace"), bot.last_for(CHAT_A));
+
+bot.clear();
+bot.on_any_message([chatid = CHAT_A, text = "/goal pause nightly"]);
+check("/goal on an unknown goal is answered", wait_for([bot]() { return bot.has_for(CHAT_A, "no node has a goal"); }, 8000), bot.last_for(CHAT_A));
+
+for(f : fileio.files(rtr.tg_inbox, false)) {
+    try { fileio.remove(rtr.tg_inbox + "/" + fileio.file_name(f)); } catch(e) {}
+}
+try { fileio.remove(rtr.tg_inbox); } catch(e) {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  5. A task finished on ANY node is a notification in EVERY trusted chat
