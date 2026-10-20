@@ -985,6 +985,11 @@ class openai_api
 		stream.start("/tokenize", _body);
 		token_count_info = stream.poll();
 		res = stream.answer();
+		//poll() only hands out chunks with "choices": the /tokenize answer
+		//([count, max_model_len, ...]) has none, so it is read from the raw text
+		//(without this the context size of a vLLM endpoint was never seen)
+		if(!token_count_info || !token_count_info.max_model_len)
+			token_count_info = std.json(res.raw, true);
 		
 		if(!token_count_info.max_model_len) {
 			
@@ -1210,7 +1215,7 @@ class openai_api
 		
 		for(current_tokens > max_total_tokens / 3 && body.messages.size() > 1 && max_iter)
 		{
-			std.warn("Truncating history (no handoff summary possible)...");
+			std.warn(compaction ? "Truncating history (no handoff summary possible)..." : "Truncating history (compaction is off)...");
 			if(body.messages[0].role == "system")
 			{
 				body.messages.remove(1);

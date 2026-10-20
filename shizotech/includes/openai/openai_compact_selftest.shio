@@ -172,48 +172,71 @@ server.route("POST", "^/v1/chat/completions$", [stats](req, writer) {
 	])];
 });
 
+check("the fake server starts", server.start() ? true : false, "port " + std.string(PORT));
 std.sleep(200);
 
-// ask(): a long history, the next question compacts it at the start
-api = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
-for(i = 0; i < 6; i++) {
-	api.body.messages.push_back([role = "user", content = "question " + std.string(i) + " " + std.string("x").ljust(300, "q")]);
-	api.body.messages.push_back([role = "assistant", content = "answer " + std.string(i) + " " + std.string("y").ljust(300, "a")]);
-}
-answer = api.ask("THE NEW QUESTION");
-check("ask(): a long history is compacted, not cut", api.compactions == 1 && stats.summaries >= 1, std.string(api.compactions));
-check("ask(): [system, user(summary + question), assistant]", roles(api.body.messages) == "sua" && api.body.messages[1].content.contains("SUMMARY-OK") && api.body.messages[1].content.contains("THE NEW QUESTION"), roles(api.body.messages));
-check("ask(): the answer still comes", std.string(answer).contains("hello") || std.string(answer).contains("done"), std.string(answer));
+// openai_stream polls in a tight loop: the client runs on its own thread, this
+// thread keeps serving the fake server's routes
+client_done = [done = false];
 
-// task(): one long tool loop grows past half the context and is compacted
-// between rounds
-stats.chats = 0;
-api2 = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
-events = [];
-api2.on_compact = [events](info) { events.push_back(info); };
-ts = toolset();
-ts.add_tool("work", "does work", [step = "int(): the step"], [](args) {
-	return "work result " + std.string(args.step) + ": " + std.string("r").ljust(450, "z");
+run_client() {
+	// ask(): a long history, the next question compacts it at the start
+	api = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
+	for(i = 0; i < 6; i++) {
+		api.body.messages.push_back([role = "user", content = "question " + std.string(i) + " " + std.string("x").ljust(300, "q")]);
+		api.body.messages.push_back([role = "assistant", content = "answer " + std.string(i) + " " + std.string("y").ljust(300, "a")]);
+	}
+	answer = api.ask("THE NEW QUESTION");
+	check("ask(): a long history is compacted, not cut", api.compactions == 1 && stats.summaries >= 1, std.string(api.compactions));
+	check("ask(): [system, user(summary + question), assistant]", roles(api.body.messages) == "sua" && api.body.messages[1].content.contains("SUMMARY-OK") && api.body.messages[1].content.contains("THE NEW QUESTION"), roles(api.body.messages));
+	check("ask(): the answer still comes", std.string(answer).contains("hello") || std.string(answer).contains("done"), std.string(answer));
+
+	// task(): one long tool loop grows past half the context and is compacted
+	// between rounds
+	stats.chats = 0;
+	api2 = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
+	events = [];
+	api2.on_compact = [events](info) { events.push_back(info); };
+	ts = toolset();
+	ts.add_tool("work", "does work", [step = "int(): the step"], [](args) {
+		return "work result " + std.string(args.step) + ": " + std.string("r").ljust(450, "z");
+	});
+	res = api2.task("THE TASK: do all the steps", ts);
+	check("task(): the tool loop ran to the end", std.string(res).contains("done"), std.string(res));
+	check("task(): compacted inside the loop", api2.compactions >= 1 && events.size() >= 1, std.string(api2.compactions));
+	check("task(): the server never saw more than the context", stats.max_seen < MAX_LEN, std.string(stats.max_seen));
+	check("task(): the task text is kept verbatim", api2.body.messages[1].content.starts("THE TASK: do all the steps"), api2.body.messages[1].content.substr(0, 80));
+	check("task(): the summary is in the conversation", std.string(api2.body.messages).contains("## Handoff summary") && std.string(api2.body.messages).contains("SUMMARY-OK"), "");
+	check("task(): tool calls stay next to their results", tool_order_ok(api2.body.messages), roles(api2.body.messages));
+	check("on_compact reports the summary", events.size() >= 1 && std.string(events[0].summary).contains("SUMMARY-OK"), std.string(events));
+
+	// compaction off: the old behaviour (cut the oldest messages)
+	api3 = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
+	api3.compaction = false;
+	for(i = 0; i < 6; i++) {
+		api3.body.messages.push_back([role = "user", content = "question " + std.string(i) + " " + std.string("x").ljust(300, "q")]);
+		api3.body.messages.push_back([role = "assistant", content = "answer " + std.string(i) + " " + std.string("y").ljust(300, "a")]);
+	}
+	summaries_before = stats.summaries;
+	api3.ask("ANOTHER QUESTION");
+	check("compaction = false: no summary request, the oldest messages are cut", stats.summaries == summaries_before && api3.compactions == 0 && api3.body.messages.size() < 14, std.string(api3.body.messages.size()));
+}
+
+client = std.thread([client_done]() {
+	try {
+		run_client();
+	}
+	catch(e) {
+		std.print("client failed: ", e);
+	}
+	client_done.done = true;
 });
-res = api2.task("THE TASK: do all the steps", ts);
-check("task(): the tool loop ran to the end", std.string(res).contains("done"), std.string(res));
-check("task(): compacted inside the loop", api2.compactions >= 1 && events.size() >= 1, std.string(api2.compactions));
-check("task(): the server never saw more than the context", stats.max_seen < MAX_LEN, std.string(stats.max_seen));
-check("task(): the task text is kept verbatim", api2.body.messages[1].content.starts("THE TASK: do all the steps"), api2.body.messages[1].content.substr(0, 80));
-check("task(): the summary is in the conversation", std.string(api2.body.messages).contains("## Handoff summary") && std.string(api2.body.messages).contains("SUMMARY-OK"), "");
-check("task(): tool calls stay next to their results", tool_order_ok(api2.body.messages), roles(api2.body.messages));
-check("on_compact reports the summary", events.size() >= 1 && std.string(events[0].summary).contains("SUMMARY-OK"), std.string(events));
+client.run();
 
-// compaction off: the old behaviour (cut the oldest messages)
-api3 = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
-api3.compaction = false;
-for(i = 0; i < 6; i++) {
-	api3.body.messages.push_back([role = "user", content = "question " + std.string(i) + " " + std.string("x").ljust(300, "q")]);
-	api3.body.messages.push_back([role = "assistant", content = "answer " + std.string(i) + " " + std.string("y").ljust(300, "a")]);
-}
-summaries_before = stats.summaries;
-api3.ask("ANOTHER QUESTION");
-check("compaction = false: no summary request, the oldest messages are cut", stats.summaries == summaries_before && api3.compactions == 0 && api3.body.messages.size() < 14, std.string(api3.body.messages.size()));
+for(w = 0; w < 6000 && !client_done.done; w++)
+	std.sleep(20);
+
+check("the client finished", client_done.done, "timeout");
 
 try { server.stop(); } catch(e) {}
 
