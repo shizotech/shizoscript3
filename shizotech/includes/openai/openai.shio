@@ -326,10 +326,15 @@ class openai_api
 	on_text = None;
 	on_tool = None;
 	
-	//Context compaction (openai_compact.shio): past half of the context the model
-	//writes a handoff summary that replaces the old messages. false = cut the
-	//oldest messages instead (the old behaviour, also the fallback).
+	//Context compaction (openai_compact.shio): the model writes a handoff summary
+	//that replaces the old messages. false = cut the oldest messages instead (the
+	//old behaviour, also the fallback).
+	//  - before a request (a continued conversation): past half of the context,
+	//    so the model has at least half of it free to answer
+	//  - between the rounds of one task()'s tool loop: past compact_run_threshold
+	//    of the context (not every round above half)
 	compaction = true;
+	compact_run_threshold = 0.8;
 	on_compact = None;		//cb([messages, tokens_before, max_tokens, summary])
 	compactions = 0;
 	_compact_stream = None;
@@ -790,7 +795,8 @@ class openai_api
 						break;
 					
 					//A long tool loop grows past the context inside ONE task: compact
-					//between rounds. No token_count_body() here (its fallback stops the
+					//between rounds once it is past compact_run_threshold (80%) of the
+					//context. No token_count_body() here (its fallback stops the
 					//task stream): the server's usage of the last round + the new results.
 					if(compaction && max_total_tokens > 0) {
 						added_chars = 0;
@@ -799,7 +805,7 @@ class openai_api
 						
 						estimate = last_total_tokens > 0 ? last_total_tokens + added_chars / OPENAI_COMPACT_CHARS_PER_TOKEN : openai_estimate_tokens(body);
 						
-						if(estimate > max_total_tokens / 2) {
+						if(estimate > max_total_tokens * compact_run_threshold) {
 							if(compact_history(max_total_tokens, estimate))
 								last_total_tokens = 0;
 						}
