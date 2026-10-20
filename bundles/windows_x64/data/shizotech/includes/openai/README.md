@@ -5,10 +5,12 @@ TESTED WITH VLLM ONLY
 
 `openai_api` keeps a conversation inside the model's context without cutting it:
 
-* Before a request (`ask()`, `task()`, `get_json()`) and between the rounds of a tool loop
-  inside one `task()`, a conversation past **half the context** is compacted: the model writes
-  a **handoff summary** (task, done, facts, in progress, next, avoid) of the old messages, and
-  that summary takes their place.
+* A conversation that is too long is compacted: the model writes a **handoff summary** (task,
+  done, facts, in progress, next, avoid) of the old messages, and that summary takes their place.
+  * Before a request (`ask()`, `task()`, `get_json()`, a continued conversation): past **half
+    the context**, so the model has at least half of it free to answer.
+  * Between the rounds of a tool loop inside one `task()`: past **80% of the context**
+    (`api.compact_run_threshold = 0.8`), so a long run is not compacted every round.
 * Kept verbatim: the system prompt, the current request (the summary goes in front of it, or
   after it when the compacted part is the progress on it) and the tool round in flight (an
   assistant `tool_calls` message and its results are never separated).

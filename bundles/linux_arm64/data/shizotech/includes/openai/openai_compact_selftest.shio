@@ -5,9 +5,10 @@
 //
 //  Part 1: the message surgery (openai_compact.shio), no network.
 //  Part 2: a real openai_api against a fake OpenAI server (webserver module,
-//          a 2000 token context): a long ask() history and a long tool loop
-//          inside ONE task() are compacted into a handoff summary, tool calls
-//          stay next to their results, nothing is cut.
+//          a 2000 token context): a long ask() history (past half the context)
+//          and a long tool loop inside ONE task() (past 80% of the context) are
+//          compacted into a handoff summary, tool calls stay next to their
+//          results, nothing is cut.
 // ═════════════════════════════════════════════════════════════════════════════
 
 import webserver;
@@ -209,6 +210,8 @@ run_client() {
 	check("task(): the summary is in the conversation", std.string(api2.body.messages).contains("## Handoff summary") && std.string(api2.body.messages).contains("SUMMARY-OK"), "");
 	check("task(): tool calls stay next to their results", tool_order_ok(api2.body.messages), roles(api2.body.messages));
 	check("on_compact reports the summary", events.size() >= 1 && std.string(events[0].summary).contains("SUMMARY-OK"), std.string(events));
+	check("task(): inside the run only past 80% of the context (not past half)", events.size() >= 1 && events[0].tokens_before > MAX_LEN * 0.8, events.size() >= 1 ? std.string(events[0].tokens_before) : "no event");
+	check("task(): a long run is not compacted every round", api2.compactions <= 3, std.string(api2.compactions));
 
 	// compaction off: the old behaviour (cut the oldest messages)
 	api3 = openai_api("http://127.0.0.1:" + std.string(PORT), "fake", "You are a test agent.");
