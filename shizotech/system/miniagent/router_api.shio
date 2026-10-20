@@ -52,6 +52,11 @@ ROUTER_MAX_OUTPUT_CHARS = 2000;
 ROUTER_INFO_REFRESH_MS = 5000;
 ROUTER_MAX_POLL_FAILS = 3;
 
+// C2 stall watchdog: an OPEN task (queued|generating) that shows no progress for
+// this long gets ONE task_stalled event. Deliberately far above any test runtime —
+// opts.stall_ms overrides it, 0 turns the watchdog off.
+ROUTER_TASK_STALL_MS = 900000;
+
 // remote task states (router_api.md): queued | generating | finished | failed | stopped | lost
 router_is_open_state(state) {
 	if(state == "queued") {
@@ -177,6 +182,7 @@ class Router {
 								// the wire threads and dies with this Router, so the
 								// reference must be kept (its __deinit__ stops them)
 	poll_ms = 1000;
+	stall_ms = ROUTER_TASK_STALL_MS;	// C2: open-task stall watchdog period, 0 = off
 
 	// state
 	_nodes = [];				// node records, keyed by mac (device object in .dev)
@@ -187,6 +193,7 @@ class Router {
 								// verbatim to the goal this turn delegates, so a node
 								// gets an .md plan without the model copying it
 	last_actions = [];			// newest first, for the role's get_last_actions
+	last_route_error = "";		// C4: reason of the LAST add_task failure ("" on success)
 	threads = [];
 
 	started_at = 0;
@@ -201,11 +208,13 @@ class Router {
 	// ─────────────────────────────────────────────────────────────────────────
 	//  cfg:  ModelConfig
 	//  opts: [name, description, capabilities, tags, role, on_event, on_notify,
-	//         on_action, poll_ms]
+	//         on_action, poll_ms, stall_ms]
 	//
 	//  opts.role defaults to "router". Override it to reuse an existing role
 	//  (e.g. "receptionist") while roles/router/ is being written, or to run a
 	//  router with a different persona.
+	//
+	//  opts.stall_ms (C2) is the open-task watchdog period; 0 turns it off.
 	// ─────────────────────────────────────────────────────────────────────────
 	__init__(cfg, opts = None) {
 		started_at = std.millis();
@@ -228,6 +237,12 @@ class Router {
 			}
 			if(opts.has("poll_ms") && opts.poll_ms > 0) {
 				poll_ms = std.int(opts.poll_ms);
+			}
+			if(opts.has("stall_ms")) {
+				stall_ms = std.int(opts.stall_ms);
+				if(stall_ms < 0) {
+					stall_ms = 0;
+				}
 			}
 			if(opts.has("on_event")) {
 				_event_cb = opts.on_event;
@@ -587,22 +602,49 @@ class Router {
 		return out;
 	}
 
+	// C4: the reason of the LAST add_task failure. Every failure path below stores a
+	// specific, human-readable text in last_route_error ("" on success), so the router
+	// AGENT can tell the user WHY the node refused instead of "offline, unreachable
+	// or it refused". -> plain string
+	add_task_error() {
+		return std.string(last_route_error ?? "");
+	}
+
+	// add_task keeps its contract (taskid | None); the wrapper only adds the
+	// exception path: a raise inside the routing must land in last_route_error too,
+	// otherwise the agent gets a bare "it refused" and the reason dies in the log.
 	add_task(name, goal, node_name = None, mode = "receptionist") {
+		last_route_error = "";
+
+		try {
+			return _add_task(name, goal, node_name, mode);
+		}
+		catch(e) {
+			last_route_error = "add_task raised: " + std.string(e);
+			std.error("[router] add_task: ", last_route_error);
+			return None;
+		}
+	}
+
+	_add_task(name, goal, node_name, mode) {
 		target = std.string(node_name ?? "").strip();
 
 		if(!target) {
-			std.error("[router] add_task: no target node for '", name, "'. The router agent must pick a node from get_nodes().");
+			last_route_error = "no target node given for task '" + std.string(name) + "': the router agent must pick a node from get_nodes()";
+			std.error("[router] add_task: ", last_route_error);
 			return None;
 		}
 
 		rec = _find_node(target);
 
 		if(!rec) {
-			std.error("[router] add_task: unknown node: ", target);
+			last_route_error = "unknown node '" + target + "': it is not in the routing table (get_nodes() lists the nodes)";
+			std.error("[router] add_task: ", last_route_error);
 			return None;
 		}
 		if(!_node_online(rec)) {
-			std.error("[router] add_task: node offline: ", rec.name);
+			last_route_error = "node '" + std.string(rec.name) + "' is offline: it does not answer on the ShizoNet network right now";
+			std.error("[router] add_task: ", last_route_error);
 			return None;
 		}
 
@@ -621,7 +663,8 @@ class Router {
 			res = _delegate(rec.name, _with_attachments(goal), name);
 
 			if(!res.ok) {
-				std.error("[router] add_task: ", std.string(res.error ?? "delegation failed"));
+				last_route_error = "node '" + std.string(rec.name) + "' refused the task: " + std.string(res.error ?? "delegation failed");
+				std.error("[router] add_task: ", last_route_error);
 				return None;
 			}
 
@@ -635,6 +678,7 @@ class Router {
 			if(std.is_json(reply)) {
 				err = std.string(reply.error ?? err);
 			}
+			last_route_error = "node '" + std.string(rec.name) + "' refused the worker task: " + err;
 			std.error("[router] add_task failed on ", rec.name, ": ", err);
 			return None;
 		}
@@ -797,6 +841,7 @@ class Router {
 			running = running,
 			uptime_ms = std.millis() - started_at,
 			poll_ms = poll_ms,
+			stall_ms = stall_ms,
 			nodes = nodes_summary(),
 			nodes_online = online.size(),
 			remote_tasks = tasks,
@@ -1069,6 +1114,7 @@ class Router {
 				tasks_running = 0,
 				tasks_planned = 0,
 				uptime_ms = 0,
+				goals = false,		// C5: node runs a GoalScheduler (ai_node_info)
 				seen = std.millis(),
 				last_info = 0,
 				dev = dev,
@@ -1198,6 +1244,11 @@ class Router {
 		if(info.has("uptime_ms")) {
 			rec.uptime_ms = std.int(info.uptime_ms);
 		}
+		if(info.has("goals")) {
+			// C5: presence only — the node says whether it runs a GoalScheduler,
+			// so the router agent can tell "no goal system here" BEFORE delegating.
+			rec.goals = info.goals ? true : false;
+		}
 
 		rec.last_info = std.millis();
 		rec.seen = std.millis();
@@ -1221,6 +1272,7 @@ class Router {
 			tasks_running = rec.tasks_running,
 			tasks_planned = rec.tasks_planned,
 			uptime_ms = rec.uptime_ms,
+			goals = rec.goals ? true : false,	// C5: does this node run goals at all?
 			open_tasks = _count_open_tasks(rec.name),
 		];
 	}
@@ -1339,6 +1391,8 @@ class Router {
 		rec.poll_fails = 0;
 		rec.output = "";
 		rec.last_error = "";
+		rec.last_progress = std.millis();	// C3: the clock the stall watchdog (C2) reads
+		rec.stall_announced = false;		// C2: one task_stalled per stall episode
 
 		if(!rec.has("report")) {
 			rec.report = "";
@@ -1367,6 +1421,7 @@ class Router {
 			name = rec.name,
 			state = rec.state,
 			report = "",
+			error = "",
 		]);
 
 		return rec.taskid;
@@ -1482,11 +1537,18 @@ class Router {
 		node = rec.node;
 		taskid = rec.taskid;
 		task_name = rec.name;
+		// C1: the failure reason travels IN the event. It used to sit in
+		// rec.last_error only, so the front end rendered "[failed] node: task X"
+		// with no reason and the user asked "why?" in the chat.
+		last_error = std.string(rec.last_error ?? "");
 		cs.release();
 
 		if(old == new_state) {
 			return true;
 		}
+
+		// C2: a state change is progress — it restarts the stall watchdog.
+		_mark_task_progress(rec);
 
 		_emit_event([
 			kind = "task_state",
@@ -1497,9 +1559,75 @@ class Router {
 			state = new_state,
 			prev = old,
 			report = report,
+			error = last_error,
 		]);
 
 		return true;
+	}
+
+	// C2: every sign of life of a mirrored task restarts the stall watchdog.
+	// Progress = a state change (_set_task_state), a delta / report arriving
+	// (_append_delta, _apply_task_record, _mirror_event), a poll that returned new
+	// data. Clearing stall_announced is what makes the NEXT stall episode reportable.
+	// Callers that already hold the critical section set the two fields inline.
+	_mark_task_progress(rec) {
+		if(!rec) {
+			return;
+		}
+
+		cs = std.critical_section_named(_lock);
+		rec.last_progress = std.millis();
+		rec.stall_announced = false;
+		cs.release();
+	}
+
+	// C2: an OPEN task (queued|generating) whose clock has not moved for stall_ms
+	// is visible on the event stream exactly once per stall episode. Runs on the
+	// poller thread only (poll_open_tasks), so the "at most once" flag needs no
+	// extra machinery. stall_ms = 0 turns the watchdog off.
+	_check_task_stall(rec) {
+		if(stall_ms <= 0 || !rec) {
+			return;
+		}
+		if(!router_is_open_state(std.string(rec.state ?? ""))) {
+			return;
+		}
+
+		cs = std.critical_section_named(_lock);
+		last_progress = std.int(rec.last_progress ?? 0);
+		if(last_progress == 0) {
+			// a record built without the mirror helper: start the clock, do not
+			// report a stall the mirror has no idea about
+			rec.last_progress = std.millis();
+			cs.release();
+			return;
+		}
+		idle = std.millis() - last_progress;
+		announced = rec.stall_announced ? true : false;
+		fire = (!announced && idle >= stall_ms) ? true : false;
+		if(fire) {
+			rec.stall_announced = true;
+		}
+		node = std.string(rec.node ?? "");
+		taskid = std.string(rec.taskid ?? "");
+		task_name = std.string(rec.name ?? "");
+		state = std.string(rec.state ?? "");
+		cs.release();
+
+		if(!fire) {
+			return;
+		}
+
+		_emit_event([
+			kind = "task_stalled",
+			time = std.millis(),
+			node = node,
+			taskid = taskid,
+			name = task_name,
+			state = state,
+			idle_ms = idle,
+			error = "",
+		]);
 	}
 
 	_count_open_tasks(node_name) {
@@ -1631,6 +1759,9 @@ class Router {
 			rec.name = std.string(ev.name);
 		}
 		rec.updated = std.millis();
+		// C2: the node pushed something about this task — it is alive.
+		rec.last_progress = std.millis();
+		rec.stall_announced = false;
 		cs.release();
 	}
 
@@ -1779,6 +1910,9 @@ class Router {
 				continue;
 			}
 			_poll_task(rec);
+			// C2: the watchdog rides the poller — an open task that stops making
+			// progress is reported once, not polled into silence forever.
+			_check_task_stall(rec);
 		}
 	}
 
@@ -1857,6 +1991,13 @@ class Router {
 		if(reply.has("status")) {
 			new_state = router_map_request_status(std.string(reply.status));
 
+			// C3: the node answers a STOPPED request as done + note="stopped"
+			// (shizonet_ai.shio handle_poll). Mapping that to "finished" told the
+			// user a killed turn had completed its goal.
+			if(new_state == "finished" && std.string(reply.note ?? "") == "stopped") {
+				new_state = "stopped";
+			}
+
 			if(new_state == "finished") {
 				report = rec.report;
 				if(reply.has("result")) {
@@ -1867,8 +2008,13 @@ class Router {
 				cs.release();
 			}
 			if(new_state == "failed" && reply.has("error")) {
+				// C3: the node's error text lands in BOTH report and last_error.
+				// A front end renders the report of a finished task and the error
+				// of a failed one — a failure has nothing else to show, and the
+				// report field is what the notification sinks already read.
 				cs = std.critical_section_named(_lock);
 				rec.last_error = std.string(reply.error);
+				rec.report = rec.last_error;
 				cs.release();
 			}
 
@@ -1884,6 +2030,9 @@ class Router {
 		if(task.has("name") && task.name) {
 			rec.name = std.string(task.name);
 		}
+		// C2: a task record off the node is new data — restart the stall clock.
+		rec.last_progress = std.millis();
+		rec.stall_announced = false;
 		cs.release();
 
 		new_state = router_map_task_state(std.string(task.state ?? "research"));
@@ -1923,6 +2072,9 @@ class Router {
 			rec.output = rec.output.substr(rec.output.length() - ROUTER_MAX_OUTPUT_CHARS);
 		}
 		rec.last_poll = std.millis();
+		// C2: a delta is the node proving it is alive — restart the stall clock.
+		rec.last_progress = std.millis();
+		rec.stall_announced = false;
 		cs.release();
 	}
 

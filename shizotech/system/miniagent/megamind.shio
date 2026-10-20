@@ -1,6 +1,76 @@
 
 #include "miniagent"
 
+// Contract C6: normalize one receptionist turn into the result the owner sees.
+// The role's finish(summary) tool puts the turn's report into
+// receptionist.env.reports, but miniagent only returns them when
+// env.use_finalize is set, so a turn that ended with finish() came back as
+// "Agent was stopped." although everything worked. Fold them in: the report IS
+// the answer, and the turn is a success. Every result carries a human-readable
+// report, so a node-side failure ("Goals are not enabled on this node: ...")
+// reaches the chat instead of a bare "Agent was stopped.".
+//
+//	agent				the receptionist miniagent (its env.reports are folded)
+//	res					what receptionist.task() returned (may be None)
+//	crash					"" , or the text of the exception that escaped the turn
+//	execution_time_ms		turn duration, used when res carries none
+megamind_turn_result(agent, res, crash = "", execution_time_ms = -1) {
+	out = res;
+
+	if(!std.is_json(out))
+		out = [ok = false, reports = []];
+
+	if(!std.is_json(out.reports))
+		out.reports = [];
+
+	if(execution_time_ms >= 0 && !out.has("execution_time_ms"))
+		out.execution_time_ms = execution_time_ms;
+
+	reps = [];
+
+	if(agent && std.is_json(agent.env) && agent.env.has("reports") && std.is_json(agent.env.reports))
+		reps = agent.env.reports.copy();
+
+	//An exception that escaped the turn is a crash, and that is what the owner
+	//must read - even when the agent had pushed a report before it died.
+	if(crash) {
+		out.ok = false;
+		out.error = crash;
+		out.reports = [[
+			report = "The node's receptionist crashed: " + crash,
+			time = std.millis(),
+			time_str = std.timestamp(),
+		]];
+		return out;
+	}
+
+	if(reps.size()) {
+		out.ok = true;
+		out.reports = reps;
+		out.error = "";
+		return out;
+	}
+
+	//Nothing was reported: keep the reason and give the owner text for it, so
+	//every request ends with a readable report.
+	if(!out.reports.size()) {
+		if(out.stopped)
+			out.reports = [[
+				report = "The receptionist turn was stopped.",
+				time = std.millis(),
+				time_str = std.timestamp(),
+			]];
+		else
+			out.reports = [[
+				report = "The node's receptionist turn ended without a report: " + (out.error ?? ""),
+				time = std.millis(),
+				time_str = std.timestamp(),
+			]];
+	}
+
+	return out;
+}
+
 class Megamind {
 	
 	running = true;
@@ -264,24 +334,42 @@ class Megamind {
 				std.sleep(100);
 				continue;
 			
+			req = request_queue[0];
 			result = None;
+			crash = "";
+			start_ms = std.millis();
 			
 			_receptionist_active = true;
 			try {
-				receptionist.on_action = request_queue[0].on_action_cb;
+				receptionist.on_action = req.on_action_cb;
 				receptionist.clear_chat();
-				result = receptionist.task(request_queue[0].prompt);
+				result = receptionist.task(req.prompt);
 			}
 			catch(e) {
-				
+				//An empty catch left result = None: the caller got nothing at all
+				//and the chat stayed silent. Report the crash (contract C6).
+				crash = std.string(e);
+				std.error("[megamind] receptionist turn crashed: ", e);
 			}	
 			_receptionist_active = false;
 			
-			if(request_queue[0].on_finish_cb)
-				request_queue[0].on_finish_cb(result);
+			//The turn result the owner sees: finish(summary) reports win, a
+			//crash or a stop becomes a readable report.
+			result = megamind_turn_result(receptionist, result, crash, std.millis() - start_ms);
 			
-			request_queue[0].result = result;
-			request_queue[0].finished = true;
+			if(req.on_finish_cb) {
+				try {
+					req.on_finish_cb(result);
+				}
+				catch(e) {
+					//A throwing callback must not strand the request: the
+					//result is delivered to the caller below either way.
+					std.error("[megamind] receptionist finish callback failed: ", e);
+				}
+			}
+			
+			req.result = result;
+			req.finished = true;
 			request_queue.erase(0);
 		
 			std.sleep(10); //Let tasks start

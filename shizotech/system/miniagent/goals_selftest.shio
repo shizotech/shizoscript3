@@ -789,6 +789,45 @@ sch4.tick();
 check("the scheduler starts the queued run", manual_runs(sch4, "fix-github-issues") == before + 1 && fileio.files(ROOT + "/.runtime/requests", false).size() == 0, std.string(manual_runs(sch4, "fix-github-issues")));
 
 // ═════════════════════════════════════════════════════════════════════════════
+section("a refused dispatch is reported");
+
+finish_open(host4, sch4);
+
+REFUSED = R"(---
+id: refused
+title: Refused dispatch
+priority: urgent
+schedule:
+  type: recurring
+  days: daily
+  start: "19:00"
+  end: "20:00"
+  timezone: Europe/Berlin
+policy:
+  retry_backoff: 5m
+---
+
+Never runs.
+)";
+// urgent: the goals left active by the tool tests can take the single
+// max_background_tasks slot, and this one must reach the dispatch
+write_goal_file("active", "refused", REFUSED);
+clk.t = at(ber, "2026-10-29", "18:00");
+sch4.tick();
+host4.refuse = true;
+before = host4.tasks.size();
+clk.t = at(ber, "2026-10-29", "19:00") + 5;
+sch4.tick();
+check("a refused dispatch creates no task, only a dispatch_failed event", host4.tasks.size() == before && has_event(sch4, "dispatch_failed", "refused"), std.string(host4.tasks.size() - before));
+check("a refused dispatch notifies the owner with the reason", notes_with(host4, "could not start - the host refused the task") == 1, std.string(host4.notes));
+host4.refuse = false;
+clk.t += 6 * 60;
+sch4.tick();
+check("a refused dispatch is retried, not forgotten", host4.tasks.size() == before + 1, std.string(host4.tasks.size() - before));
+space.move("refused", "archived");
+finish_open(host4, sch4);
+
+// ═════════════════════════════════════════════════════════════════════════════
 
 fileio.remove(ROOT);
 

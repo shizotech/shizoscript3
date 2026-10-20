@@ -4,18 +4,24 @@
 //
 //  Usage:  shz telegram_router.shio --bot-token 123456:ABCDEF...
 //                [--name TelegramRouter] [--role router] [--poll 1000]
-//                [--trusted <path>] [--no-stream] [--verbose-events]
+//                [--stall 900000] [--trusted <path>] [--no-stream]
+//                [--verbose-events]
 //
 //  What it does:
 //    * plain text from a TRUSTED chat is ONE router-agent turn: the agent
 //      (roles/router) reads get_nodes(), picks the node and delegates. The
 //      answer of the turn is sent back to that chat.
 //    * the chat stays quiet. The owner sees only what deserves attention:
-//      the router agent's answer, a task that FINISHED / FAILED / was LOST on
-//      any node (with the node's report), and a notify from a node (its report
-//      or its question to the owner). Node online/offline, queued/running
-//      transitions, stops and tool calls are NOT sent. --verbose-events
-//      restores the full event stream (tg_events = "all").
+//      the router agent's answer, and EVERY terminal fact about a task on any
+//      node — FINISHED / FAILED / LOST / STOPPED / a node QUESTION — carrying
+//      the node's report and, for a failure/loss/stop, the reason from the
+//      event's `error` field (C1). A task that reported nothing says so, it
+//      never ends in a bare line. A task that makes no progress for stall_ms
+//      (default 15 min) arrives exactly once per episode as [stalled] (C2).
+//      A notify from a node is its report or its question to the owner.
+//      /nodes shows per node whether it runs a goal system (goals).
+//      Node online/offline, queued/running transitions and tool calls are NOT
+//      sent. --verbose-events restores the full event stream (tg_events = "all").
 //    * access control: only chats listed in the trusted_chats json are served.
 //      No file / empty list -> the FIRST chat that messages the bot becomes the
 //      trusted chat and is written to the file (bootstrap). Every other chat is
@@ -100,9 +106,13 @@ class TelegramRouter : Router
 
     // ─────────────────────────────────────────────────────────────────────────
     //  cfg: ModelConfig
-    //  opts: Router opts (name, role, description, capabilities, tags, poll_ms)
-    //        plus: trusted_chats (path), stream (bool), draft_ms (int),
+    //  opts: Router opts (name, role, description, capabilities, tags, poll_ms,
+    //        stall_ms) plus: trusted_chats (path), stream (bool), draft_ms (int),
     //              events ("reports" | "all")
+    //
+    //  stall_ms is forwarded to the Router: an open task that makes no progress
+    //  that long is announced in the chat once (0 = the Router default of
+    //  ROUTER_TASK_STALL_MS, 15 min).
     // ─────────────────────────────────────────────────────────────────────────
     __init__(cfg, opts = None)
     {
@@ -113,6 +123,7 @@ class TelegramRouter : Router
         opts_poll = 1000;
         opts_draft = TG_DRAFT_MS;
         opts_events = "reports";
+        opts_stall = 0;
 
         if(opts) {
             if(opts.has("name") && opts.name) {
@@ -130,6 +141,9 @@ class TelegramRouter : Router
             if(opts.has("poll_ms") && opts.poll_ms > 0) {
                 opts_poll = std.int(opts.poll_ms);
             }
+            if(opts.has("stall_ms") && opts.stall_ms > 0) {
+                opts_stall = std.int(opts.stall_ms);
+            }
             if(opts.has("draft_ms") && opts.draft_ms >= 0) {
                 opts_draft = std.int(opts.draft_ms);
             }
@@ -146,6 +160,7 @@ class TelegramRouter : Router
             role = opts_role,
             description = "telegram front of the router fleet",
             poll_ms = opts_poll,
+            stall_ms = opts_stall,
         ]);
 
         tg_stream = opts_stream;
@@ -989,6 +1004,10 @@ class TelegramRouter : Router
         tg_notify(msg);
     }
 
+    // What deserves the owner's attention. Every terminal state is in: a task
+    // that stopped, and a node that asks a question, must not be silent
+    // (router_api.md §Events). The Router de-duplicates the stream, so a state
+    // listed here arrives at most once per fact.
     tg_is_report(kind, state)
     {
         if(kind == "task_finished") {
@@ -999,8 +1018,15 @@ class TelegramRouter : Router
             return true;
         }
 
+        // C2: the stall watchdog emits ONE task_stalled per stall episode — the
+        // chat has to hear it, that is the whole point of the watchdog.
+        if(kind == "task_stalled") {
+            return true;
+        }
+
         if(kind == "task_state") {
-            return state == "finished" || state == "failed" || state == "lost";
+            return state == "finished" || state == "failed" || state == "lost"
+                || state == "stopped" || state == "question";
         }
 
         return false;
@@ -1009,6 +1035,16 @@ class TelegramRouter : Router
     // The Router de-duplicates its event stream (router_api.md §Events), so a
     // finished task arrives exactly once — as task_finished (node push) or as
     // task_state -> finished (poller). Both render to the same one message.
+    //
+    // Rendering rules (the owner must learn WHY, never only THAT):
+    //   [done]/[failed]/[lost]/[stopped]/[question] <node>: task <name> <state>
+    //     + the node's report (clipped), when it sent one
+    //     + "error: <reason>" for failed/lost/stopped, from the task_state
+    //       event's `error` (C1) — next to the report when both exist, alone
+    //       when the node reported nothing
+    //     + "(the node reported nothing)" when there is neither
+    //   [stalled] <node>: task <name> ... for <N> min (state <state>) ...
+    //     from the C2 task_stalled event, once per stall episode
     tg_render_event(e)
     {
         kind = std.string(e.kind ?? "event");
@@ -1016,12 +1052,13 @@ class TelegramRouter : Router
         task_name = std.string(e.name ?? "");
         st = std.string(e.state ?? "");
         rep = std.string(e.report ?? "");
+        err = std.string(e.error ?? "");
 
         if(tg_events != "all" && !tg_is_report(kind, st)) {
             return "";
         }
 
-        if(kind == "task_finished" || (kind == "task_state" && (st == "finished" || st == "failed" || st == "lost" || st == "stopped"))) {
+        if(kind == "task_finished" || (kind == "task_state" && (st == "finished" || st == "failed" || st == "lost" || st == "stopped" || st == "question"))) {
             label = "[done]";
 
             if(st == "failed") {
@@ -1033,14 +1070,46 @@ class TelegramRouter : Router
             else if(st == "stopped") {
                 label = "[stopped]";
             }
+            else if(st == "question") {
+                label = "[question]";
+            }
 
             out = label + " " + node + ": task " + task_name + " " + st;
 
+            body = "";
+
             if(rep) {
-                out += "\n" + tg_clip(rep, TG_REPORT_CHARS);
+                body = tg_clip(rep, TG_REPORT_CHARS);
             }
 
-            return out;
+            // C1: the reason of the transition. A failure without a reason is
+            // the bug this front end exists to fix.
+            if(err && (st == "failed" || st == "lost" || st == "stopped")) {
+                if(body) {
+                    body += "\n";
+                }
+                body += "error: " + tg_clip(err, TG_REPORT_CHARS);
+            }
+
+            if(!body) {
+                body = "(the node reported nothing)";
+            }
+
+            return out + "\n" + body;
+        }
+
+        // C2: the stall watchdog — an open task that says nothing for
+        // stall_ms. idle_ms -> whole minutes, never less than one.
+        if(kind == "task_stalled") {
+            mins = std.int(e.idle_ms ?? 0) / 60000;
+
+            if(mins < 1) {
+                mins = 1;
+            }
+
+            return "[stalled] " + node + ": task " + task_name +
+                " has made no progress for " + std.string(mins) +
+                " min (state " + st + "). Ask it for status with a message, or /tasks.";
         }
 
         if(kind == "notify") {
@@ -1185,7 +1254,7 @@ class TelegramRouter : Router
     {
         return "Router '" + name + "' (role " + role + ")\n" +
             "plain text   one router-agent turn: I pick the node and delegate\n" +
-            "/nodes       the fleet: name, capabilities, load\n" +
+            "/nodes       the fleet: name, capabilities, load, goals (does the node run a goal system)\n" +
             "/tasks [state]  routed tasks of ALL nodes (state: open, finished, failed, stopped, lost)\n" +
             "/status      router + trust state\n" +
             "/goals [node]   scheduled goals of the nodes (next window, last outcome)\n" +
@@ -1194,7 +1263,7 @@ class TelegramRouter : Router
             "/id          this chat id + the trust list\n" +
             "/allow <chatid> [name]   /deny <chatid>   /forget\n" +
             "/help        this list\n" +
-            "You get a message when a task finishes, fails or is lost on a node (with the node's report), and when a node reports or asks something. Node online/offline, progress updates and tool calls stay out of this chat.";
+            "You get a message when a task finishes, fails, is lost, is stopped or asks a question on a node: the node's report, and for a failure/loss/stop the reason as 'error: ...' (a node that reported nothing says so). A task that makes no progress for 15 minutes is announced once as [stalled]. A refused delegation is answered with its reason. Node online/offline, queued/running progress and tool calls stay out of this chat.";
     }
 
     tg_answer_text(res)
@@ -1246,6 +1315,7 @@ class TelegramRouter : Router
             out += "\n  capabilities: " + std.string(n.capabilities) +
                 "  model: " + std.string(n.model) +
                 "  busy: " + (n.busy ? "yes" : "no") +
+                "  goals: " + (n.goals ? "yes" : "no") +
                 "  running: " + std.string(n.tasks_running) +
                 "  open: " + std.string(n.open_tasks) + "\n";
         }
@@ -1363,10 +1433,11 @@ if(tg_is_main()) {
     name_opt = std.argvoption("--name");
     role_opt = std.argvoption("--role");
     poll_opt = std.argvoption("--poll");
+    stall_opt = std.argvoption("--stall");
     trusted_opt = std.argvoption("--trusted");
 
     if(!token) {
-        std.print("usage: shz telegram_router.shio --bot-token <token> [--config <name|path>] [--name X] [--role router] [--poll ms] [--trusted <path>] [--no-stream] [--verbose-events] [--list-configs] [--new-config <name>]\n");
+        std.print("usage: shz telegram_router.shio --bot-token <token> [--config <name|path>] [--name X] [--role router] [--poll ms] [--stall ms] [--trusted <path>] [--no-stream] [--verbose-events] [--list-configs] [--new-config <name>]\n");
         return;
     }
 
@@ -1380,6 +1451,9 @@ if(tg_is_main()) {
     }
     if(poll_opt) {
         opts.poll_ms = std.int(poll_opt);
+    }
+    if(stall_opt) {
+        opts.stall_ms = std.int(stall_opt);
     }
     if(trusted_opt) {
         opts.trusted_chats = std.string(trusted_opt);
