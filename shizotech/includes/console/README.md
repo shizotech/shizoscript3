@@ -27,7 +27,7 @@ frames). `console_selftest.shio` is the test.
 | Call | |
 |---|---|
 | `console.colors(false)` | No escape sequences at all: for log files, pipes, consoles that do not understand them |
-| `console.unicode(false)` | ASCII frames and symbols (`+-+`, `|`, `#`) instead of `╭─╮`, `✔`, `█` |
+| `console.unicode(false)` | ASCII frames and symbols (`+-+`, `|`, `#`) instead of `╭─╮`, `✓`, `█` |
 | `console.width(100)` | Width of `rule()`, `title()` (default 80) |
 
 Without an argument each one returns the current value; with one it returns `console`, so they chain.
@@ -55,7 +55,7 @@ Shortcuts: `bold dim italic underline red green yellow blue magenta cyan gray`, 
 |---|---|
 | `print(text)` / `write(text)` | With / without a line end (`std.cout`, flushed at once) |
 | `newline(n = 1)` | Empty lines |
-| `success(t)` `info(t)` `warn(t)` `error(t)` | A line with a coloured `✔ ℹ ⚠ ✖` |
+| `success(t)` `info(t)` `warn(t)` `error(t)` | A line with a coloured `✓ i ▲ ✗` (symbols without an emoji form, so every terminal shows them one column wide in the colour) |
 | `bullet(t)` | `  • t` |
 | `step(i, n, t)` | `[2/5] t` |
 | `rule(title = "", color = "gray")` | A line over the whole width, the title in the middle |
@@ -88,7 +88,7 @@ for (!connected()) {
 	sp.tick();               // next frame; sp.tick("new text") changes the text
 	std.sleep(80);
 }
-sp.done("Connected");        // ✔ Connected; sp.fail("No answer") prints ✖
+sp.done("Connected");        // ✓ Connected; sp.fail("No answer") prints ✗
 ```
 
 `sp.start()` animates the spinner in a task of its own. Tasks take turns: it only moves while the task that started it

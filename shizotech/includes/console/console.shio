@@ -195,8 +195,10 @@ class shz_console
 	];
 	frame_ascii = ["+", "-", "+", "|", "|", "+", "-", "+", "+", "+", "+", "+", "+"];
 
+	// Status symbols without an emoji form: Windows Terminal draws ✔ ✖ ⚠ ℹ as coloured emoji two columns wide (over
+	// the space after them, in their own colours), the classic console cuts them off. U+FE0E does not help there.
 	symbols_unicode = [
-		success = "✔", error = "✖", warn = "⚠", info = "ℹ", arrow = "➜", bullet = "•",
+		success = "✓", error = "✗", warn = "▲", info = "i", arrow = "➜", bullet = "•",
 		bar_full = "█", bar_empty = "░", rule = "─",
 		tree_mid = "├── ", tree_last = "└── ", tree_pipe = "│   ", tree_space = "    ",
 	];
