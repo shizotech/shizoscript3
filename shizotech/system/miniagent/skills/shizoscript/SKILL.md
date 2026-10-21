@@ -1264,11 +1264,20 @@ shz file_name
 shz --check file_name    // syntax check only (includes the strict mode checks)
 shz --strict file_name   // strict mode for every file, as if each started with #strict
 shz --watch file_name    // run it, start it again when it or a file it #includes changes
+shz -i                   // the prompt: one input at a time (also "shz" alone on a terminal without a script)
 ```
 
 - `--watch` (`-w`) runs the script in a child process. After a change of the script or of a file it `#include`s (and of
   any `.shio` next to it) the script is stopped and started again; a script that ends or does not compile waits for the
   next change. Files loaded at run time (`std.module`, `fileio`) are not watched. Ctrl+C ends both.
+
+- `-i` (`--interactive`) is a prompt. Every input runs in the global scope of one program: variables, functions,
+  classes, `using` and `import` stay for the next input, and earlier inputs do not run again. Without `;` at the end the
+  value of an expression is shown (`x * 2` shows 20; `x = 5`, `x * 2;` and `std.print(...)` show nothing more). A line
+  with open brackets (`{`, `(`, `[`) asks for more lines (`..`). On a terminal: arrows, up / down through the history,
+  Ctrl+C drops the input, Ctrl+D ends (Windows: Ctrl+Z, Enter). An input that does not compile changes nothing.
+  Timers and threads of earlier inputs only go on while an input runs. Piped input (`shz -i < file`) exits with `1`
+  when an input failed.
 
 - The process exits with code `1` after an uncaught runtime error in the main script (errors caught by `try`/`catch` do not count).
 
