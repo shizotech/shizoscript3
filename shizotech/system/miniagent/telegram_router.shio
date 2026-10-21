@@ -736,7 +736,7 @@ class TelegramRouter : Router
         }
 
         for(f : files) {
-            out += "\n\nAttached file '" + f.name + "' (" + std.string(f.size) + " bytes, kept at " + f.path + "). It is attached verbatim to the task you delegate in this turn; do not copy it into the task text.\n````\n" + tg_clip(f.content, TG_FILE_PROMPT_CHARS) + "\n````";
+            out += "\n\nAttached file '" + f.name + "' (" + std.string(f.bytes) + " bytes, kept at " + f.path + "). It is attached verbatim to the task you delegate in this turn; do not copy it into the task text.\n````\n" + tg_clip(f.content, TG_FILE_PROMPT_CHARS) + "\n````";
         }
 
         for(n : notes) {
@@ -787,7 +787,8 @@ class TelegramRouter : Router
         name = std.string(tg_get(doc, "filename", "file"));
         size = std.int(tg_get(doc, "filesize", 0));
         mime = std.string(tg_get(doc, "mimetype", ""));
-        fail = [ok = false, name = name, content = "", path = "", size = size, error = ""];
+        //"bytes", not "size": a json literal drops a key named size (it is the size() method)
+        fail = [ok = false, name = name, content = "", path = "", bytes = size, error = ""];
 
         if(size > TG_FILE_MAX) {
             fail.error = "too large (" + std.string(size / 1024) + " KB, the limit is " + std.string(TG_FILE_MAX / 1024) + " KB)";
@@ -836,7 +837,7 @@ class TelegramRouter : Router
             path = "(not saved: " + std.string(e) + ")";
         }
 
-        return [ok = true, name = name, content = content, path = path, size = content.length(), error = ""];
+        return [ok = true, name = name, content = content, path = path, bytes = content.length(), error = ""];
     }
 
     // /goals [node] and /goal <action> <id> [node] (ask the nodes: worker thread)
@@ -1245,7 +1246,7 @@ class TelegramRouter : Router
         }
 
         if(kind == "file") {
-            out = "[file] " + node + ": " + std.string(e.name ?? "file") + " (" + std.string(std.int(e.size ?? 0)) + " bytes)";
+            out = "[file] " + node + ": " + std.string(e.name ?? "file") + " (" + std.string(std.int(e.bytes ?? 0)) + " bytes)";
             if(e.caption) {
                 out += "\n" + tg_clip(std.string(e.caption), TG_CAPTION_CHARS);
             }

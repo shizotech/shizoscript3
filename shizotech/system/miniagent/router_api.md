@@ -165,7 +165,7 @@ The router answers `"ok"` (it registers `on_get("ai_event", ...)`); no other dev
     # notify:
     message,
     # file (send_file of an agent on the node, Megamind.share_file):
-    name, size, caption, data = <base64 of the file>,
+    name, bytes, caption, data = <base64 of the file>,
     # node_state:
     online = bool,
 ]
@@ -177,7 +177,7 @@ The router answers `"ok"` (it registers `on_get("ai_event", ...)`); no other dev
 |---|---|---|
 | `task_finished` | `[kind, time, node, taskid, name, state, report]` | node push |
 | `notify` | `[kind, time, node, message]` | node push (`notify_user` on the node) |
-| `file` | `[kind, time, node, name, size, caption, data]` | node push (`share_file` on the node, the `send_file` tool); `data` is base64 |
+| `file` | `[kind, time, node, name, bytes, caption, data]` | node push (`share_file` on the node, the `send_file` tool); `data` is base64 |
 | `node_state` | `[kind, time, node, online]` | node push + the router's own discovery |
 | `task_state` | `[kind, time, node, taskid, name, state, prev, report, error]` | the router's mirror moved a task |
 | `task_stalled` | `[kind, time, node, taskid, name, state, idle_ms, error]` | the router's stall watchdog |

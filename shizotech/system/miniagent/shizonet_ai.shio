@@ -493,7 +493,7 @@ class AiService {
 				push_event([
 					kind = "file",
 					name = ai_str(f.name),
-					size = std.int(f.size ?? 0),
+					bytes = std.int(f.bytes ?? 0),
 					caption = ai_str(f.caption),
 					data = ai_str(f.data),
 				]);

@@ -275,7 +275,8 @@ class Megamind {
 	}
 	
 	//A file for the owner's chat (the send_file tool, roles/SHARED.shio). Every listener
-	//(the shizonet node service, the node API) gets [name, size, caption, data (base64)].
+	//(the shizonet node service) gets [name, bytes, caption, data (base64)]. ("bytes", not "size":
+	//f.size would be the size() method of the json)
 	on_file(cb) {
 		_file_listeners.push_back(cb);
 	}
@@ -287,7 +288,7 @@ class Megamind {
 		data = fileio.read_file(path);
 		f = [
 			name = fileio.file_name(path),
-			size = data.size(),
+			bytes = data.size(),
 			caption = std.string(caption ?? ""),
 			data = std.base64_encode(data),
 		];
@@ -305,7 +306,7 @@ class Megamind {
 		
 		if(!sent)
 			return [ok = false, error = "the file could not be handed to the chat"];
-		return [ok = true, name = f.name, size = f.size];
+		return [ok = true, name = f.name, bytes = f.bytes];
 	}
 	
 	on_action(cb) {

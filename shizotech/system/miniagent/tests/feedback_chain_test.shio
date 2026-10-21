@@ -163,10 +163,10 @@ class fb_stub_host {
 	// like megamind.share_file (the send_file tool)
 	share_file(path, caption = "") {
 		data = fileio.read_file(path);
-		f = [name = fileio.file_name(path), size = data.size(), caption = std.string(caption), data = std.base64_encode(data)];
+		f = [name = fileio.file_name(path), bytes = data.size(), caption = std.string(caption), data = std.base64_encode(data)];
 		for(cb : _file_cbs)
 			cb(f);
-		return [ok = _file_cbs.size() > 0, name = f.name, size = f.size];
+		return [ok = _file_cbs.size() > 0, name = f.name, bytes = f.bytes];
 	}
 	on_task_finished(cb) { _task_finish_cb = cb; }
 	on_action(cb) { }
@@ -351,7 +351,7 @@ check("the node hands the file over", shared.ok, std.string(shared));
 check("the document reaches the chat", wait_for([bot]() { return bot.doc_with("SHARE_MARKER") != None; }, 6000), std.string(bot.docs.size()));
 sd = bot.doc_with("SHARE_MARKER");
 check("it keeps its name and caption", sd && sd.name.ends("fb_report.html") && sd.caption == "the weekly report", std.string(sd));
-check("the chat announces the file", bot.has_for(CHAT, "[file] " + NODE_NAME + ": fb_report.html"), std.string(bot.sent));
+check("the chat announces the file and its size", bot.has_for(CHAT, "[file] " + NODE_NAME + ": fb_report.html (" + std.string(fileio.size(share_path)) + " bytes)"), std.string(bot.sent));
 try { fileio.remove(share_path); } catch(e) {}
 
 // ── C4: a refused delegation keeps its reason on the router ─────────────────
