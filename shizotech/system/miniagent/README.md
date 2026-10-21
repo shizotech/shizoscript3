@@ -364,7 +364,7 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                  is notified, the `every: 2d` interval schedules and the
                                  agent goal
                                  tools, stall watchdog, state/overview.md, fake host +
-                                 fake clock -> 161 checks, ALL PASSED
+                                 fake clock -> 162 checks, ALL PASSED
 shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
                                  -> 13 checks, ALL PASSED
 shz tests/role_slots_test.shio   max_running_agents with a real ModelConfig and the
