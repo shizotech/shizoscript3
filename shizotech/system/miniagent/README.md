@@ -367,6 +367,10 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                  fake clock -> 161 checks, ALL PASSED
 shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
                                  -> 13 checks, ALL PASSED
+shz tests/role_slots_test.shio   max_running_agents with a real ModelConfig and the
+                                 adaptive role's file_task_batch / fork / start_task,
+                                 stub LLM: never more than the limit generating, every
+                                 batch item exactly once  -> 13 checks, ALL PASSED
 shz tests/stop_propagation_test.shio  miniagent.stop() across the agent tree, no LLM:
                                   every child and grandchild registered and stopped,
                                   no generation under a stopped ancestor, a child
