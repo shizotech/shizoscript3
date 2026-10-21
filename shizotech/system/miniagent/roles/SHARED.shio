@@ -1577,3 +1577,47 @@ agt_add_command_tools(agt)
 		}
 	);
 }
+
+// ── send_file: a document for the owner's chat ───────────────────────────────
+// The node (Megamind) of an agent tree: the agent itself or one of its parents has
+// env.mind (the receptionist and the worker task get it, subagents find it here).
+SHARE_FILE_MAX = 20 * 1024 * 1024;   // Telegram bots can upload 50 MB, the event travels over ShizoNet
+
+agt_find_mind(agt) {
+	a = agt;
+	for(a) {
+		m = a.env.mind ?? None;
+		if(m)
+			return m;
+		a = a._parent;
+	}
+	return None;
+}
+
+agt_add_share_tools(agt) {
+	agt.add_tool(
+		"send_file",
+		"Send a file to the owner's chat (Telegram) as a document, with an optional caption.\nUse it for results that are too long or too rich for a chat message: write a report, a table or a presentation into a file (HTML or Markdown look best) and send that file instead of pasting it into the text.",
+		[
+			path = "&string(): Path of the file to send",
+			caption = "string(): OPTIONAL short caption shown with the document",
+		],
+		[](agt, args)
+		{
+			path = std.string(args.path ?? "");
+
+			if(!path || !fileio.exists(path))
+				return [ok = false, error = "file not found: " + path];
+
+			size = fileio.size(path);
+			if(size > SHARE_FILE_MAX)
+				return [ok = false, error = "the file has " + std.string(size) + " bytes, at most " + std.string(SHARE_FILE_MAX) + " can be sent"];
+
+			mind = agt_find_mind(agt);
+			if(!mind)
+				return [ok = false, error = "this agent does not run on a node, there is no chat to send the file to"];
+
+			return mind.share_file(path, std.string(args.caption ?? ""));
+		}
+	);
+}
