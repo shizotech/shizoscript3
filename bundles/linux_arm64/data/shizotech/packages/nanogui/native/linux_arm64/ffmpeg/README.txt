@@ -1,7 +1,7 @@
 FFmpeg 9.0.2 for nanogui.video (linux_arm64)
 
 These are the shared libraries of an LGPL build of FFmpeg, unchanged:
-  libavutil.so.61, libswresample.so.7, libswscale.so.10, libavcodec.so.63, libavformat.so.63
+  libavutil.so.61, libswresample.so.7, libswscale.so.10, libavcodec.so.63, libavformat.so.63, libavfilter.so.12, libavdevice.so.63
 Build:   ffmpeg-n9.0.2-28-g669f5ab083-linuxarm64-lgpl-shared-9.0.tar.xz (BtbN/FFmpeg-Builds, release autobuild-2026-10-17-20-51)
 SHA-256: a2d10bce2f3aacb000fb00b1edbb745fc3caf11c3e3f76e623b213397be874cf
 Source:  https://github.com/FFmpeg/FFmpeg/tree/669f5ab083
