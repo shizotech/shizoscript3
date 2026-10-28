@@ -3,7 +3,12 @@ set -eu
 
 APP_NAME="shz"
 DATA_DIR="data"
-BUNDLE_URL="${SHZ_BUNDLE_URL:-https://raw.githubusercontent.com/shizotech/shizoscript3/main/bundles/linux_x64.tar.gz}"
+# The bundle is published as a GitHub Releases asset, not as a file in the tree:
+# raw.githubusercontent.com refuses files over 100 MB and this archive is bigger.
+# The asset lives under the release tag below, next to its "$BUNDLE_URL.sha256"
+# sidecar. A new build = upload the rebuilt archives + sidecars to a new tag and
+# bump the tag here. SHZ_BUNDLE_URL overrides the whole URL.
+BUNDLE_URL="${SHZ_BUNDLE_URL:-https://github.com/shizotech/shizoscript3/releases/download/bundles-2026-10-28/linux_x64.tar.gz}"
 
 INSTALL_BASE="$HOME/.local"
 INSTALL_DIR="$INSTALL_BASE/$APP_NAME"
@@ -97,8 +102,18 @@ EOF
     chmod +x "$BIN_DIR/$APP_NAME"
 
     # --- Install updater (copy this script) ----------------------------------
+    # SHZ_KEEP_UPDATER is set by update_app: an update keeps the updater that started
+    # it. The installer shipped inside an archive carries the bundle URL it was built
+    # with, which is the older one, and copying it over the updater would pin the
+    # client back to the archive it came from.
 
-    cp "$SOURCE_DIR/installer.sh" "$BIN_DIR/shzupdate.new"
+    UPDATER_SRC="$SOURCE_DIR/installer.sh"
+
+    if [ -n "${SHZ_KEEP_UPDATER:-}" ] && [ -f "${SHZ_KEEP_UPDATER:-}" ]; then
+        UPDATER_SRC="$SHZ_KEEP_UPDATER"
+    fi
+
+    cp "$UPDATER_SRC" "$BIN_DIR/shzupdate.new"
     chmod +x "$BIN_DIR/shzupdate.new"
     mv -f "$BIN_DIR/shzupdate.new" "$BIN_DIR/shzupdate"
 
@@ -178,8 +193,33 @@ update_app() {
         exit 1
     fi
 
+    # Never install a bundle that is older than the build that is installed. The bundle
+    # published as a release asset and the archive in the repository tree are two different
+    # builds, and an updater baked into an older archive must not roll a newer install back.
+    # This runs before the installer is called: nothing is installed and nothing is removed.
+    # A bundle or an install without a readable version keeps the old behaviour.
+    BUNDLE_VERSIONS="$EXTRACT_DIR/data/shizotech/version.json"
+    INSTALLED_VERSIONS="$TARGET_SUPPORT_DIR/version.json"
+
+    if [ -f "$BUNDLE_VERSIONS" ] && [ -f "$INSTALLED_VERSIONS" ]; then
+        BUNDLE_VER="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$BUNDLE_VERSIONS" | head -n 1)"
+        INSTALLED_VER="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$INSTALLED_VERSIONS" | head -n 1)"
+
+        if [ -n "$BUNDLE_VER" ] && [ -n "$INSTALLED_VER" ] && [ "$INSTALLED_VER" -gt "$BUNDLE_VER" ]; then
+            echo "Keeping $APP_NAME $INSTALLED_VER: the bundle at"
+            echo "  $BUNDLE_URL"
+            echo "is build $BUNDLE_VER, older than the installed build."
+            echo "Nothing was installed. Run installer.sh from the repository tree to move"
+            echo "this install onto the bundle published as a GitHub Releases asset."
+            exit 0
+        fi
+    fi
+
     chmod +x "$EXTRACT_DIR/installer.sh"
-    "$EXTRACT_DIR/installer.sh"
+    # $0 is this installed updater (~/.local/bin/shzupdate). Hand it to the new installer
+    # so it keeps it (see "Install updater" in install_app) instead of replacing the
+    # updater with the older copy that sits inside the archive.
+    SHZ_KEEP_UPDATER="$0" "$EXTRACT_DIR/installer.sh"
 
     echo "$APP_NAME update complete."
 }

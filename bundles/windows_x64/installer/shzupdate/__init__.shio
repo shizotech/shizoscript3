@@ -4,6 +4,17 @@ using std;
 ver = fileio.read_json("shizotech/version.json");
 remote_ver = std.json(std.web_get("https://raw.githubusercontent.com/shizotech/shizoscript3/refs/heads/main/shizotech/version.json"));
 
+// The bundle is published as a GitHub Releases asset, not as a file in the tree:
+// raw.githubusercontent.com refuses files over 100 MB and windows_x64.zip is bigger.
+// A new build = upload the rebuilt zip to a new tag and bump the tag here.
+// Coupling rule with shizotech/version.json: the number in the top level version.json
+// (remote_ver, fetched above) is the number every client compares against, and the number
+// inside the zip at bundle_url is the number the client ends up with (it is copied over
+// shizotech/version.json below). The two must be the same number: the top level number must
+// never be published above the number of the zip served at the URL a client fetches, because
+// that mismatch is exactly what sends an update into a replace-then-fail.
+bundle_url = "https://github.com/shizotech/shizoscript3/releases/download/bundles-2026-10-28/windows_x64.zip";
+
 
 print("Current version:");
 print(ver);
@@ -14,8 +25,44 @@ if(ver.version < remote_ver.version)
 {
 	print("New version available!");
 	fileio.mkdir("shztmp");
-	fileio.write_string("shztmp/new_version.zip", std.web_get("https://github.com/shizotech/shizoscript3/raw/refs/heads/main/bundles/windows_x64.zip"));
+	// std.web_get raises a runtime error on a connection failure and on every non-2xx answer
+	// (core/main.cpp registers web_get: "HTTP error code: <code>"), so a missing release, a
+	// deleted tag or a dead server ends the update right here - before a single installed
+	// file is touched. There is no fallback to the old raw URL on purpose: the archive behind
+	// the raw URL is a different build, and installing a build whose version.json disagrees
+	// with the published version is exactly what the check below prevents.
+	bundle = "";
+	try
+	{
+		bundle = std.web_get(bundle_url);
+	}
+	catch(e)
+	{
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (the bundle could not be downloaded: " + e + ") - nothing was removed");
+		return;
+	}
+	fileio.write_string("shztmp/new_version.zip", bundle);
 	std.system("powershell -Command \"Expand-Archive -Path 'shztmp/new_version.zip' -DestinationPath 'shztmp/new_version'\"");
+
+	// Nothing is removed before the downloaded bundle is complete and carries the published
+	// version: a truncated download, a failed extraction or a version.json that disagrees with
+	// the published version stops here, leaving shz.exe, shizotech/ and shzupdate/ intact.
+	if(!fileio.is_file("shztmp/new_version/installer/shzupdate/__init__.shio") || !fileio.is_file("shztmp/new_version/data/shizotech/version.json"))
+	{
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (the downloaded bundle is incomplete) - nothing was removed");
+		return;
+	}
+
+	new_ver = fileio.read_json("shztmp/new_version/data/shizotech/version.json");
+
+	if(new_ver.version != remote_ver.version)
+	{
+		fileio.remove("shztmp");
+		std.print("Update was NOT successful! (the bundle is version " + new_ver.version + ", the published version is " + std.string(remote_ver.version) + ") - nothing was removed");
+		return;
+	}
 	
 	if(!fileio.remove("shz.exe"))
 		fileio.remove("shztmp");
