@@ -4,6 +4,8 @@ The idea is
 
 ```
 'shz miniagent'          -> starts __init__.shio, very simple direct action agent
+'shz miniagent --web'    -> a node with its web interface: chat, tasks and the
+                            architecture graph of the codebase (see "Web interface")
 'shz miniagent.node'     -> starts a node for an AI expert sitting on this machine and taking
                             in requests, supported web-api and shizonet (shizonet preferred)
 'shz miniagent.router'   -> starts the router: it detects the AI nodes in the private
@@ -30,6 +32,8 @@ can be used.
 | `telegram_router.shio` | `TelegramRouter : Router` — the Telegram front end: trusted-chat access control + every node event pushed into the chat |
 | `shizonet_ai.shio` | the node ⇄ router wire protocol (both sides, one place) |
 | `node_api.shio` | optional JSON web API of a node (`--webserver` / `--port`) |
+| `web_ui.shio` + `web/` | the web interface of a node (`--web`): the dashboard pages on top of the JSON API |
+| `architecture.shio` | the architecture graph: `.agentspace/architecture.json`, pending edits, analyze / plan / apply jobs (`architecture_spec.md`) |
 | `goal_engine.shio` | scheduled goals: `.agentspace/` Markdown goals, validation, the deterministic `GoalScheduler` (`goals_spec.md`) |
 | `goal_time.shio` / `goal_frontmatter.shio` | time zones + DST, work windows / the front matter reader and writer |
 | `goal_tools.shio` | the receptionist's goal tools (create / update / pause / run) |
@@ -112,6 +116,31 @@ Then use:
 ```
 shz node.shio --config ./endpoints.json#default --worker-config ./endpoints.json#worker
 ```
+
+## Web interface
+
+```
+shz miniagent --web                          (= shz miniagent.node --web)
+shz miniagent --web --port 8080 --api-token secret --config gpu --max-workers 2
+```
+
+Starts a node (receptionist + worker pool, ShizoNet like `node.shio`) and serves
+http://localhost:13337/ — every page works offline (no CDN):
+
+* **Chat** — talk to the node's receptionist (`/api/adminagent`, the chat page's protocol).
+* **Tasks** — the worker tasks: running / planned with live output, finished ones with
+  their report; start a task, send an update, stop it.
+* **Architecture** — the codebase as a node graph (`architecture_spec.md`). On first use
+  *Analyze the codebase* lets a worker write `.agentspace/architecture.json` (modules,
+  files, services with a one-line purpose; calls / data / includes / events / network
+  between them). Add, change, connect or remove nodes on the graph: the edits stay
+  **pending**. *Review plan* lets a worker write a plan for them (no code changes), you
+  give feedback and revise it; *Apply* lets a worker implement them, and when it
+  finishes the edits become the model. *Re-sync* analyzes again (positions and pending
+  edits stay).
+
+With `--api-token` the pages ask for the token once. The JSON API (`node_api.md`) is the
+same as with `--port`, its index moves to `/api`.
 
 ## Goals (scheduled autonomous work)
 
@@ -296,8 +325,17 @@ shz node.shio --name GPUBox --description "cuda training box"
 shz node.shio --receptionist-config chat --worker-config gpu
 shz node.shio --worker-config ./endpoints.json#worker --max-workers 4
 shz node.shio --webserver --port 13337 --api-token secret   + JSON web API
+shz node.shio --web [--port 13337]                   + the web interface (= shz miniagent --web)
 shz node.shio --agentspace .agentspace               scheduled goals (auto when ./.agentspace exists)
 ```
+
+Tasks of a node (`Megamind`): a worker thread takes a task (`planned`), researches
+(`research`) and implements it (`implement`). `update_task` during the research adds the
+message to the implementation prompt; during the implementation it stops the current
+generation and the **worker thread** continues the same conversation with the message. A
+follow-up for a running receptionist turn (`ai_request_update`) is continued the same way on
+the receptionist thread (`Megamind.update_receptionist`). Nothing ends a worker, receptionist,
+router poller or Telegram thread: an error fails that one task / turn with its reason.
 
 A node announces itself with the ShizoNet props `AINode` (protocol version) and
 `AINodeInfo` (name, description, capabilities, model, load, `goals` = it runs a goal scheduler)
@@ -340,7 +378,7 @@ shz router_selftest.shio        full stack: Router + protocol + role tools, stub
                                  stub router-agent turn, no LLM, the failure reason in
                                  every task_state event, the stall watchdog, the refused
                                  delegation reason, the goals flag
-                                 -> 126 checks, ALL PASSED
+                                 -> 127 checks, ALL PASSED
 shz telegram_router_selftest.shio  Telegram front end against a fake bot + stub nodes:
                                  trusted-chat bootstrap, untrusted chats ignored,
                                  /allow /deny /forget /nodes /tasks /status, agent turn,
@@ -354,8 +392,9 @@ shz telegram_router_selftest.shio  Telegram front end against a fake bot + stub 
                                  node state / progress / tool calls silent by default,
                                  a burst of messages is one turn, replies quoted, a text
                                  file reaches the node verbatim, a binary file is refused,
-                                 /goals
-                                 -> 102 checks, ALL PASSED
+                                 /goals, a turn that throws is reported and the
+                                 bot keeps answering
+                                 -> 104 checks, ALL PASSED
 shz shizonet_ai_selftest.shio   protocol only: node service + router service, no LLM,
                                  the node info advertising goals = 1|0 over the wire
                                  -> 114 checks, ALL PASSED
@@ -369,6 +408,17 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                  agent goal
                                  tools, stall watchdog, state/overview.md, fake host +
                                  fake clock -> 162 checks, ALL PASSED
+shz architecture_selftest.shio   the architecture board: model file, merge of a re-sync,
+                                 pending edits, analyze / plan / apply jobs on a fake
+                                 host, restart, the --web command line
+                                 -> 80 checks, ALL PASSED
+shz tests/megamind_tasks_test.shio  the task system of a node keeps running: an update
+                                 during the implementation is continued by the worker
+                                 thread (not by the caller), a follow-up of a running
+                                 receptionist turn stays on the receptionist thread, a
+                                 throwing finished listener / a crashing worker do not
+                                 end the worker thread, stop_task reaches a task that
+                                 waits for a slot -> 21 checks, ALL PASSED
 shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
                                  -> 13 checks, ALL PASSED
 shz tests/command_tools_test.shio  command_start with multi-line sh / python scripts:

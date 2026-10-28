@@ -570,19 +570,35 @@ class TelegramRouter : Router
 
     // one worker thread: sends queued event notifications, then runs one
     // router-agent turn. Telegram HTTP never happens on the shizonet thread.
+    //
+    // Nothing may end this thread: it is the only one that answers the chats
+    // and sends the notifications. An error in one turn used to end it for good -
+    // every later message was queued and never answered, no task report arrived.
     tg_worker()
     {
         for(tg_running) {
-            sent = tg_flush_out();
-
-            idx = tg_next_ready();
-
-            if(idx >= 0) {
-                tg_run_item(idx);
-                continue;
+            sent = 0;
+            try {
+                sent = tg_flush_out();
+            }
+            catch(e) {
+                std.error("[telegram] sending the notifications failed: ", e);
             }
 
-            if(!sent) {
+            ran = false;
+            try {
+                idx = tg_next_ready();
+
+                if(idx >= 0) {
+                    ran = true;
+                    tg_run_item(idx);
+                }
+            }
+            catch(e) {
+                std.error("[telegram] a queued message failed: ", e);
+            }
+
+            if(!sent && !ran) {
                 std.sleep(50);
             }
         }
@@ -645,12 +661,21 @@ class TelegramRouter : Router
         }
         cs.release();
 
-        if(first.kind == "cmd") {
-            tg_send(first.chatdata, tg_slow_command(first.text));
-            return;
-        }
+        try {
+            if(first.kind == "cmd") {
+                tg_send(first.chatdata, tg_slow_command(first.text));
+                return;
+            }
 
-        tg_run_turn(items);
+            tg_run_turn(items);
+        }
+        catch(e) {
+            // the messages are out of the queue: the chat learns that they failed
+            tg_active = None;
+            turn_attachments = [];
+            std.error("[telegram] the turn failed: ", e);
+            tg_send(first.chatdata, "This message failed on the router: " + std.string(e));
+        }
     }
 
     tg_run_turn(items)

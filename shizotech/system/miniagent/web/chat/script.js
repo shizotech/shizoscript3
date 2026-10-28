@@ -700,7 +700,7 @@ async function streamAgentResponse({ prompt, sessionId, mode, activeId, onDelta,
   try {
     const res = await fetch(`/api/adminagent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: NodeApi.headers(),
       body: JSON.stringify({
         prompt: prompt,
         session_id: sessionId || ''
@@ -748,7 +748,7 @@ async function streamAgentResponse({ prompt, sessionId, mode, activeId, onDelta,
     try {
       const res = await fetch(`/api/adminagent/poll`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: NodeApi.headers(),
         body: JSON.stringify({ session_id: sessionId })
       });
 
@@ -1518,7 +1518,7 @@ async function stopRequest() {
     // Call the stop API endpoint
     const res = await fetch('/api/adminagent/stop', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: NodeApi.headers(),
       body: JSON.stringify({ session_id: sessionId })
     });
     

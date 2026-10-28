@@ -12,8 +12,11 @@ shz node.shio --port 13337          headless JSON web API
 shz node.shio --port 13337 --api-token secret
 ```
 
-`node_api_start(host, cfg, port, api_token = "")` returns the `webserver.http_server`
-object, or `None` when the port cannot be bound.
+`node_api_start(host, cfg, port, api_token = "", web_root = "")` returns the
+`webserver.http_server` object, or `None` when the port cannot be bound. With
+`web_root` the folder is served at `/` and the API index moves to `GET /api` — that is
+how `shz miniagent --web` (`web_ui.shio`) serves the dashboard, the chat protocol
+`/api/adminagent` and the architecture graph (`architecture_spec.md`) on top of this API.
 
 ## Envelope
 
