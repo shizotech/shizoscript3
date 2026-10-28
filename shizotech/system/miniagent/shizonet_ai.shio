@@ -611,8 +611,8 @@ class AiService {
 	}
 
 	// Apply the recorded ai_request_update follow-ups (router_api.md):
-	//   generating -> inject into the live receptionist conversation, the same
-	//                 mechanism Megamind.update_task uses for a running worker
+	//   generating -> continue the live receptionist turn with the message
+	//                 (Megamind.update_receptionist, on the receptionist thread)
 	//   queued     -> append to the stored prompt, part of the task at start
 	//   done/error/stopped/reaped -> dropped (the handler already answered not found)
 	apply_updates() {
@@ -642,7 +642,27 @@ class AiService {
 			if(status != "generating")
 				continue;
 
-			// a host without a receptionist member (stub hosts) must not take the
+			// A Megamind continues the running turn with the message on its own
+			// receptionist thread (Megamind.update_receptionist). Calling
+			// receptionist.send_prompt() from here ran the rest of the turn on this
+			// refresh thread while the receptionist thread already took the next
+			// request on the same agent, and no refresh happened until it ended.
+			handled = false;
+			try {
+				if(std.is_function(host.update_receptionist)) {
+					host.update_receptionist(message);
+					handled = true;
+				}
+			}
+			catch(e) {
+				handled = false;
+			}
+
+			if(handled)
+				continue;
+
+			// hosts without update_receptionist (stub hosts): the receptionist's
+			// send_prompt; a host without a receptionist member must not take the
 			// service down: the update is simply skipped.
 			try {
 				if(std.is_function(host.receptionist.send_prompt))
