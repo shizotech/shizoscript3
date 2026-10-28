@@ -137,7 +137,8 @@ http://localhost:13337/ — every page works offline (no CDN):
   **pending**. *Review plan* lets a worker write a plan for them (no code changes), you
   give feedback and revise it; *Apply* lets a worker implement them, and when it
   finishes the edits become the model. *Re-sync* analyzes again (positions and pending
-  edits stay).
+  edits stay). Each job is one `adaptive` task; a big change set is split into subtasks
+  (one per group of edits) within `max_running_agents` — `architecture_spec.md`, "Context".
 
 With `--api-token` the pages ask for the token once. The JSON API (`node_api.md`) is the
 same as with `--port`, its index moves to `/api`.
@@ -329,7 +330,8 @@ shz node.shio --web [--port 13337]                   + the web interface (= shz 
 shz node.shio --agentspace .agentspace               scheduled goals (auto when ./.agentspace exists)
 ```
 
-Tasks of a node (`Megamind`): a worker thread takes a task (`planned`), researches
+Tasks of a node (`Megamind`): `add_task(name, goal, role = "adaptive")`; a task of another role
+gets an agent of its own. A worker thread takes a task (`planned`), researches
 (`research`) and implements it (`implement`). `update_task` during the research adds the
 message to the implementation prompt; during the implementation it stops the current
 generation and the **worker thread** continues the same conversation with the message. A
@@ -411,14 +413,17 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
 shz architecture_selftest.shio   the architecture board: model file, merge of a re-sync,
                                  pending edits, analyze / plan / apply jobs on a fake
                                  host, restart, the --web command line
-                                 -> 80 checks, ALL PASSED
+                                 , the job role (adaptive), the split of a big change
+                                 set into subtasks -> 98 checks, ALL PASSED
 shz tests/megamind_tasks_test.shio  the task system of a node keeps running: an update
                                  during the implementation is continued by the worker
                                  thread (not by the caller), a follow-up of a running
                                  receptionist turn stays on the receptionist thread, a
                                  throwing finished listener / a crashing worker do not
                                  end the worker thread, stop_task reaches a task that
-                                 waits for a slot -> 21 checks, ALL PASSED
+                                 waits for a slot, the role of a task (adaptive by
+                                 default, another role gets its own agent)
+                                 -> 24 checks, ALL PASSED
 shz tests/agent_slots_test.shio  max_running_agents: lending, forks, roots, stops
                                  -> 13 checks, ALL PASSED
 shz tests/command_tools_test.shio  command_start with multi-line sh / python scripts:

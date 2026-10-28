@@ -71,6 +71,8 @@ megamind_turn_result(agent, res, crash = "", execution_time_ms = -1) {
 	return out;
 }
 
+MEGAMIND_DEFAULT_ROLE = "adaptive";
+
 class Megamind {
 	
 	running = true;
@@ -126,8 +128,8 @@ class Megamind {
 		return miniagent(cfg, "receptionist");
 	}
 	
-	create_worker(cfg) {
-		return miniagent(cfg, "adaptive");
+	create_worker(cfg, role = MEGAMIND_DEFAULT_ROLE) {
+		return miniagent(cfg, role);
 	}
 	
 	__deinit__() {
@@ -192,9 +194,16 @@ class Megamind {
 		return result;
 	}
 	
-	add_task(name, goal) {
+	//role: the agent role of the task. The default "adaptive" runs on the worker
+	//thread's own agent; another role gets an agent of its own for this task. Either
+	//may delegate subtasks (start_task / fork / file_task_batch), limited by
+	//max_running_agents of the model config (agent_slots.shio).
+	add_task(name, goal, role = MEGAMIND_DEFAULT_ROLE) {
 		taskid = std.random_hash();
-		tasks_scheduled.push_back([name=name, task=goal, taskid=taskid, state="planned"]);
+		r = std.string(role ?? "");
+		if(!r)
+			r = MEGAMIND_DEFAULT_ROLE;
+		tasks_scheduled.push_back([name=name, task=goal, taskid=taskid, state="planned", role=r]);
 		return taskid;
 	}
 	
@@ -514,7 +523,7 @@ class Megamind {
 				//exception left its task "running" forever and every later task
 				//"planned" (with one worker: the whole node stuck).
 				try {
-					_run_task(worker, task);
+					_run_task(worker, task, cfg);
 				}
 				catch(e) {
 					std.error("[megamind] worker failed: ", e);
@@ -527,9 +536,21 @@ class Megamind {
 	
 	//One task on this worker thread: research, implement (continued with every
 	//update that arrives while it runs), then the record and the events.
-	_run_task(worker, task) {
+	_run_task(worker, task, cfg = None) {
 		root_slot = None;
 		crash = "";
+		
+		//a task of another role gets an agent of its own (the default role uses
+		//the worker thread's agent)
+		role = task.role ? std.string(task.role) : MEGAMIND_DEFAULT_ROLE;
+		if(role != MEGAMIND_DEFAULT_ROLE) {
+			try {
+				worker = create_worker(cfg, role);
+			}
+			catch(e) {
+				crash = "cannot create an agent with the role '" + role + "': " + std.string(e);
+			}
+		}
 		
 		//The worker is the task's from now on, so stop_task() reaches a task that
 		//still waits for the receptionist or for a max_running_agents slot.
@@ -540,6 +561,9 @@ class Megamind {
 		task.last_update_ms = std.millis();
 		
 		try {
+			if(crash)
+				std.runtime_error(crash);
+			
 			//Dont start yet when receptionist is still generating text
 			for(this._receptionist_active && task.state != "stopped") {
 				std.sleep(1);

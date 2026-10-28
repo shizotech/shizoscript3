@@ -2,6 +2,7 @@
 //  web_ui.shio — the web interface of a node: shz miniagent --web
 //
 //      shz miniagent --web [--port 13337] [--api-token secret] [--agentspace dir]
+//                          [--architecture-role adaptive]
 //      shz miniagent.node --web ...                   (the same)
 //
 //  One HTTP server on the node:
@@ -54,8 +55,9 @@ web_ui_has(args, flag) {
 	return false;
 }
 
-// -> [web, port, api_token, agentspace]
+// -> [web, port, api_token, agentspace, architecture_role]
 //    web: --web (also --web=<port>); port: --port, else 13337
+//    architecture_role: --architecture-role, the role of the graph's job tasks (adaptive)
 web_ui_parse(args) {
 	web = web_ui_has(args, "--web");
 	port = WEB_UI_DEFAULT_PORT;
@@ -74,11 +76,16 @@ web_ui_parse(args) {
 	if(!space)
 		space = ".agentspace";
 
+	role = web_ui_value(args, "--architecture-role");
+	if(!role)
+		role = "adaptive";
+
 	return [
 		web = web,
 		port = port,
 		api_token = web_ui_value(args, "--api-token"),
 		agentspace = space,
+		architecture_role = role,
 	];
 }
 
@@ -298,7 +305,7 @@ web_ui_start(host, cfg, opts) {
 	if(!server)
 		return None;
 
-	board = ArchitectureBoard(host, space);
+	board = ArchitectureBoard(host, space, std.string(opts.architecture_role ?? "adaptive"));
 
 	web_ui_chat_routes(server, host, token);
 	web_ui_architecture_routes(server, board, token);

@@ -170,12 +170,14 @@ class StubReceptionist {
 }
 
 workers = [];
+roles_made = [];
 
 class TestMind : Megamind {
 	create_receptionist(cfg) {
 		return StubReceptionist();
 	}
-	create_worker(cfg) {
+	create_worker(cfg, role = "adaptive") {
+		roles_made.push_back(role);
 		w = StubWorker();
 		workers.push_back(w);
 		return w;
@@ -245,6 +247,15 @@ workers[0].model_config.max_running_agents = 0;
 e = mind.add_task("E", "quick work e");
 wait_for([e]() { return state_of(e) == "finished"; });
 check("the next task runs", state_of(e) == "finished", state_of(e));
+
+std.print("\n── the role of a task ──");
+f = mind.add_task("F", "quick work f");
+check("the default role is adaptive", mind.inspect_task(f).role == "adaptive", std.string(mind.inspect_task(f)));
+wait_for([f]() { return state_of(f) == "finished"; });
+check("a default-role task runs on the worker thread's agent", state_of(f) == "finished" && workers.size() == 1 && roles_made.size() == 1, std.string(roles_made));
+g = mind.add_task("G", "quick work g", "some_role");
+wait_for([g]() { return state_of(g) == "finished"; });
+check("another role gets an agent of its own", state_of(g) == "finished" && roles_made.size() == 2 && roles_made[1] == "some_role", std.string(roles_made));
 
 std.print("\n── a follow-up for the running receptionist turn ──");
 check("no turn: update_receptionist answers false", !mind.update_receptionist("nobody listens"));

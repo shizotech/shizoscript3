@@ -733,24 +733,167 @@ arch_edits_markdown(model, edits = None) {
 	return out;
 }
 
-// the current model in short (what the worker reads first)
-arch_model_markdown(model) {
-	out = "";
-	if(model.project)
-		out += "Project: " + model.project + "\n";
-	if(model.summary)
-		out += model.summary + "\n";
-	out += "\nNodes:\n";
-	for(n : model.nodes)
-		out += "- " + arch_node_line(n) + "\n";
-	out += "\nConnections:\n";
-	for(e : model.edges) {
-		out += "- `" + e.id + "`: " + e.source + " -[" + e.kind + "]-> " + e.target;
-		if(e.label)
-			out += " (" + e.label + ")";
-		out += "\n";
+// ─────────────────────────────────────────────────────────────────────────────
+//  context of a job: the prompt stays small, the details are files
+//
+//  A worker never gets the whole model or the whole change set pasted into its
+//  prompt. It gets a short summary and file paths it reads in pieces (read_file
+//  with start_line / end_line, search_in_file): architecture.json, the change list
+//  (architecture_changes.md, written by the board: every edit in full, grouped,
+//  with the nodes it touches) and the plan. Above ARCH_SPLIT_EDITS edits, or a
+//  change list / plan longer than ARCH_SPLIT_CHARS, the job is SPLIT: the worker
+//  coordinates and delegates one start_task per group of edits; the node runs
+//  them in parallel up to max_running_agents of the model config (agent_slots).
+//  The conversation itself is compacted by openai_compact when it fills up.
+// ─────────────────────────────────────────────────────────────────────────────
+
+ARCH_CHANGES_FILE = "architecture_changes.md";
+ARCH_PREV_PLAN_FILE = "architecture_plan.previous.md";
+ARCH_SPLIT_EDITS = 6;
+ARCH_SPLIT_CHARS = 12000;
+ARCH_SUMMARY_LINES = 12;
+
+// the node ids an edit touches
+arch_edit_nodes(model, p) {
+	op = arch_str(p, "op", "");
+	if(op == "add_node")
+		return [p.node.id];
+	if(op == "update_node" || op == "remove_node")
+		return [arch_str(p, "target", "")];
+	if(op == "add_edge")
+		return [p.edge.source, p.edge.target];
+	// update_edge / remove_edge: the ends of that edge
+	pv = arch_preview(model);
+	i = arch_find(pv.edges, arch_str(p, "target", ""));
+	if(i >= 0)
+		return [pv.edges[i].source, pv.edges[i].target];
+	return [];
+}
+
+// the edits by the group of the first node they touch:
+// [[group, numbers = [1, 4], nodes = [...]], ...] in the order they first appear
+arch_edit_groups(model, edits) {
+	pv = arch_preview(model);
+	out = [];
+	for(i, p : edits) {
+		ids = arch_edit_nodes(model, p);
+		g = "";
+		if(ids.size()) {
+			j = arch_find(pv.nodes, ids[0]);
+			if(j >= 0)
+				g = arch_str(pv.nodes[j], "group", "");
+		}
+		if(!g)
+			g = "(no group)";
+		k = -1;
+		for(n, x : out) {
+			if(x.group == g)
+				k = n;
+		}
+		if(k < 0) {
+			out.push_back([group = g, numbers = [], nodes = []]);
+			k = out.size() - 1;
+		}
+		out[k].numbers.push_back(i + 1);
+		for(id : ids) {
+			if(!arch_in(out[k].nodes, id))
+				out[k].nodes.push_back(id);
+		}
 	}
 	return out;
+}
+
+arch_numbers(list) {
+	s = "";
+	for(i, n : list)
+		s += (i ? ", " : "") + std.string(n);
+	return s;
+}
+
+// architecture_changes.md: every edit in full, the groups, the nodes they touch
+arch_changes_markdown(model, edits) {
+	pv = arch_preview(model);
+	out = "# Pending architecture changes (" + std.string(edits.size()) + ")\n\n" +
+		"Numbers are the edit numbers the job prompt refers to.\n\n" +
+		arch_edits_markdown(model, edits) + "\n## Groups\n\n";
+	groups = arch_edit_groups(model, edits);
+	for(g : groups)
+		out += "- " + g.group + ": edits " + arch_numbers(g.numbers) + "\n";
+
+	out += "\n## The nodes these changes touch\n\n";
+	touched = [];
+	for(g : groups) {
+		for(id : g.nodes) {
+			if(!arch_in(touched, id))
+				touched.push_back(id);
+		}
+	}
+	for(id : touched) {
+		i = arch_find(pv.nodes, id);
+		if(i < 0)
+			continue;
+		out += "- " + arch_node_line(pv.nodes[i]) + "\n";
+		for(e : pv.edges) {
+			if(e.source == id || e.target == id)
+				out += "  - " + e.source + " -[" + e.kind + "]-> " + e.target + (e.label ? " (" + e.label + ")" : "") + "\n";
+		}
+	}
+	return out;
+}
+
+// too much for one context: the job is split into subtasks
+arch_needs_split(model, edits, plan_text = "") {
+	if(edits.size() > ARCH_SPLIT_EDITS)
+		return true;
+	if(arch_changes_markdown(model, edits).length() > ARCH_SPLIT_CHARS)
+		return true;
+	return std.string(plan_text ?? "").length() > ARCH_SPLIT_CHARS;
+}
+
+// what every job prompt starts with: the project in short, the files, the edits
+// as one line each (at most ARCH_SUMMARY_LINES, the rest only in the file)
+// files: [model, changes, plan] paths
+arch_job_context(model, edits, files) {
+	text = "# Context\n";
+	if(model.project)
+		text += "Project: " + model.project + ". ";
+	if(model.summary)
+		text += model.summary;
+	text += "\n\nThe architecture model (" + std.string(model.nodes.size()) + " nodes, " + std.string(model.edges.size()) + " connections) is `" + files.model + "`. " +
+		"Do not read it whole: search_in_file for the node ids you need and read_file with start_line / end_line around them.\n";
+	if(edits.size()) {
+		text += "Every change in full, grouped, with the nodes it touches: `" + files.changes + "` (read it in pieces when it is long).\n\n" +
+			"# The " + std.string(edits.size()) + " changes in short\n";
+		lines = arch_edits_markdown(model, edits).split("\n");
+		shown = 0;
+		for(l : lines) {
+			if(!l || l.starts(" "))
+				continue;
+			if(shown >= ARCH_SUMMARY_LINES)
+				break;
+			text += (l.length() > 160 ? l.substr(0, 157) + "..." : l) + "\n";
+			shown++;
+		}
+		if(edits.size() > shown)
+			text += "... and " + std.string(edits.size() - shown) + " more in `" + files.changes + "`.\n";
+	}
+	return text + "\n";
+}
+
+// how to work: alone, or split into one subtask per group of edits
+arch_split_rules(model, edits, files, what) {
+	if(!arch_needs_split(model, edits, arch_read_text(files.plan))) {
+		return "This change set is small: do the work yourself. Use start_task only for parts that are clearly independent.\n";
+	}
+	text = "# This change set is too big for one context: split it\n" +
+		"You coordinate and do not " + what + " everything yourself. Delegate with start_task, one subtask per group below " +
+		"(a group with more than " + std.string(ARCH_SPLIT_EDITS) + " edits: one subtask per edit). " +
+		"Give each subtask only its edit numbers, the path `" + files.changes + "` and the files it touches - never paste the whole change list or the model. " +
+		"Start the independent groups together: the node runs them in parallel up to its max_running_agents limit. " +
+		"Keep only the short results in your context; put the parts together yourself at the end.\n\n";
+	for(g : arch_edit_groups(model, edits))
+		text += "- " + g.group + ": edits " + arch_numbers(g.numbers) + "\n";
+	return text + "\n";
 }
 
 arch_format_help() {
@@ -774,6 +917,7 @@ arch_analyze_goal(out_path) {
 		"This model is shown to the owner as a node graph: it is the map they use to understand and redesign the program, so it must be correct and readable at a glance.\n\n" +
 		"# What to do\n" +
 		"1. Look at the layout of the repository, the build files, entry points and the main modules (read enough code to know what each part does and what it uses; do not read every file).\n" +
+		"   A large repository (many top-level parts): delegate one start_task per top-level part that returns its nodes and edges in short, and merge them yourself; keep your own context for the overview.\n" +
 		"2. Pick 8 to 40 nodes at the level a new developer needs: modules, important files, services/processes, UIs, data stores, external systems. Group them with `group` (a subsystem name).\n" +
 		"3. Add the edges that matter: who calls / includes / sends data or events to whom.\n" +
 		"4. Write the JSON (only JSON, no comments) to `" + out_path + "` in exactly this format:\n\n" +
@@ -782,34 +926,35 @@ arch_analyze_goal(out_path) {
 		"5. Do not change any other file. Then signal finished with a two-line summary.\n";
 }
 
-arch_plan_goal(model, plan_path, feedback = "") {
+// files: [model, changes, plan, previous] (previous: the last plan, for a revision)
+arch_plan_goal(model, files, feedback = "") {
+	edits = model.pending;
 	text = "Write an implementation plan for changes the owner made in the architecture graph of this codebase. Do NOT change any code in this task.\n\n" +
-		"# Current architecture (.agentspace/" + ARCH_FILE + ")\n" + arch_model_markdown(model) + "\n" +
-		"# The owner's pending changes\n" + arch_edits_markdown(model) + "\n";
+		arch_job_context(model, edits, files);
 
-	prev = arch_str(model.plan, "text", "");
-	if(feedback && prev)
-		text += "# Your previous plan\n" + prev + "\n\n# The owner's feedback on it\n" + feedback + "\n\nRevise the plan with this feedback.\n\n";
+	if(feedback && arch_str(files, "previous", ""))
+		text += "# Revision\nYour previous plan is `" + files.previous + "`. The owner's feedback on it:\n" + feedback + "\n\nRevise the plan with this feedback.\n\n";
 	else if(feedback)
 		text += "# The owner's notes\n" + feedback + "\n\n";
 
-	text += "# What to do\n" +
+	text += arch_split_rules(model, edits, files, "research") +
+		"# What to do\n" +
 		"1. Read the code the changes touch.\n" +
-		"2. Write the plan as Markdown to `" + plan_path + "`: for each change what will be done, in which files, the order, risks and open questions. Short and concrete; the owner reads it before pressing Apply.\n" +
+		"2. Write the plan as Markdown to `" + files.plan + "`: for each change (by its number) what will be done, in which files, the order, risks and open questions. Short and concrete; the owner reads it before pressing Apply. A split change set: one section per group, so Apply can hand each section to one subtask.\n" +
 		"3. Do not change any other file. Signal finished with a one-paragraph summary of the plan.\n";
 	return text;
 }
 
-arch_apply_goal(model, edits) {
+// files: [model, changes, plan] (plan: "" when there is none)
+arch_apply_goal(model, edits, files) {
 	text = "Implement changes the owner made in the architecture graph of this codebase.\n\n" +
-		"# Current architecture\n" + arch_model_markdown(model) + "\n" +
-		"# Changes to implement\n" + arch_edits_markdown(model, edits) + "\n";
+		arch_job_context(model, edits, files);
 
-	plan = arch_str(model.plan, "text", "");
-	if(plan)
-		text += "# The plan the owner reviewed\n" + plan + "\n\n";
+	if(arch_str(files, "plan", "") && fileio.exists(files.plan))
+		text += "The plan the owner reviewed is `" + files.plan + "`: follow it (read it in pieces when it is long).\n\n";
 
-	text += "# What to do\n" +
+	text += arch_split_rules(model, edits, files, "implement") +
+		"# What to do\n" +
 		"Implement every change in the code (new modules / files, changed responsibilities, new or removed connections), keep the build and the tests working, and follow the conventions of the repository.\n" +
 		"Do not edit .agentspace/" + ARCH_FILE + ": the graph is updated when you signal finished. Signal failed (with the reason) if a change cannot be done; signal question if the owner has to decide something.\n";
 	return text;
@@ -824,17 +969,25 @@ class ArchitectureBoard {
 	path = "";
 	analysis_path = "";
 	plan_path = "";
+	changes_path = "";
+	prev_plan_path = "";
+	role = "adaptive";		// the role of the job tasks (Megamind.add_task)
 	host = None;
 	model = None;
 
-	__init__(_host, _root = ".agentspace") {
+	__init__(_host, _root = ".agentspace", _role = "adaptive") {
 		host = _host;
+		role = std.string(_role ?? "adaptive");
+		if(!role)
+			role = "adaptive";
 		root = std.string(_root ?? ".agentspace");
 		for(root.length() > 1 && (root.ends("/") || root.ends("\\")))
 			root = root.substr(0, root.length() - 1);
 		path = root + "/" + ARCH_FILE;
 		analysis_path = root + "/" + ARCH_ANALYSIS_FILE;
 		plan_path = root + "/" + ARCH_PLAN_FILE;
+		changes_path = root + "/" + ARCH_CHANGES_FILE;
+		prev_plan_path = root + "/" + ARCH_PREV_PLAN_FILE;
 		model = arch_load(path);
 
 		// a job of an earlier run whose task this node does not know is lost
@@ -1010,7 +1163,7 @@ class ArchitectureBoard {
 		if(job_open())
 			return [ok = false, error = "the " + arch_str(model.job, "kind", "") + " job is still running"];
 
-		taskid = host.add_task(name, goal);
+		taskid = host.add_task(name, goal, role);
 		if(!taskid)
 			return [ok = false, error = "the node did not accept the task"];
 
@@ -1050,8 +1203,17 @@ class ArchitectureBoard {
 		ids = [];
 		for(p : model.pending)
 			ids.push_back(p.id);
+		fb = std.string(feedback ?? "").strip();
+		// a revision reads the last plan from its own file; the worker writes the new one
+		prev = "";
+		if(fb && arch_str(model.plan, "text", "")) {
+			arch_write_atomic(prev_plan_path, model.plan.text);
+			prev = prev_plan_path;
+		}
 		arch_remove(plan_path);
-		res = _start_job("plan", "Architecture-Plan", arch_plan_goal(model, plan_path, std.string(feedback ?? "").strip()), [edit_ids = ids, feedback = std.string(feedback ?? "")]);
+		arch_write_atomic(changes_path, arch_changes_markdown(model, model.pending));
+		files = [model = path, changes = changes_path, plan = plan_path, previous = prev];
+		res = _start_job("plan", "Architecture-Plan", arch_plan_goal(model, files, fb), [edit_ids = ids, feedback = fb, split = json.bool(arch_needs_split(model, model.pending))]);
 		cs.release();
 		return res;
 	}
@@ -1069,7 +1231,15 @@ class ArchitectureBoard {
 			ids.push_back(p.id);
 			edits.push_back(p);
 		}
-		res = _start_job("apply", "Architecture-Apply", arch_apply_goal(model, edits), [edit_ids = ids]);
+		arch_write_atomic(changes_path, arch_changes_markdown(model, edits));
+		// the reviewed plan is the file the worker reads
+		plan_file = "";
+		if(arch_str(model.plan, "text", "")) {
+			arch_write_atomic(plan_path, model.plan.text);
+			plan_file = plan_path;
+		}
+		files = [model = path, changes = changes_path, plan = plan_file];
+		res = _start_job("apply", "Architecture-Apply", arch_apply_goal(model, edits, files), [edit_ids = ids, split = json.bool(arch_needs_split(model, edits, arch_str(model.plan, "text", "")))]);
 		cs.release();
 		return res;
 	}

@@ -36,11 +36,11 @@ class FakeHost {
 	listeners = [];
 	refuse = false;
 
-	add_task(name, goal) {
+	add_task(name, goal, role = "adaptive") {
 		if(refuse)
 			return None;
 		id = "t" + std.string(added.size() + 1);
-		added.push_back([taskid = id, name = name, goal = goal]);
+		added.push_back([taskid = id, name = name, goal = goal, role = role]);
 		known.push_back(id);
 		return id;
 	}
@@ -165,9 +165,43 @@ check("preview does not change the model", m.nodes.size() == 3 && m.nodes[1].pur
 
 md = arch_edits_markdown(m);
 check("edits as markdown", md.contains("ADD node") && md.contains("CONNECT") && md.contains("CHANGE node") && md.contains("REMOVE node") && md.contains("use the cache"), md);
-check("plan goal names the plan file and the edits", arch_plan_goal(m, "P.md").contains("P.md") && arch_plan_goal(m, "P.md").contains("ADD node"));
-check("plan goal with feedback", arch_plan_goal(m, "P.md", "smaller steps").contains("smaller steps"));
-check("apply goal tells not to edit the graph", arch_apply_goal(m, m.pending).contains("Do not edit .agentspace/architecture.json"));
+FILES = [model = "M.json", changes = "C.md", plan = "P.md", previous = ""];
+pg = arch_plan_goal(m, FILES);
+check("plan goal names the plan, model and change files and the edits", pg.contains("P.md") && pg.contains("M.json") && pg.contains("C.md") && pg.contains("ADD node"), pg);
+check("plan goal with feedback", arch_plan_goal(m, FILES, "smaller steps").contains("smaller steps"));
+FILES.previous = "OLD.md";
+check("a revision names the previous plan file", arch_plan_goal(m, FILES, "smaller steps").contains("OLD.md"));
+ag = arch_apply_goal(m, m.pending, FILES);
+check("apply goal tells not to edit the graph", ag.contains("Do not edit .agentspace/architecture.json"), ag);
+check("the model is a file reference, not pasted", !ag.contains("the window") && ag.contains("M.json") && ag.contains("search_in_file"), ag);
+check("a small change set is not split", !arch_needs_split(m, m.pending) && ag.contains("small") && !ag.contains("split it"), ag);
+cm = arch_changes_markdown(m, m.pending);
+check("the change list has every edit, the groups and the touched nodes", cm.contains("REMOVE node") && cm.contains("## Groups") && cm.contains("App (ui): the window"), cm);
+
+// a big change set: more than ARCH_SPLIT_EDITS edits over two groups
+big = arch_normalize(ANALYSIS);
+for(k = 0; k < ARCH_SPLIT_EDITS + 2; k++)
+	arch_add_edit(big, [op = "add_node", node = [label = "Part " + std.string(k), group = (k % 2 ? "front" : "back"), purpose = "part number " + std.string(k)]]);
+groups = arch_edit_groups(big, big.pending);
+check("edits are grouped by the group of their node", groups.size() == 2 && groups[0].group == "back" && groups[0].numbers.size() == 4, std.string(groups));
+check("more than ARCH_SPLIT_EDITS edits are split", arch_needs_split(big, big.pending));
+bg = arch_apply_goal(big, big.pending, FILES);
+check("the split prompt tells to delegate one start_task per group", bg.contains("split it") && bg.contains("start_task") && bg.contains("max_running_agents") && bg.contains("back: edits 1, 3, 5, 7"), bg);
+check("the prompt lists at most ARCH_SUMMARY_LINES edits", ARCH_SPLIT_EDITS + 2 <= ARCH_SUMMARY_LINES || bg.contains("more in `C.md`"), bg);
+many = arch_normalize(ANALYSIS);
+for(k = 0; k < ARCH_SUMMARY_LINES + 3; k++)
+	arch_add_edit(many, [op = "add_node", node = [label = "Item " + std.string(k)]]);
+mg = arch_apply_goal(many, many.pending, FILES);
+check("edits past ARCH_SUMMARY_LINES are only in the change file", mg.contains("... and 3 more in `C.md`") && !mg.contains("Item " + std.string(ARCH_SUMMARY_LINES + 2)), mg);
+long_note = "";
+for(k = 0; k < 300; k++)
+	long_note += "a long note line ";
+few = arch_normalize(ANALYSIS);
+arch_add_edit(few, [op = "update_node", target = "core", node = [purpose = "x"], note = long_note + long_note + long_note]);
+check("a long change list is split even with few edits", few.pending.size() == 1 && arch_needs_split(few, few.pending), std.string(arch_changes_markdown(few, few.pending).length()));
+check("a long plan is split", arch_needs_split(m, m.pending, long_note + long_note + long_note));
+pgb = arch_plan_goal(big, FILES);
+check("the plan of a split set is researched in subtasks too", pgb.contains("split it") && pgb.contains("one section per group"), pgb);
 check("analyze goal has the format", arch_analyze_goal("A.json").contains("A.json") && arch_analyze_goal("A.json").contains("\"edges\""));
 
 add_id = m.pending[0].id;
@@ -191,6 +225,7 @@ check("board on an empty space", board.model.nodes.size() == 0 && board.state().
 
 r = board.analyze();
 check("analyze starts a worker task", r.ok && host.added.size() == 1 && host.added[0].goal.contains("architecture.analysis.json"), std.string(r));
+check("the job task has the role adaptive", host.added[0].role == "adaptive", std.string(host.added[0]));
 r2 = board.analyze();
 check("one job at a time", !r2.ok, std.string(r2));
 check("the job shows the live task state", board.state().job.state == "implement", std.string(board.state().job));
@@ -219,6 +254,7 @@ check("board.add_edit edge", r.ok, std.string(r));
 
 r = board.review_plan("keep it small");
 check("review plan starts a task with the edits", r.ok && host.added[host.added.size() - 1].goal.contains("CONNECT") && host.added[host.added.size() - 1].goal.contains("keep it small"), std.string(r));
+check("the board wrote the change list", arch_read_text(board.changes_path).contains("ADD node") && host.added[host.added.size() - 1].goal.contains(board.changes_path), arch_read_text(board.changes_path));
 fileio.write_text(board.plan_path, "# Plan\n1. add cache.cpp\n");
 host.finish(r.taskid, "finished", "plan written");
 check("the plan is stored", board.model.plan.text.contains("cache.cpp") && !board.model.plan.outdated, std.string(board.model.plan));
@@ -227,7 +263,8 @@ r = board.add_edit([op = "update_node", target = "app", node = [purpose = "the m
 check("an edit after the plan marks it outdated", r.ok && board.model.plan.outdated, std.string(board.model.plan));
 
 r = board.apply();
-check("apply starts a task with the plan", r.ok && host.added[host.added.size() - 1].goal.contains("add cache.cpp"), std.string(r));
+check("apply starts a task with the plan file", r.ok && host.added[host.added.size() - 1].goal.contains(board.plan_path) && arch_read_text(board.plan_path).contains("add cache.cpp"), std.string(r));
+check("apply task: role adaptive", host.added[host.added.size() - 1].role == "adaptive");
 r2 = board.add_edit([op = "add_node", node = [label = "Late"]]);
 check("no edits while Apply runs", !r2.ok, std.string(r2));
 host.finish(r.taskid, "failed", "the build broke");
@@ -255,8 +292,10 @@ host.refuse = false;
 
 r = board.analyze();
 host2 = FakeHost();
-board2 = ArchitectureBoard(host2, ROOT);
+board2 = ArchitectureBoard(host2, ROOT, "planner");
 check("after a restart an unknown open job is lost", board2.model.job.state == "lost", std.string(board2.model.job));
+board2.analyze();
+check("the role of the job tasks can be set", host2.added[0].role == "planner", std.string(host2.added));
 
 std.print("\n── --web command line ──");
 o = web_ui_parse(["--web"]);
@@ -267,6 +306,8 @@ o = web_ui_parse(["--web=9000", "--agentspace", "/tmp/space"]);
 check("--web=<port> --agentspace", o.web && o.port == 9000 && o.agentspace == "/tmp/space", std.string(o));
 o = web_ui_parse(["--port", "1234"]);
 check("no --web", !o.web, std.string(o));
+check("the architecture role defaults to adaptive", o.architecture_role == "adaptive", std.string(o));
+check("--architecture-role", web_ui_parse(["--web", "--architecture-role", "coder"]).architecture_role == "coder");
 d = web_ui_chat_delta([tool = [name = "start_task", args = [name = "Sushi"]]]);
 check("chat delta of a tool call", d.text.contains("start_task") && d.text.contains("Sushi"), std.string(d));
 check("chat delta of text", web_ui_chat_delta([text = "hi"]).text == "hi");
