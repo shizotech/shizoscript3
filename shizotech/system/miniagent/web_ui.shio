@@ -101,10 +101,10 @@ web_ui_chat_delta(action) {
 	if(action.has("text") && action.text)
 		return [agent = "planner", text = std.string(action.text)];
 
+	// a tool call arrives twice: as "tool" (the model's call) and as "tool_start"
+	// (the harness runs it); the chat shows it once
 	tool = None;
-	if(action.has("tool") && std.is_json(action.tool))
-		tool = action.tool;
-	else if(action.has("tool_start") && std.is_json(action.tool_start))
+	if(action.has("tool_start") && std.is_json(action.tool_start))
 		tool = action.tool_start;
 
 	if(!tool || !tool.has("name"))

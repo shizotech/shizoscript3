@@ -414,7 +414,11 @@ shz architecture_selftest.shio   the architecture board: model file, merge of a 
                                  pending edits, analyze / plan / apply jobs on a fake
                                  host, restart, the --web command line
                                  , the job role (adaptive), the split of a big change
-                                 set into subtasks -> 98 checks, ALL PASSED
+                                 set into subtasks -> 99 checks, ALL PASSED
+shz web_ui_selftest.shio         the web interface under browser load, stub host: every
+                                 page and file, 150 polls, chat turns with their /poll
+                                 loop while the pages poll, 20 parallel requests,
+                                 keep-alive reuse -> 28 checks, ALL PASSED
 shz tests/megamind_tasks_test.shio  the task system of a node keeps running: an update
                                  during the implementation is continued by the worker
                                  thread (not by the caller), a follow-up of a running

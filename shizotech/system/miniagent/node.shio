@@ -424,7 +424,7 @@ else if(web_mode) {
 
 		if(ui) {
 			api = ui.server;
-			std.print("Web interface: http://localhost:" + opts.port + "/  (architecture: " + ui.board.path + ")\n");
+			std.print("Web interface: http://127.0.0.1:" + opts.port + "/  (architecture: " + ui.board.path + ")\n");
 		}
 		else
 			api_port = opts.port;
