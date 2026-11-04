@@ -6,6 +6,8 @@
 //           shz node.shio --interactive --config gpu
 //           shz node.shio --name Box --description "GPU box"   headless AI node
 //           shz node.shio --webserver --port 13337             + JSON web API
+//           shz node.shio --web [--port 13337]                 + the web interface
+//                                                              (= shz miniagent --web)
 //           shz node.shio --port 13337 --api-token secret
 //           shz node.shio --agentspace .agentspace             scheduled goals
 //
@@ -61,7 +63,7 @@
 
 #include "megamind"
 #include "mcp/mcp_server"
-#include "node_api"
+#include "web_ui"
 #include "shizonet_ai"
 #include "model_config_cli"
 #include "goal_engine"
@@ -102,7 +104,15 @@ node_has_headless_identity() {
 	return false;
 }
 
+// --web: the web interface (web_ui.shio), the JSON API is part of it
+node_is_web_ui_mode() {
+	return web_ui_parse(web_ui_args()).web;
+}
+
 node_is_web_mode() {
+	if(node_is_web_ui_mode())
+		return true;
+
 	if(model_config_cli_has_flag("--webserver"))
 		return true;
 
@@ -404,15 +414,33 @@ else if(web_mode) {
 	if(token_opt)
 		api_token = std.string(token_opt);
 
-	std.print("Starting API server at " + api_port);
+	api = None;
 
-	api = node_api_start(host, cfg, api_port, api_token);
+	if(node_is_web_ui_mode()) {
+		opts = web_ui_parse(web_ui_args());
+		std.print("Starting the web interface at " + opts.port);
+
+		ui = web_ui_start(host, cfg, opts);
+
+		if(ui) {
+			api = ui.server;
+			std.print("Web interface: http://127.0.0.1:" + opts.port + "/  (architecture: " + ui.board.path + ")\n");
+		}
+		else
+			api_port = opts.port;
+	}
+	else {
+		std.print("Starting API server at " + api_port);
+
+		api = node_api_start(host, cfg, api_port, api_token);
+
+		if(api)
+			std.print("Node JSON API: http://localhost:" + api_port + "/api/health\n");
+	}
 
 	if(!api)
 		std.error("Could not start the API server on port ", api_port, ".");
 	else {
-		std.print("Node JSON API: http://localhost:" + api_port + "/api/health\n");
-
 		for(host.running)
 			std.sleep(250);
 

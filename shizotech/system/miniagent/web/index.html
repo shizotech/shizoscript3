@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard • ShizoGPT Ecosystem</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <title>miniagent • node</title>
+  <link rel="stylesheet" href="components/icons.css">
   <link rel="stylesheet" href="dashboard.css" />
   <link rel="stylesheet" href="components/ui.css" />
 </head>
@@ -32,19 +32,14 @@
           <span>Planner Chat</span>
         </button>
 		
-        <button class="nav-item" data-module="features">
+        <button class="nav-item" data-module="tasks">
           <i class="fa-solid fa-rocket"></i>
-          <span>Features</span>
+          <span>Tasks</span>
         </button>
         
-        <button class="nav-item" data-module="history">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-          <span>History</span>
-        </button>   
-        
-        <button class="nav-item" data-module="settings">
-          <i class="fa-solid fa-gear"></i>
-          <span>Settings</span>
+        <button class="nav-item" data-module="architecture">
+          <i class="fa-solid fa-diagram"></i>
+          <span>Architecture</span>
         </button>
         
         <div class="nav-section-label">
@@ -59,11 +54,6 @@
         <button class="nav-item nav-item-secondary" id="btnThemeToggle">
           <i class="fa-solid fa-moon"></i>
           <span>Dark Mode</span>
-        </button>
-        
-        <button class="nav-item nav-item-secondary" id="btnWorkMode">
-          <i class="fa-solid fa-play"></i>
-          <span>Work Mode</span>
         </button>
         
         <button class="nav-item nav-item-secondary" id="btnSecretEgg" style="opacity: 0.5;">
@@ -90,8 +80,8 @@
               <i class="fa-solid fa-user"></i>
             </div>
             <div class="user-info">
-              <span class="user-name">User</span>
-              <span class="user-role">Admin</span>
+              <span class="user-name" id="nodeName">Node</span>
+              <span class="user-role" id="nodeState">connecting…</span>
             </div>
           </div>
           
@@ -109,16 +99,12 @@
           <iframe id="chatFrame" src="chat/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
         
-        <div id="featuresModule" class="module">
-          <iframe id="featuresFrame" src="features/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        <div id="tasksModule" class="module">
+          <iframe id="tasksFrame" src="tasks/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
         
-        <div id="historyModule" class="module">
-          <iframe id="historyFrame" src="history/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
-        </div>
-        
-        <div id="settingsModule" class="module">
-          <iframe id="settingsFrame" src="settings/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+        <div id="architectureModule" class="module">
+          <iframe id="architectureFrame" src="architecture/index.html" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
         </div>
         
         <div id="cowLaysEggsModule" class="module">
@@ -132,6 +118,7 @@
     
   </div>
 
+  <script src="components/nodeapi.js"></script>
   <script src="components/utils.js"></script>
   <script src="dashboard.js"></script>
 </body>

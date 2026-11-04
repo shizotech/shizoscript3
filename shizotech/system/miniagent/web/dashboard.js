@@ -15,9 +15,8 @@ const DashboardState = {
   // Initialize dashboard state
   init() {
     this.modules.set('chat', { title: 'Chat', active: true });
-    this.modules.set('features', { title: 'Features', active: false });
-    this.modules.set('history', { title: 'History', active: false }); 
-    this.modules.set('settings', { title: 'Settings', active: false });
+    this.modules.set('tasks', { title: 'Tasks', active: false });
+    this.modules.set('architecture', { title: 'Architecture', active: false });
   },
 
   // Switch to a different module
@@ -97,99 +96,6 @@ const DashboardState = {
       this.theme = savedTheme;
     }
     this.applyTheme();
-  },
-
-  // Toggle work mode
-   async toggleWorkMode() {
-     this.workMode = !this.workMode;
-     
-     // Update UI immediately for responsiveness
-     this.updateWorkModeIcon();
-     
-     try {
-       // Call backend API to persist work mode state
-       const res = await fetch('/api/workmode', {
-         method: 'PUT',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ enabled: this.workMode })
-       });
-       
-       if (!res.ok) {
-         throw new Error(`Server error: ${res.status}`);
-       }
-       
-       const data = await res.json();
-       if (data.ok) {
-         // Save to localStorage as backup
-         this.saveWorkMode();
-         console.log('Work mode toggled and synced with backend:', this.workMode);
-       } else {
-         throw new Error(data.error || 'Backend rejected the request');
-       }
-     } catch (error) {
-       console.error('Failed to sync work mode with backend:', error);
-       // Revert UI on error to maintain consistency
-       this.workMode = !this.workMode;
-       this.updateWorkModeIcon();
-     }
-   },
-
-  // Save work mode preference
-  saveWorkMode() {
-    localStorage.setItem('dashboard_workmode', JSON.stringify(this.workMode));
-  },
-
-  // Load saved work mode
-   loadWorkMode() {
-     const savedWorkMode = localStorage.getItem('dashboard_workmode');
-     if (savedWorkMode !== null) {
-       this.workMode = JSON.parse(savedWorkMode);
-     }
-     this.updateWorkModeIcon();
-   },
-
-   // Load work mode from server
-   async loadWorkModeFromServer() {
-     try {
-       const res = await fetch('/api/workmode', {
-         method: 'GET',
-         headers: { 'Content-Type': 'application/json' }
-       });
-       
-       if (!res.ok) {
-         throw new Error(`Server error: ${res.status}`);
-       }
-       
-       const data = await res.json();
-       if (data.ok && data.data && data.data.enabled !== undefined) {
-         this.workMode = data.data.enabled;
-         this.saveWorkMode();
-       }
-     } catch (error) {
-       console.error('Work Mode API Error:', error);
-       // Fall back to localStorage on error
-       const savedWorkMode = localStorage.getItem('dashboard_workmode');
-       if (savedWorkMode !== null) {
-         this.workMode = JSON.parse(savedWorkMode);
-       }
-     }
-     this.updateWorkModeIcon();
-   },
-
-  // Update work mode icon
-  updateWorkModeIcon() {
-    const btn = document.getElementById('btnWorkMode');
-    if (!btn) return;
-    
-    if (this.workMode) {
-      btn.querySelector('i').className = 'fa-solid fa-play';
-      btn.classList.remove('workmode-stopped');
-      btn.classList.add('workmode-active');
-    } else {
-      btn.querySelector('i').className = 'fa-solid fa-pause';
-      btn.classList.remove('workmode-active');
-      btn.classList.add('workmode-stopped');
-    }
   },
 
   // Update notification badge
@@ -382,13 +288,7 @@ const NavigationManager = {
         this.updateThemeIcon();
       });
     }
-    
-    const workModeBtn = document.getElementById('btnWorkMode');
-    if (workModeBtn) {
-      workModeBtn.addEventListener('click', async () => {
-        await DashboardState.toggleWorkMode();
-      });
-    }
+
   },
 
   // Activate a module
@@ -464,25 +364,6 @@ const ModuleEvents = {
     }
   },
 
-  // Listen for features events
-  features: {
-    onFeatureAdded(feature) {
-      // Sync with dashboard-wide feature manager
-      window.DashboardUtils.FeatureManager.register(feature.id, feature);
-    },
-
-    onFeatureUpdated(feature) {
-      window.DashboardUtils.FeatureManager.update(feature.id, feature);
-    }
-  },
-
-  // Listen for history events
-  history: {
-    onActionAdded(action) {
-      // Sync with dashboard-wide history manager
-      window.DashboardUtils.HistoryManager.add(action);
-    }
-  },
 
   // Initialize all module event listeners
   init() {
@@ -499,6 +380,48 @@ const ModuleEvents = {
 };
 
 
+
+// ════════════════════════════════════════════
+//  Node status (GET /api/status, /api/notifications)
+// ════════════════════════════════════════════
+
+const NodeStatus = {
+  seen: 0,
+
+  async refresh() {
+    const name = document.getElementById('nodeName');
+    const state = document.getElementById('nodeState');
+    try {
+      const st = await NodeApi.get('/api/status');
+      const t = st.tasks || {};
+      if (name) name.textContent = (st.model && st.model.name) || 'Node';
+      if (state) state.textContent = `${t.running || 0} running · ${t.planned || 0} planned`;
+      const notes = await NodeApi.get('/api/notifications');
+      const list = Array.isArray(notes) ? notes : Object.values(notes || {});
+      const fresh = list.filter(n => n.time > this.seen).length;
+      DashboardState.updateNotifications(fresh);
+    } catch (e) {
+      if (state) state.textContent = e.status === 401 ? 'token needed' : 'offline';
+    }
+  },
+
+  start() {
+    const bell = document.getElementById('btnNotifications');
+    if (bell) {
+      bell.addEventListener('click', async () => {
+        try {
+          const notes = await NodeApi.get('/api/notifications');
+          const text = (Array.isArray(notes) ? notes : Object.values(notes || {})).slice(-10).map(n => '• ' + n.message).join('\n') || 'No notifications.';
+          this.seen = Date.now();
+          DashboardState.updateNotifications(0);
+          alert(text);
+        } catch (e) { alert(String(e.message || e)); }
+      });
+    }
+    this.refresh();
+    setInterval(() => this.refresh(), 5000);
+  }
+};
 
 // ════════════════════════════════════════════
 //  Dashboard Initialization
@@ -519,17 +442,15 @@ const Dashboard = {
     DashboardState.loadTheme();
     NavigationManager.updateThemeIcon();
     
-    // Load work mode from server (with localStorage fallback)
-    DashboardState.loadWorkModeFromServer();
-    DashboardState.updateWorkModeIcon();
-    
     // Initialize module manager
     ModuleManager.register('chat', { iframeSrc: 'chat/index.html' });
-    ModuleManager.register('features', { iframeSrc: 'features/index.html' });
-    ModuleManager.register('history', { iframeSrc: 'history/index.html' });
-    ModuleManager.register('settings', { iframeSrc: 'settings/index.html' });
+    ModuleManager.register('tasks', { iframeSrc: 'tasks/index.html' });
+    ModuleManager.register('architecture', { iframeSrc: 'architecture/index.html' });
     
     ModuleManager.init();
+    
+    // Node status in the header, notifications of the receptionist on the bell
+    NodeStatus.start();
     
     
     
@@ -589,21 +510,6 @@ window.addEventListener('message', (e) => {
       case 'notification':
         if (e.data.module === 'chat') {
           ModuleEvents.chat.onNotification(e.data.payload?.count || 0);
-        }
-        break;
-      case 'featureAdded':
-        if (e.data.module === 'features') {
-          ModuleEvents.features.onFeatureAdded(e.data.payload);
-        }
-        break;
-      case 'featureUpdated':
-        if (e.data.module === 'features') {
-          ModuleEvents.features.onFeatureUpdated(e.data.payload);
-        }
-        break;
-      case 'actionAdded':
-        if (e.data.module === 'history') {
-          ModuleEvents.history.onActionAdded(e.data.payload);
         }
         break;
     }
