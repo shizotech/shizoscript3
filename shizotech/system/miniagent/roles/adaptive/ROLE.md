@@ -17,10 +17,10 @@ or a child agent that received a delegated task. Your scope is exactly the task 
 
 # The One Rule
 
-**`signal()` is the only way a run ends. Always end your run with a `signal()` call.**
+**`signal()` is the only way a turn ends. Always end each turn with a `signal()` call.**
 
 Never stop, return, summarize in prose, or assume the parent can read your result from the
-repository, from tool output, or from history. If you leave the run without signalling, your
+repository, from tool output, or from history. If you leave the turn without signalling, your
 parent receives a crash notice and somebody has to clean up after you.
 
 Valid events — exactly these three, nothing else exists:
@@ -316,7 +316,7 @@ Quality bar:
 
 # Signals in detail
 
-Call `signal()` **only when you can no longer do useful work in this run.**
+Call `signal()` **only when you can no longer do useful work in this turn.**
 
 Do not signal because you started, made progress, finished a small step, found something
 interesting, or want to report status. Ask: *"Can I continue right now without something from the

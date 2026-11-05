@@ -483,6 +483,21 @@ class tg_stub_agent {
     }
 }
 
+// A TelegramRouter whose answer of one turn throws (boom = true): the worker thread
+// of the bot must survive it (#762: one error ended it, later messages were never
+// answered).
+class tg_fragile_router : TelegramRouter {
+    boom = false;
+
+    tg_answer_text(res) {
+        if(boom) {
+            boom = false;
+            std.runtime_error("answer exploded");
+        }
+        return super.tg_answer_text(res);
+    }
+}
+
 tg_stop_router(r) {
     r.tg_stop_worker();
     r.running = false;
@@ -506,7 +521,7 @@ if(fileio.exists(TRUSTED_FILE)) {
 
 bot = tg_fake_bot();
 
-rtr = TelegramRouter(
+rtr = tg_fragile_router(
     ModelConfig(),
     [
         name = ROUTER_WIRE,
@@ -651,6 +666,17 @@ q_answered = wait_for([bot]() { return bot.has_for(CHAT_A, "the fleet has"); }, 
 check("an arbitrary question gets the agent's answer", q_answered, bot.last_for(CHAT_A));
 check("a question is not framed as a failure", !bot.has_for(CHAT_A, "failed") && !bot.has_for(CHAT_A, "Routing") && !bot.has_for(CHAT_A, "Agent returned nothing"), bot.last_for(CHAT_A));
 check("a question routes no task", rtr.tasks_summary().size() == tasks_q, std.string(rtr.tasks_summary()));
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  4a. A turn that throws: the chat hears about it, the bot keeps working
+// ─────────────────────────────────────────────────────────────────────────────
+
+bot.clear();
+rtr.boom = true;
+bot.on_any_message([chatid = CHAT_A, text = "QUESTION: does this break?"]);
+check("a turn that throws is reported in the chat", wait_for([bot]() { return bot.has_for(CHAT_A, "answer exploded"); }, 8000), bot.last_for(CHAT_A));
+bot.on_any_message([chatid = CHAT_A, text = "QUESTION: still there?"]);
+check("the next message is still answered (the worker thread lives)", wait_for([bot]() { return bot.has_for(CHAT_A, "the fleet has"); }, 8000), bot.last_for(CHAT_A));
 
 // the question turn streams too -> its draft ids must be valid as well
 bad_drafts2 = 0;

@@ -3,8 +3,10 @@
 //
 //  #include "node_api"
 //
-//  api = node_api_start(host, cfg, port, api_token = "");   // returns the
-//                                                            webserver object
+//  api = node_api_start(host, cfg, port, api_token = "", web_root = "");
+//                                                    // returns the webserver object
+//                                                    // web_root: pages served at /,
+//                                                    // the API index moves to /api
 //  api.stop();
 //
 //  `host` is a Megamind() (see megamind.shio): the receptionist router plus the
@@ -207,11 +209,17 @@ node_api_task_list(ov) {
 //  Server
 // ─────────────────────────────────────────────────────────────────────────────
 
-node_api_start(host, cfg, port, api_token = "") {
+// web_root: a folder of web pages served at / (shz miniagent --web, web_ui.shio);
+// the API index moves to /api then.
+node_api_start(host, cfg, port, api_token = "", web_root = "") {
     port = std.int(port);
     api_token = std.string(api_token);
+    web_root = std.string(web_root ?? "");
 
     server = webserver.http_server(port);
+
+    if(web_root)
+        server.static("", web_root);
 
     // API state. All of these are shared by reference with the route lambdas.
     requests = [];          // request_id -> request state
@@ -241,8 +249,8 @@ node_api_start(host, cfg, port, api_token = "") {
         return [status_code = 204, headers = node_api_headers(), body = ""];
     });
 
-    // GET / — API index
-    server.route("GET", "^/$", [port](req, writer) {
+    // GET / — API index (GET /api when the web pages are served at /)
+    server.route("GET", web_root ? "^/api/?$" : "^/$", [port](req, writer) {
         return node_api_ok([
             name = "megamind-node-api",
             version = NODE_API_VERSION,

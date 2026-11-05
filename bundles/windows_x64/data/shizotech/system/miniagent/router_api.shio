@@ -1909,9 +1909,14 @@ class Router {
 			// is set, so a turn that ended with finish() would come back as
 			// "Agent returned nothing (maybe crashed)" although everything worked.
 			// Fold them in: the report IS the answer, and the turn is a success.
-			result = _turn_result(result);
-
-			agent.on_action = _action_cb;
+			// (guarded: request() waits for req.finished, this thread must live)
+			try {
+				result = _turn_result(result);
+				agent.on_action = _action_cb;
+			}
+			catch(e) {
+				result = [ok = false, error = std.string(e)];
+			}
 
 			if(req.on_finish_cb) {
 				try {
@@ -1956,10 +1961,19 @@ class Router {
 				}
 			}
 
-			poll_open_tasks();
+			try {
+				poll_open_tasks();
+			}
+			catch(e) {
+				std.error("[router] polling the tasks failed: ", e);
+			}
 		}
 	}
 
+	// One task that fails to poll must not stop the others, and nothing may end the
+	// poller thread: without it every open task stays open in the mirror for good
+	// (no finished / lost state, no stall report, and add_task answers the same goal
+	// with that dead task as an open duplicate).
 	poll_open_tasks() {
 		for(i = 0; i < remote_tasks.size(); i++) {
 			if(!this.running) {
@@ -1969,10 +1983,28 @@ class Router {
 			if(!router_is_open_state(rec.state)) {
 				continue;
 			}
-			_poll_task(rec);
+			try {
+				_poll_task(rec);
+			}
+			catch(e) {
+				rec.poll_fails += 1;
+				rec.last_error = std.string(e);
+				std.error("[router] polling task ", std.string(rec.taskid), " failed: ", e);
+				if(rec.poll_fails >= ROUTER_MAX_POLL_FAILS) {
+					try {
+						_set_task_state(rec, "lost", "polling failed: " + rec.last_error);
+					}
+					catch(e2) {}
+				}
+			}
 			// C2: the watchdog rides the poller — an open task that stops making
 			// progress is reported once, not polled into silence forever.
-			_check_task_stall(rec);
+			try {
+				_check_task_stall(rec);
+			}
+			catch(e) {
+				std.error("[router] stall check failed: ", e);
+			}
 		}
 	}
 

@@ -356,7 +356,7 @@ add_tools(agt)
 				return [
 					stopped = true,
 					results = fork_results,
-					note = "The agent was stopped. Do not continue, end the run with signal().",
+					note = "The agent was stopped. Do not continue, end the turn with signal().",
 				];
 			}
 
@@ -432,7 +432,7 @@ add_tools(agt)
 					task_id = task.id,
 					stopped = true,
 					finish_reason = task.finish_reason,
-					report = "The agent was stopped before this task started.\nDo not continue, end the run with signal().",
+					report = "The agent was stopped before this task started.\nDo not continue, end the turn with signal().",
 				];
 			}
 			
@@ -461,7 +461,7 @@ add_tools(agt)
 					task_id = task.id,
 					stopped = true,
 					finish_reason = task.finish_reason,
-					report = "The agent was stopped while this task was running.\nDo not continue, end the run with signal().",
+					report = "The agent was stopped while this task was running.\nDo not continue, end the turn with signal().",
 				];
 			}
 			
@@ -523,7 +523,7 @@ add_tools(agt)
 				return [
 					task_id = args.task_id,
 					stopped = true,
-					report = "The agent was stopped.\nDo not continue, end the run with signal().",
+					report = "The agent was stopped.\nDo not continue, end the turn with signal().",
 				];
 			}
 
@@ -563,7 +563,7 @@ add_tools(agt)
 					task_id = task.id,
 					stopped = true,
 					finish_reason = task.finish_reason,
-					report = "The agent was stopped before this task continued.\nDo not continue, end the run with signal().",
+					report = "The agent was stopped before this task continued.\nDo not continue, end the turn with signal().",
 				];
 			}
 			
@@ -581,7 +581,7 @@ add_tools(agt)
 					task_id = task.id,
 					stopped = true,
 					finish_reason = task.finish_reason,
-					report = "The agent was stopped while this task was running.\nDo not continue, end the run with signal().",
+					report = "The agent was stopped while this task was running.\nDo not continue, end the turn with signal().",
 				];
 			}
 			
@@ -611,7 +611,7 @@ add_tools(agt)
 	
 	agt.add_tool(
 		"signal",
-		"Emit an event",
+		"Use this at the end of each turn: emit finished, failed or question with the report.",
 		[
 			event = ["finished", "failed", "question"],
 			report = "&string(): What to signal",
@@ -629,7 +629,7 @@ add_tools(agt)
 			agt.env.signal_report = args.report;
 			agt.env.signal_event = args.event;
 			
-			return "Signal sent, exit and wait for further instructions.";
+			return "Signal sent, the turn ends; wait for further instructions.";
 		}
 	);
 	
@@ -834,7 +834,7 @@ add_tools(agt)
 
 			if(agt.should_stop()) {
 				result.stopped = true;
-				result.note = "The agent was stopped and the batch was torn down.\nDo not continue, end the run with signal().";
+				result.note = "The agent was stopped and the batch was torn down.\nDo not continue, end the turn with signal().";
 			}
 
 			return result;

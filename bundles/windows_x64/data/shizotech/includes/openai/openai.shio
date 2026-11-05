@@ -1018,6 +1018,8 @@ class openai_api
 			stream.stop();
 			res = stream.answer();
 			
+			std.print(res);
+			
 			if(!llama_n_ctx)
 				std.print("non vLLM or llama endpoint without /tokenize or /props ... using default 128k.");
 				llama_n_ctx = 128000;
