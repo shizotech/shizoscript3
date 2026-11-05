@@ -1,0 +1,216 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  workspaces_selftest.shio — store/settings checks + minimal agent protocol
+// ═══════════════════════════════════════════════════════════════════════════
+
+#include "workspaces"
+
+passed = 0;
+failed = 0;
+
+check(cond, label) {
+    if(cond) {
+        passed++;
+        std.print("ok " + label);
+    } else {
+        failed++;
+        std.print("FAIL " + label);
+    }
+}
+
+class FakeServer {
+    routes = [];
+
+    route(method, path, callback) {
+        routes.push_back([method = method, path = path]);
+    }
+}
+
+test_root = std.user_path() + "/miniagent/workspaces_selftest_" + std.random_hash(8);
+test_root = fileio.absolute_path(test_root);
+
+if(fileio.exists(test_root))
+    fileio.remove(test_root);
+
+store = WorkspaceStore(test_root);
+
+check(store.settings().max_sessions == 2, "default max_sessions is 2");
+
+res = store.set_settings(3);
+check(res.ok && store.settings().max_sessions == 3, "settings update to 3");
+
+check(store.list().size() >= 1, "root workspace exists");
+
+root_ws = store.get("root");
+check(!std.is_none(root_ws) && root_ws.path == test_root, "root workspace path");
+
+alpha = store.create("alpha", "", "");
+check(alpha.ok && fileio.is_directory(alpha.workspace.path), "create workspace alpha");
+check(fileio.is_directory(alpha.workspace.path + "/.megamind"), "alpha .megamind");
+check(fileio.is_directory(alpha.workspace.path + "/.megamind/sessions"), "alpha sessions dir");
+check(fileio.is_directory(alpha.workspace.path + "/.megamind/tasks"), "alpha tasks dir");
+
+beta = store.create("beta", "", alpha.workspace.id);
+check(beta.ok && fileio.is_directory(beta.workspace.path), "create nested beta");
+check(beta.workspace.parent == alpha.workspace.id, "beta parent is alpha");
+check(fileio.is_directory(beta.workspace.path + "/.megamind/architecture"), "beta architecture dir");
+
+tree = store.tree();
+check(std.is_json(tree) && tree.children.size() >= 1, "tree has children");
+
+alpha_in_tree = false;
+
+for(c : tree.children) {
+    if(c.id == alpha.workspace.id)
+        alpha_in_tree = true;
+}
+
+check(alpha_in_tree, "tree contains alpha");
+
+beta_in_tree = false;
+
+for(c : tree.children) {
+    if(c.id != alpha.workspace.id)
+        continue;
+
+    for(g : c.children) {
+        if(g.id == beta.workspace.id)
+            beta_in_tree = true;
+    }
+}
+
+check(beta_in_tree, "tree nests beta below alpha");
+
+del_parent = store.delete(alpha.workspace.id);
+check(!del_parent.ok, "delete parent refused while child exists");
+
+del_child = store.delete(beta.workspace.id);
+check(del_child.ok, "delete beta");
+
+del_alpha = store.delete(alpha.workspace.id);
+check(del_alpha.ok, "delete alpha after beta");
+
+check(!std.is_none(store.get("root")), "root remains after deletes");
+
+// ── minimal protocol check: spawn workspace_agent.shio and read ready line ──
+proto = store.create("protocol", "", "");
+proto_dir = proto.workspace.path;
+config_path = proto_dir + "/config.json";
+
+fileio.write_json(config_path, [
+    url = "",
+    token = "",
+    name = "",
+    max_tokens = 128000,
+    max_running_agents = 0,
+], true, true);
+
+agent_script = __DIR__ + "/workspace_agent.shio";
+exe = std.string(std.local_executable());
+
+proc = subprocess.process();
+proc.pipes(true, true, true);
+
+started = false;
+
+try {
+    started = proc.start([
+        exe,
+        agent_script,
+        "--workspace", proto_dir,
+        "--config-file", config_path,
+        "--session-id", "selftest-session",
+        "--role", "adaptive",
+        "--mode", "normal",
+    ], proto_dir, false);
+} catch(e) {
+    started = false;
+    std.print("FAIL agent start: " + std.string(e));
+    failed++;
+}
+
+check(started && proc.running(), "workspace_agent started");
+
+line = proc.read_line("stdout", 8000);
+data = None;
+
+try {
+    data = std.json(line, true);
+} catch(e) {
+    data = None;
+}
+
+check(std.is_json(data) && std.string(data.type) == "ready" && std.string(data.session_id) == "selftest-session", "ready protocol line");
+
+stop_msg = [type = "stop"];
+proc.write_line(stop_msg.compact_string());
+
+for(i = 0; i < 100; i++) {
+    if(!proc.running())
+        break;
+    std.sleep(50);
+}
+
+check(proc.exited() || !proc.running(), "agent exited after stop line");
+
+if(proc.running())
+    proc.kill();
+
+// ── SessionManager check: spawn, read ready status, enforce max, stop ─────
+cfg = ModelConfig();
+
+if(!cfg.load(config_path, false)) {
+    check(false, "load selftest config for SessionManager");
+} else {
+    manager = SessionManager(store, cfg);
+    mres = manager.create_session(proto.workspace.id, "manager-test", "normal", "", "adaptive");
+
+    check(mres.ok, "session manager create");
+
+    sid = mres.ok ? mres.session.id : "";
+    mstatus = "";
+
+    for(i = 0; i < 100; i++) {
+        s = manager.get_session(sid);
+
+        if(!s)
+            break;
+
+        mstatus = s.status;
+
+        if(mstatus == "waiting" || mstatus == "running")
+            break;
+
+        std.sleep(100);
+    }
+
+    check(mstatus == "waiting" || mstatus == "running", "session manager ready status");
+
+    store.set_settings(1);
+    second = manager.create_session(proto.workspace.id, "second", "normal", "", "adaptive");
+    check(!second.ok, "max_sessions enforced");
+    store.set_settings(3);
+
+    check(manager.stop_session(sid), "session manager stop");
+
+    stopped = manager.get_session(sid);
+    check(!std.is_none(stopped) && stopped.status == "stopped", "session stopped");
+}
+
+fake = FakeServer();
+api = workspaces_api_register(fake, cfg, "", store);
+
+check(!std.is_none(api.store) && !std.is_none(api.manager), "api register returns store and manager");
+check(fake.routes.size() >= 20, "workspace API routes registered");
+
+if(fileio.exists(test_root))
+    fileio.remove(test_root);
+
+std.print("workspaces_selftest: " + std.string(passed) + " passed, " + std.string(failed) + " failed");
+
+if(failed) {
+    std.print("FAIL");
+    std.exitprocess(1);
+}
+
+std.print("PASSED");
+std.exitprocess(0);

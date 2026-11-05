@@ -465,3 +465,18 @@ ShizoNet on one machine: only the process binding UDP **6454** hears every beaco
 selftest starts the router first and gives the stub nodes explicit ports (6455, 6456) —
 and a check that asks a *second* server to see a *third* one can never pass: ask the
 6454 owner.
+## Workspace UI (issue #907)
+
+`shz miniagent --web` now serves a recursive **workspace tree** instead of the node-scoped
+Chat/Tasks/Architecture dashboard (`workspace_spec.md`).
+
+- The global workspace lives under `std.user_path()/miniagent/workspaces`; each workspace is
+  bound to a physical directory and owns `.megamind/` with sessions, architecture and goals.
+- A session is an adaptive miniagent spawned as a subprocess in that workspace directory.
+  Its output streams to the UI through SSE; a new prompt interrupts the running turn.
+- Goal mode loops until the agent calls `goal_finish(status=finished|failed)`; an exited or
+  API-failing process is restarted with backoff (always-retry policy).
+- Architecture and tasks are per workspace, driven through the workspace host adapter. The
+  global workspace has a *Global tasks* view across all workspaces.
+- `max_sessions` is editable in the UI; `max_running_agents` comes from the model config.
+- Live token usage, active sessions and notifications are in the dashboard.

@@ -1,0 +1,330 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  workspace_agent.shio — the subprocess session agent of issue #907
+//
+//  Runs with:
+//      --workspace <dir> --config-file <json> --session-id <id>
+//      --role <role> --mode normal|goal
+//
+//  stdout: one JSON object per line
+//      {"type":"ready","session_id":"..."}
+//      {"type":"delta","action":{...}}
+//      {"type":"stats","token_usage":0}
+//      {"type":"done","ok":true,"status":"finished|failed","report":"...","token_usage":0}
+//      {"type":"error","message":"..."}
+//
+//  stdin: JSON lines
+//      {"type":"prompt","text":"..."}
+//      {"type":"interrupt"}
+//      {"type":"mode","mode":"normal|goal"}
+//      {"type":"stop"}
+// ═══════════════════════════════════════════════════════════════════════════
+
+#include "miniagent"
+#include "model_config"
+#include "goal_tools"
+
+agent = None;
+session_id = "";
+workspace = "";
+config_file = "";
+role = "adaptive";
+mode = "normal";
+
+prompt_queue = [];
+stop_pending = false;
+stdin_closed = false;
+terminal = false;
+
+// issue #907 always-retry: no attempt cap; backoff is capped at 30 s.
+WS_AGENT_BACKOFF_MAX_MS = 30000;
+
+// ── protocol output ────────────────────────────────────────────────────────
+emit(obj) {
+    std.print(obj.compact_string());
+}
+
+token_usage() {
+    total = 0;
+
+    try {
+        g = std.global("_global_token_usage");
+        u = g["usage"];
+
+        if(std.is_json(u) && u.has("total_tokens"))
+            total = std.int(u.total_tokens);
+    } catch(e) {}
+
+    return total;
+}
+
+result_report(res) {
+    out = "";
+
+    if(std.is_json(res)) {
+        if(res.has("reports") && std.is_json(res.reports) && res.reports.size())
+            out = std.string(res.reports[0].report ?? "");
+
+        if(!out && res.has("error"))
+            out = std.string(res.error ?? "");
+    }
+
+    return out;
+}
+
+// ── one turn ──────────────────────────────────────────────────────────────
+run_turn(prompt) {
+    status = "";
+    report = "";
+    attempts = 0;
+
+    for(1) {
+        agent.env.signal_event = "";
+        agent.env.signal_report = "";
+
+        res = None;
+
+        try {
+            res = agent.task(prompt);
+        } catch(e) {
+            res = None;
+        }
+
+        emit([type = "stats", token_usage = token_usage()]);
+
+        if(stop_pending)
+            break;
+
+        event = std.string(agent.env.signal_event ?? "");
+
+        if(event == "finished" || event == "failed" || event == "question") {
+            status = event == "finished" ? "finished" : "failed";
+            report = std.string(agent.env.signal_report ?? "");
+
+            if(!report)
+                report = result_report(res);
+
+            break;
+        }
+
+        if(std.is_json(res) && res.stopped)
+            break;
+
+        attempts++;
+
+        if(mode == "goal") {
+            std.sleep(math.min(WS_AGENT_BACKOFF_MAX_MS, 500 * attempts));
+            continue;
+        }
+
+        if(std.is_json(res) && res.ok) {
+            status = "finished";
+            report = result_report(res);
+            break;
+        }
+
+        std.sleep(math.min(WS_AGENT_BACKOFF_MAX_MS, 1000 * attempts));
+    }
+
+    if(status) {
+        emit([
+            type = "done",
+            ok = json.bool(status == "finished"),
+            status = status,
+            report = report,
+            token_usage = token_usage(),
+        ]);
+        terminal = true;
+    }
+
+    return [status = status, report = report];
+}
+
+// ── stdin protocol reader (runs as a script task) ───────────────────────
+read_protocol() {
+    for(1) {
+        line = std.input();
+
+        if(line.strip().empty()) {
+            stdin_closed = true;
+            break;
+        }
+
+        data = None;
+
+        try {
+            data = std.json(line, true);
+        } catch(e) {
+            data = None;
+        }
+
+        if(!std.is_json(data)) {
+            emit([type = "error", message = "Invalid protocol line"]);
+            continue;
+        }
+
+        type = std.string(data.type ?? "");
+
+        if(type == "prompt") {
+            text = std.string(data.text ?? "");
+
+            if(text.strip().empty()) {
+                emit([type = "error", message = "Empty prompt"]);
+                continue;
+            }
+
+            prompt_queue.push_back(text);
+
+            if(agent && agent.running)
+                agent.stop();
+        }
+        else if(type == "interrupt") {
+            if(agent && agent.running)
+                agent.stop();
+        }
+        else if(type == "mode") {
+            m = std.string(data.mode ?? "normal");
+
+            if(m != "goal")
+                m = "normal";
+
+            mode = m;
+        }
+        else if(type == "stop") {
+            stop_pending = true;
+
+            if(agent && agent.running)
+                agent.stop();
+        }
+        else {
+            emit([type = "error", message = "Unknown protocol type"]);
+        }
+    }
+}
+
+// ── command line ─────────────────────────────────────────────────────────
+workspace = std.string(std.argvoption("--workspace") ?? "");
+config_file = std.string(std.argvoption("--config-file") ?? "");
+session_id = std.string(std.argvoption("--session-id") ?? "");
+role = std.string(std.argvoption("--role") ?? "");
+mode = std.string(std.argvoption("--mode") ?? "");
+
+if(!role)
+    role = "adaptive";
+
+if(mode != "goal")
+    mode = "normal";
+
+if(workspace) {
+    try {
+        std.cd(workspace);
+    } catch(e) {
+        emit([type = "error", message = "Cannot enter workspace: " + std.string(e)]);
+        std.exitprocess(1);
+    }
+}
+
+if(!config_file) {
+    emit([type = "error", message = "Missing --config-file"]);
+    std.exitprocess(1);
+}
+
+cfg = ModelConfig();
+
+if(!cfg.load(config_file, false)) {
+    emit([type = "error", message = "Cannot load config file: " + config_file]);
+    std.exitprocess(1);
+}
+
+try {
+    agent = miniagent(cfg, role);
+} catch(e) {
+    emit([type = "error", message = "Cannot create agent: " + std.string(e)]);
+    std.exitprocess(1);
+}
+
+// issue #907: the session may create workspace goals through the goal engine.
+task_space = GoalSpace(workspace + "/.megamind/tasks");
+task_scheduler = GoalScheduler(task_space, None);
+agent.env.mind = [goals = task_scheduler];
+
+agent.on_action = [](action) {
+    emit([type = "delta", action = action]);
+};
+
+agent.add_tool(
+    "goal_finish",
+    "Finish a goal run. status=finished when the goal is met, status=failed when it cannot be completed. Include a short report.",
+    [
+        status = "&string(): finished or failed",
+        report = "&string(): final report",
+    ],
+    [](agt, args) {
+        st = std.string(args.status ?? "").strip();
+
+        if(st != "finished" && st != "failed")
+            return [ok = false, error = "status must be finished or failed"];
+
+        agt.env.signal_event = st;
+        agt.env.signal_report = std.string(args.report ?? "");
+        agt.stop();
+
+        return "Goal finished.";
+    }
+);
+
+agent.add_tool(
+    "create_task",
+    "Create a regular or recurring task (goal) in this workspace's .megamind/tasks store. Use schedule_type/start/end/every/days for a scheduled task, or manual for a one-off task.",
+    [
+        title = "&string(): task title",
+        instructions = "&string(): full instructions for the task",
+        schedule_type = "&string(): manual, once, interval, weekly, daily (optional)",
+        start = "&string(): HH:MM (optional)",
+        end = "&string(): HH:MM (optional)",
+        every = "&string(): e.g. 2d, 1w (optional)",
+        days = "&string(): daily, weekdays, weekends (optional)",
+    ],
+    [&task_scheduler](agt, args) {
+        return goal_tool_create(task_scheduler, args);
+    }
+);
+
+if(mode == "goal") {
+    try {
+        messages = agent.llm_api.context.body.messages;
+
+        if(std.is_json(messages) && messages.size()) {
+            messages[0].content += "\n\nGoal mode: finish the run by calling goal_finish(status=\"finished\" or \"failed\", report=\"...\"). Do not call finalize for a goal run.";
+        }
+    } catch(e) {}
+}
+
+emit([type = "ready", session_id = session_id]);
+
+reader_thread = std.thread(read_protocol);
+reader_thread.run();
+
+for(1) {
+    if(stop_pending)
+        break;
+
+    if(prompt_queue.size()) {
+        p = prompt_queue[0];
+        prompt_queue.erase(0);
+
+        run_turn(p);
+
+        if(terminal)
+            break;
+
+        continue;
+    }
+
+    if(stdin_closed)
+        break;
+
+    std.sleep(50);
+}
+
+std.sleep(20);
+std.exitprocess(0);

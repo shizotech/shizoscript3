@@ -26,3 +26,12 @@ Notes for changes:
 * With `--api-token` every `/api/` call needs the token; `NodeApi` asks once and keeps it
   in `localStorage` (`?token=<t>` in the URL sets it as well).
 * The API is documented in `../node_api.md` (node) and `../architecture_spec.md` (graph).
+## Workspace dashboard (issue #907)
+
+`index.html`, `dashboard.css` and `dashboard.js` are the workspace dashboard. They replace the
+old node-scoped navigation with a recursive workspace tree; each workspace has sessions,
+architecture and tasks under its own `.megamind/`. Chat streams through
+`GET /api/sessions/<id>/stream`; a new prompt interrupts the running turn. Settings edits
+`max_sessions`; live token/usage stats and notifications are shown in the shell.
+API contract: `../workspace_spec.md`. The old `chat/`, `tasks/` and `architecture/` pages remain
+as standalone files but are no longer the dashboard's primary navigation.

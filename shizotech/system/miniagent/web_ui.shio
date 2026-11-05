@@ -22,6 +22,7 @@
 
 #include "node_api"
 #include "architecture"
+#include "workspaces"
 
 WEB_UI_DEFAULT_PORT = 13337;
 WEB_UI_ROOT = __DIR__ + "/web";
@@ -310,5 +311,7 @@ web_ui_start(host, cfg, opts) {
 	web_ui_chat_routes(server, host, token);
 	web_ui_architecture_routes(server, board, token);
 
-	return [server = server, board = board];
+	workspaces = workspaces_api_register(server, cfg, token);
+
+	return [server = server, board = board, workspaces = workspaces];
 }
