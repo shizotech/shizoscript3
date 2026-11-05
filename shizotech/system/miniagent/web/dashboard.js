@@ -1,8 +1,8 @@
-﻿/* â”€â”€ Workspace dashboard (issue #907) â”€â”€
- * Single-page UI: recursive workspace tree, sessions, SSE chat, goal mode,
- * architecture / tasks tabs, global tasks, settings, live stats.
- * API contract: ../workspace_spec.md. Reuses the offline nodeapi / minimd /
- * icons components. No CDN, no build step.
+/* ── Workspace dashboard (issue #907) ──
+ * Single-page UI: one sidebar with the recursive workspace tree and the
+ * sessions of the selected workspace; chat, architecture and tasks tabs in
+ * the main pane. API contract: ../workspace_spec.md.
+ * No CDN, no build step.
  */
 
 'use strict';
@@ -57,16 +57,16 @@ const statusLabel = (status) => {
 
 const statusClass = (status) => {
   const s = String(status || '').toLowerCase();
-  if (s === 'running' || s === 'starting' || s === 'waiting') return 'running';
-  if (s === 'done' || s === 'finished') return 'done';
-  if (s === 'failed' || s === 'error') return 'failed';
-  if (s === 'stopped') return 'stopped';
+  if (s === 'running' || s === 'starting' || s === 'waiting' || s === 'planned') return 'running';
+  if (s === 'done' || s === 'finished' || s === 'completed') return 'done';
+  if (s === 'failed' || s === 'error' || s === 'cancelled') return 'failed';
+  if (s === 'stopped' || s === 'paused' || s === 'archived') return 'stopped';
   return 'idle';
 };
 
 const isRunningStatus = (status) => {
   const s = String(status || '').toLowerCase();
-  return s === 'running' || s === 'starting' || s === 'waiting';
+  return s === 'running' || s === 'starting' || s === 'waiting' || s === 'planned';
 };
 
 let markdownRenderer = null;
@@ -99,9 +99,9 @@ const state = {
   view: 'workspace',
   tab: 'chat',
   architecture: null,
-  tasks: null,
-  newParent: '',
+  taskData: null,
   stream: null,
+  streamSince: 0,
   streamAbort: null,
   currentAgentBubble: null,
   currentAgentText: '',
@@ -138,7 +138,13 @@ function makeEmpty(title, desc) {
   return el;
 }
 
-/* â”€â”€ Settings â”€â”€ */
+function makeEmptyCompact(title, desc) {
+  const el = makeEmpty(title, desc);
+  el.classList.add('compact');
+  return el;
+}
+
+/* ── Settings ── */
 async function loadSettings() {
   const data = await NodeApi.get('/api/settings');
   applySettings(data);
@@ -170,7 +176,7 @@ async function saveSettings() {
   }
 }
 
-/* â”€â”€ Workspace tree â”€â”€ */
+/* ── Workspace tree ── */
 function flattenWorkspaces(raw) {
   let list = [];
   if (Array.isArray(raw)) {
@@ -214,13 +220,12 @@ function renderWorkspaceTree() {
   const host = $('workspaceTree');
   host.innerHTML = '';
   const roots = rootWorkspaces();
+
   if (!roots.length) {
     host.appendChild(makeEmpty('No workspaces yet.', 'Create one with the + button.'));
     return;
   }
 
-  // Simpler recursive builder: call renderNode for each workspace and append children.
-  host.innerHTML = '';
   const built = new Set();
 
   function renderNode(w) {
@@ -241,14 +246,21 @@ function renderWorkspaceTree() {
       '<span class="ws-name">' + esc(w.name || w.id) + '</span>' +
       '<span class="ws-path">' + esc(w.path || '') + '</span>';
 
-    const add = document.createElement('button');
-    add.className = 'ws-add';
-    add.dataset.addChild = w.id;
-    add.title = 'Add child workspace';
-    add.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    const addSession = document.createElement('button');
+    addSession.className = 'ws-add';
+    addSession.dataset.addSession = w.id;
+    addSession.title = 'New session in this workspace';
+    addSession.innerHTML = '<i class="fa-solid fa-plus"></i>';
+
+    const addChild = document.createElement('button');
+    addChild.className = 'ws-add ws-child-add';
+    addChild.dataset.addChild = w.id;
+    addChild.title = 'Add child workspace';
+    addChild.innerHTML = '<i class="fa-solid fa-folder-plus"></i>';
 
     row.appendChild(link);
-    row.appendChild(add);
+    row.appendChild(addSession);
+    row.appendChild(addChild);
     item.appendChild(row);
 
     const children = childrenOf(w.id);
@@ -261,6 +273,31 @@ function renderWorkspaceTree() {
       });
       item.appendChild(childBox);
     }
+
+    // Sessions of the selected workspace live in the same sidebar, below
+    // the workspace row, instead of a second rail.
+    if (state.selectedWorkspace && state.selectedWorkspace.id === w.id) {
+      const list = arr(state.sessions).slice().sort((a, b) => {
+        return (timeValue(b.updated || b.created) || 0) - (timeValue(a.updated || a.created) || 0);
+      });
+
+      if (list.length) {
+        const sessBox = document.createElement('div');
+        sessBox.className = 'ws-sessions';
+        list.forEach((s) => {
+          const btn = document.createElement('button');
+          btn.className = 'session-item' + (state.selectedSession === s.id ? ' active' : '');
+          btn.dataset.sessionId = s.id;
+          btn.innerHTML =
+            '<span class="status-dot ' + statusClass(s.status) + '"></span>' +
+            '<span class="session-name">' + esc(s.title || 'Session') + '</span>' +
+            '<span class="session-tokens">' + fmtNum(s.token_usage) + ' tok</span>';
+          sessBox.appendChild(btn);
+        });
+        item.appendChild(sessBox);
+      }
+    }
+
     return item;
   }
 
@@ -303,7 +340,7 @@ async function createWorkspace() {
   }
 }
 
-/* â”€â”€ Workspace data â”€â”€ */
+/* ── Workspace data ── */
 async function loadWorkspaces() {
   const data = await NodeApi.get('/api/workspaces');
   state.workspaces = flattenWorkspaces(data);
@@ -331,7 +368,7 @@ async function selectWorkspace(id) {
   state.selectedSession = null;
   state.session = null;
   state.architecture = null;
-  state.tasks = null;
+  state.taskData = null;
   state.currentAgentBubble = null;
   state.currentAgentText = '';
   localStorage.setItem('miniagent_workspace_id', id);
@@ -368,12 +405,12 @@ async function refreshWorkspace(id) {
     const sid = s.id || s.session_id || s.sessionId;
     return Object.assign({}, s, { id: sid != null ? String(sid) : '' });
   }).filter(Boolean);
+
   if (data.architecture) state.architecture = data.architecture;
-  if (data.tasks) state.tasks = data.tasks;
+  if (data.goals) state.taskData = { goals: arr(data.goals), sessions: arr(data.tasks), templates: [] };
 
   renderHeader();
   renderWorkspaceTree();
-  renderSessionList();
   renderStats();
 
   if (state.selectedSession && state.sessions.some((s) => s.id === state.selectedSession)) {
@@ -389,7 +426,7 @@ async function refreshWorkspace(id) {
   }
 }
 
-/* â”€â”€ Header / stats â”€â”€ */
+/* ── Header / stats ── */
 function renderHeader() {
   const globalBtn = $('btnGlobalTasks');
   if (state.view === 'globalTasks') {
@@ -450,43 +487,13 @@ async function refreshStats() {
   renderStats();
 }
 
-/* â”€â”€ Sessions â”€â”€ */
-function renderSessionList() {
-  const host = $('sessionList');
-  host.innerHTML = '';
-  const list = arr(state.sessions).slice().sort((a, b) => {
-    return (timeValue(b.updated || b.created) || 0) - (timeValue(a.updated || a.created) || 0);
-  });
-
-  if (!list.length) {
-    host.appendChild(makeEmpty('No sessions.', 'Create one with + or send a prompt.'));
-    return;
-  }
-
-  list.forEach((s) => {
-    const btn = document.createElement('button');
-    btn.className = 'session-item' + (state.selectedSession === s.id ? ' active' : '');
-    btn.dataset.sessionId = s.id;
-    const status = statusClass(s.status);
-    const tokens = num(s.token_usage);
-    btn.innerHTML =
-      '<span class="status-dot ' + status + '"></span>' +
-      '<div class="session-copy">' +
-        '<div class="session-name">' + esc(s.title || 'Session') + '</div>' +
-        '<div class="session-info">' + esc(statusLabel(s.status)) + ' - ' + esc(s.mode || 'normal') +
-          ' - ' + esc(timeAgo(s.updated || s.created)) + '</div>' +
-      '</div>' +
-      '<span class="session-tokens">' + fmtNum(tokens) + ' tok</span>';
-    host.appendChild(btn);
-  });
-}
-
+/* ── Sessions ── */
 function setChatEmpty() {
   $('chatMessages').innerHTML =
     '<div class="empty-state">' +
       '<i class="fa-solid fa-comments"></i>' +
       '<div>No messages yet.</div>' +
-      '<div class="empty-state-desc">Pick a session or start one with a prompt.</div>' +
+      '<div class="empty-state-desc">Pick a session or create one with + in the sidebar.</div>' +
     '</div>';
   state.currentAgentBubble = null;
   state.currentAgentText = '';
@@ -500,7 +507,7 @@ function renderSessionHeader() {
 
   if (!s) {
     titleEl.textContent = 'No session selected';
-    metaEl.textContent = 'Select a workspace session or create one.';
+    metaEl.textContent = 'Select a session in the sidebar or create one with +.';
     modeButtons.forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === state.composerMode);
       b.disabled = false;
@@ -509,7 +516,7 @@ function renderSessionHeader() {
     $('btnSendPrompt').disabled = !state.selectedWorkspace;
     $('promptInput').disabled = !state.selectedWorkspace;
     $('composerHint').textContent = state.selectedWorkspace
-      ? 'Send a prompt to create a session (' + state.composerMode + ' mode).'
+      ? 'Send a prompt to start a session, or use + to start an empty one.'
       : 'Select a workspace first.';
     return;
   }
@@ -523,7 +530,7 @@ function renderSessionHeader() {
     b.disabled = false;
   });
 
-  $('btnStopSession').disabled = !isRunningStatus(s.status) && !['starting', 'waiting', 'running'].includes(String(s.status));
+  $('btnStopSession').disabled = !isRunningStatus(s.status) && !['starting', 'waiting', 'running', 'planned'].includes(String(s.status));
   $('btnSendPrompt').disabled = !state.selectedWorkspace;
   $('promptInput').disabled = !state.selectedWorkspace;
 
@@ -544,7 +551,6 @@ async function selectSession(id) {
   try {
     const data = await NodeApi.get('/api/sessions/' + encodeURIComponent(id));
     const session = data.session || data;
-    if (data.events && session && !session.events) session.events = data.events;
     state.session = session && (session.id || session.session_id || session.sessionId)
       ? session
       : { id, title: 'Session', status: 'starting', mode: 'normal', events: [] };
@@ -559,8 +565,9 @@ async function selectSession(id) {
   }
 
   renderSessionHeader();
-  renderSessionList();
+  renderWorkspaceTree();
   renderSessionHistory(state.session.events);
+
   const st = String(state.session.status || '').toLowerCase();
   if (!['done', 'failed', 'stopped'].includes(st)) openStream(id);
 }
@@ -571,6 +578,12 @@ function renderSessionHistory(events) {
   state.currentAgentText = '';
 
   const list = arr(events);
+  let maxSeq = 0;
+  list.forEach((ev) => {
+    maxSeq = Math.max(maxSeq, num(ev.seq));
+  });
+  state.streamSince = maxSeq;
+
   if (!list.length) {
     setChatEmpty();
     return;
@@ -592,7 +605,7 @@ function applySessionEvent(ev) {
   }
 }
 
-/* â”€â”€ Chat rendering â”€â”€ */
+/* ── Chat rendering ── */
 function scrollChat() {
   const el = $('chatMessages');
   el.scrollTop = el.scrollHeight;
@@ -719,7 +732,7 @@ function addError(text) {
   scrollChat();
 }
 
-/* â”€â”€ Session state â”€â”€ */
+/* ── Session state ── */
 function setSessionStatus(status) {
   if (!state.session) return;
   const raw = String(status || '').toLowerCase();
@@ -728,7 +741,7 @@ function setSessionStatus(status) {
   const s = state.sessions.find((x) => x.id === state.session.id);
   if (s) s.status = mapped;
   renderSessionHeader();
-  renderSessionList();
+  renderWorkspaceTree();
 }
 
 function updateTokenUsage(value) {
@@ -737,11 +750,11 @@ function updateTokenUsage(value) {
   const s = state.sessions.find((x) => x.id === state.session.id);
   if (s) s.token_usage = n;
   renderSessionHeader();
-  renderSessionList();
+  renderWorkspaceTree();
   renderStats();
 }
 
-/* â”€â”€ SSE stream â”€â”€ */
+/* ── SSE stream ── */
 function closeStream() {
   if (state.stream) {
     try { state.stream.close(); } catch (e) {}
@@ -753,12 +766,20 @@ function closeStream() {
   }
 }
 
+function streamUrl(id, since) {
+  const token = NodeApi.token();
+  const params = new URLSearchParams();
+  params.set('since', String(since || 0));
+  if (token) params.set('token', token);
+  return '/api/sessions/' + encodeURIComponent(id) + '/stream?' + params.toString();
+}
+
 function openStream(id) {
   closeStream();
-  const token = NodeApi.token();
-  const url = '/api/sessions/' + encodeURIComponent(id) + '/stream' + (token ? '?token=' + encodeURIComponent(token) : '');
-  const es = new EventSource(url);
+  const since = state.streamSince || 0;
+  const es = new EventSource(streamUrl(id, since));
   state.stream = es;
+  state.streamSince = since;
 
   ['delta', 'user', 'status', 'done', 'error', 'stats'].forEach((name) => {
     es.addEventListener(name, (ev) => handleStreamEvent(name, ev.data));
@@ -772,11 +793,7 @@ function openStream(id) {
     if (es.readyState === EventSource.CLOSED || errors >= 2) {
       try { es.close(); } catch (e) {}
       state.stream = null;
-      if (token) {
-        fetchStream(id);
-      } else {
-        toast('Live stream lost.', 'warn');
-      }
+      fetchStream(id, since);
     }
   };
 }
@@ -785,7 +802,7 @@ function ensureStream(id) {
   if (!state.stream && !state.streamAbort) openStream(id);
 }
 
-async function fetchStream(id) {
+async function fetchStream(id, since) {
   if (state.stream) {
     try { state.stream.close(); } catch (e) {}
     state.stream = null;
@@ -795,11 +812,16 @@ async function fetchStream(id) {
   state.streamAbort = controller;
 
   try {
-    const res = await fetch('/api/sessions/' + encodeURIComponent(id) + '/stream', {
+    const res = await fetch(streamUrl(id, since), {
       headers: NodeApi.headers(),
       signal: controller.signal
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('text/event-stream')) {
+      throw new Error('stream returned ' + contentType);
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -902,7 +924,7 @@ function handleStreamEvent(name, raw) {
   if (data && data.action) handleStreamEvent('delta', data);
 }
 
-/* â”€â”€ Chat actions â”€â”€ */
+/* ── Chat actions ── */
 function currentMode() {
   return state.session ? (state.session.mode || state.composerMode) : state.composerMode;
 }
@@ -919,7 +941,6 @@ async function sendPrompt() {
   try {
     if (!state.session) {
       const data = await NodeApi.post('/api/workspaces/' + encodeURIComponent(ws.id) + '/sessions', {
-        title: 'New session',
         mode: currentMode(),
         prompt: text
       });
@@ -975,32 +996,27 @@ async function stopSession() {
   }
 }
 
-async function createSession() {
-  if (!state.selectedWorkspace) {
-    toast('Select a workspace first.', 'warn');
-    return;
+async function newSession(workspaceId) {
+  if (!state.byId[workspaceId]) return;
+
+  if (!state.selectedWorkspace || state.selectedWorkspace.id !== workspaceId) {
+    await selectWorkspace(workspaceId);
   }
-  const title = $('sessionTitle').value.trim() || 'Session';
-  const mode = $('sessionModeSelect').value || 'normal';
-  const prompt = $('sessionPrompt').value.trim();
-  const body = { title, mode };
-  if (prompt) body.prompt = prompt;
 
   try {
-    const data = await NodeApi.post('/api/workspaces/' + encodeURIComponent(state.selectedWorkspace.id) + '/sessions', body);
+    const data = await NodeApi.post('/api/workspaces/' + encodeURIComponent(workspaceId) + '/sessions', {
+      mode: state.composerMode
+    });
     const id = data && (data.id || data.session_id || data.sessionId || (data.session && data.session.id));
-    $('sessionTitle').value = '';
-    $('sessionPrompt').value = '';
-    $('sessionForm').classList.add('hidden');
     if (id) state.selectedSession = String(id);
-    await refreshWorkspace(state.selectedWorkspace.id);
+    await refreshWorkspace(workspaceId);
     toast('Session created.', 'success');
   } catch (e) {
     toast('Could not create session: ' + e.message, 'error');
   }
 }
 
-/* â”€â”€ Architecture â”€â”€ */
+/* ── Architecture ── */
 const KIND_COLORS = {
   module: '#1f6f5c',
   file: '#2b4f6b',
@@ -1125,6 +1141,14 @@ function architectureSvg(nodes, edges) {
   return svg;
 }
 
+function archButton(label, action, className = 'btn btn-small') {
+  const b = document.createElement('button');
+  b.className = className;
+  b.textContent = label;
+  b.addEventListener('click', () => architectureAction(action));
+  return b;
+}
+
 function renderArchitecture() {
   const host = $('architectureView');
   const raw = state.architecture || {};
@@ -1139,9 +1163,23 @@ function renderArchitecture() {
 
   const head = document.createElement('div');
   head.className = 'arch-head';
-  head.innerHTML =
+
+  const titleBlock = document.createElement('div');
+  titleBlock.className = 'arch-title-block';
+  titleBlock.innerHTML =
     '<div><h2>' + esc(arch.project || (state.selectedWorkspace && state.selectedWorkspace.name) || 'Architecture') + '</h2>' +
       '<div class="arch-summary">' + esc(arch.summary || '') + '</div></div>';
+  head.appendChild(titleBlock);
+
+  const actions = document.createElement('div');
+  actions.className = 'arch-actions';
+  actions.appendChild(archButton('Analyze', 'analyze'));
+  if (pending.length) {
+    actions.appendChild(archButton('Review plan', 'plan', 'btn btn-small btn-ghost'));
+    actions.appendChild(archButton('Apply', 'apply'));
+    actions.appendChild(archButton('Discard', 'discard', 'btn btn-small btn-ghost'));
+  }
+  head.appendChild(actions);
   host.appendChild(head);
 
   const cards = document.createElement('div');
@@ -1162,7 +1200,7 @@ function renderArchitecture() {
   host.appendChild(cards);
 
   if (!nodes.length) {
-    host.appendChild(makeEmpty('No architecture model.', 'Analyze the workspace to build a graph.'));
+    host.appendChild(makeEmptyCompact('No architecture model.', 'Run Analyze to build the graph for this workspace.'));
   } else {
     host.appendChild(architectureSvg(nodes, edges));
   }
@@ -1230,59 +1268,266 @@ async function loadArchitecture() {
   }
 }
 
-/* â”€â”€ Tasks â”€â”€ */
-function normalizeTasks(data) {
-  const keep = (t) => t && typeof t === 'object';
-  if (Array.isArray(data)) return data.filter(keep);
-  if (!data || typeof data !== 'object') return [];
-  for (const key of ['tasks', 'goals', 'items', 'list', 'task_overview']) {
-    if (data[key] != null) return arr(data[key]).filter(keep);
+async function architectureAction(action) {
+  if (!state.selectedWorkspace) return;
+  const ws = state.selectedWorkspace;
+  try {
+    await NodeApi.post('/api/workspaces/' + encodeURIComponent(ws.id) + '/architecture/' + action);
+    toast('Architecture ' + action + ' started.', 'info');
+    await loadArchitecture();
+    setTimeout(() => {
+      loadArchitecture().catch(() => {});
+      refreshWorkspace(ws.id).catch(() => {});
+    }, 1200);
+  } catch (e) {
+    toast('Architecture action failed: ' + e.message, 'error');
   }
-  return arr(data).filter(keep);
 }
 
-function taskCard(t, workspaceName) {
-  if (!t || typeof t !== 'object') return null;
-  const stRaw = String(t.state || t.status || 'planned').toLowerCase();
-  const st = stRaw.replace(/[^a-z]/g, '') || 'planned';
-  const name = t.name || t.title || t.taskid || 'Task';
-  const goal = t.goal || t.task || t.prompt || '';
-  const report = t.report || t.summary || '';
+/* ── Tasks ── */
+function taskStateClass(raw) {
+  const st = String(raw || 'planned').toLowerCase().replace(/[^a-z]/g, '') || 'planned';
+  return st;
+}
 
+function goalCard(g, workspaceId) {
+  if (!g || typeof g !== 'object') return null;
+  const st = String(g.status || 'planned').toLowerCase();
   const card = document.createElement('div');
   card.className = 'task-card';
-  card.innerHTML =
-    '<div class="task-top">' +
-      '<div class="task-name">' + esc(name) + '</div>' +
-      '<span class="task-state ' + esc(st) + '">' + esc(statusLabel(t.state || t.status)) + '</span>' +
-    '</div>' +
-    (goal ? '<div class="task-goal">' + esc(goal) + '</div>' : '') +
-    (workspaceName ? '<div class="task-workspace">' + esc(workspaceName) + '</div>' : '') +
-    (report ? '<div class="task-report">' + esc(report) + '</div>' : '');
+
+  const top = document.createElement('div');
+  top.className = 'task-top';
+  top.innerHTML =
+    '<div class="task-name">' + esc(g.title || g.id || 'Task') + '</div>' +
+    '<span class="task-state ' + esc(taskStateClass(g.status)) + '">' + esc(statusLabel(g.status)) + '</span>';
+  card.appendChild(top);
+
+  if (g.schedule) {
+    const p = document.createElement('div');
+    p.className = 'task-goal';
+    p.textContent = 'Schedule: ' + String(g.schedule);
+    card.appendChild(p);
+  }
+  if (g.next_window) {
+    const p = document.createElement('div');
+    p.className = 'task-goal';
+    p.textContent = 'Next: ' + String(g.next_window);
+    card.appendChild(p);
+  }
+  if (g.active_window) {
+    const p = document.createElement('div');
+    p.className = 'task-goal';
+    p.textContent = 'Now: ' + String(g.active_window);
+    card.appendChild(p);
+  }
+  if (g.last_outcome) {
+    const p = document.createElement('div');
+    p.className = 'task-report';
+    p.textContent = 'Last: ' + String(g.last_outcome);
+    card.appendChild(p);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'task-actions';
+
+  if (st === 'proposed') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-small';
+    btn.textContent = 'Activate';
+    btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'active'));
+    actions.appendChild(btn);
+  } else if (st === 'active') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-small btn-ghost';
+    btn.textContent = 'Pause';
+    btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'paused'));
+    actions.appendChild(btn);
+  } else if (st === 'paused') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-small';
+    btn.textContent = 'Resume';
+    btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'active'));
+    actions.appendChild(btn);
+  }
+
+  if (actions.childElementCount) card.appendChild(actions);
   return card;
 }
 
-function renderTasks(tasks, workspaceName) {
-  const host = $('taskView');
-  host.innerHTML = '';
-  const head = document.createElement('div');
-  head.className = 'task-headline';
-  head.innerHTML = '<h2>Tasks - ' + esc(workspaceName || 'workspace') + '</h2>' +
-    '<span class="form-hint">' + (tasks.length ? tasks.length + ' task(s)' : 'none') + '</span>';
-  host.appendChild(head);
+function sessionCard(s, workspaceId) {
+  if (!s || typeof s !== 'object') return null;
+  const st = String(s.state || s.status || 'planned').toLowerCase();
+  const card = document.createElement('div');
+  card.className = 'task-card';
 
-  if (!tasks.length) {
-    host.appendChild(makeEmpty('No tasks.', 'The workspace task scheduler has no tasks yet.'));
-    return;
+  const top = document.createElement('div');
+  top.className = 'task-top';
+  top.innerHTML =
+    '<div class="task-name">' + esc(s.name || s.title || s.taskid || 'Task') + '</div>' +
+    '<span class="task-state ' + esc(taskStateClass(st)) + '">' + esc(statusLabel(st)) + '</span>';
+  card.appendChild(top);
+
+  const meta = document.createElement('div');
+  meta.className = 'task-goal';
+  meta.textContent = 'Session ' + (s.taskid || s.id || '') + ' - ' + fmtNum(s.token_usage) + ' tokens';
+  card.appendChild(meta);
+
+  if (s.report || s.error) {
+    const report = document.createElement('div');
+    report.className = 'task-report';
+    report.textContent = s.report || s.error;
+    card.appendChild(report);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'task-actions';
+  if (isRunningStatus(st) || st === 'planned' || st === 'running') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-small btn-danger';
+    btn.textContent = 'Stop';
+    btn.addEventListener('click', () => stopTask(workspaceId, s.taskid || s.id));
+    actions.appendChild(btn);
+  }
+  if (actions.childElementCount) card.appendChild(actions);
+  return card;
+}
+
+function taskSection(title, subtitle, cards, emptyText) {
+  const wrap = document.createElement('section');
+  wrap.className = 'task-section';
+  const head = document.createElement('div');
+  head.className = 'task-section-head';
+  head.innerHTML = '<h3>' + esc(title) + '</h3>' + (subtitle ? '<span>' + esc(subtitle) + '</span>' : '');
+  wrap.appendChild(head);
+
+  if (!cards.length) {
+    wrap.appendChild(makeEmptyCompact(emptyText, ''));
+    return wrap;
   }
 
   const grid = document.createElement('div');
   grid.className = 'task-grid';
-  tasks.forEach((t) => {
-    const card = taskCard(t, workspaceName);
-    if (card) grid.appendChild(card);
+  cards.forEach((c) => { if (c) grid.appendChild(c); });
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function renderTasks(data, workspaceName, workspaceId) {
+  const host = $('taskView');
+  host.innerHTML = '';
+
+  const goals = arr(data && data.goals);
+  const sessions = arr(data && data.sessions);
+  const templates = arr(data && data.templates);
+
+  const head = document.createElement('div');
+  head.className = 'task-headline';
+  head.innerHTML =
+    '<div><h2>Tasks - ' + esc(workspaceName || 'workspace') + '</h2>' +
+      '<div class="form-hint">Active tasks, proposed tasks and the goal templates of this workspace.</div></div>' +
+    '<button id="btnNewTask" class="btn btn-small">+ New task</button>';
+  host.appendChild(head);
+
+  const form = document.createElement('form');
+  form.id = 'taskForm';
+  form.className = 'inline-form hidden';
+  form.innerHTML =
+    '<input id="taskTitle" type="text" placeholder="Task title (optional)" autocomplete="off" />' +
+    '<textarea id="taskGoal" rows="3" placeholder="What should the task do?"></textarea>' +
+    '<div class="form-row">' +
+      '<select id="taskMode">' +
+        '<option value="normal">Normal</option>' +
+        '<option value="goal">Goal mode</option>' +
+      '</select>' +
+      '<button type="submit" class="btn btn-small">Start task</button>' +
+      '<button type="button" id="btnCancelTask" class="btn btn-small btn-ghost">Cancel</button>' +
+    '</div>';
+  host.appendChild(form);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const goal = $('taskGoal').value.trim();
+    if (!goal) {
+      toast('Describe what the task should do.', 'warn');
+      return;
+    }
+    const title = $('taskTitle').value.trim() || goal.slice(0, 48);
+    const mode = $('taskMode').value || 'normal';
+    try {
+      await NodeApi.post('/api/workspaces/' + encodeURIComponent(workspaceId) + '/tasks', {
+        name: title,
+        goal,
+        mode,
+        role: 'adaptive'
+      });
+      $('taskForm').classList.add('hidden');
+      $('taskTitle').value = '';
+      $('taskGoal').value = '';
+      await loadTasks();
+      await refreshWorkspace(workspaceId);
+      toast('Task started.', 'success');
+    } catch (e) {
+      toast('Could not start task: ' + e.message, 'error');
+    }
   });
-  host.appendChild(grid);
+
+  $('btnNewTask').addEventListener('click', () => {
+    $('taskForm').classList.remove('hidden');
+    $('taskTitle').focus();
+  });
+  $('btnCancelTask').addEventListener('click', () => $('taskForm').classList.add('hidden'));
+
+  const activeGoals = goals.filter((g) => ['active', 'paused'].includes(String(g.status || '').toLowerCase()));
+  const activeSessions = sessions.filter((s) => ['planned', 'running', 'starting', 'waiting'].includes(String(s.state || '').toLowerCase()));
+  const activeCards = activeGoals.map((g) => goalCard(g, workspaceId))
+    .concat(activeSessions.map((s) => sessionCard(s, workspaceId)));
+
+  host.appendChild(taskSection(
+    'Active tasks',
+    activeCards.length ? activeCards.length + ' active' : '',
+    activeCards,
+    'No active tasks.'
+  ));
+
+  const proposed = goals.filter((g) => String(g.status || '').toLowerCase() === 'proposed');
+  host.appendChild(taskSection(
+    'Proposed tasks',
+    proposed.length ? proposed.length + ' waiting for activation' : '',
+    proposed.map((g) => goalCard(g, workspaceId)),
+    'No proposed tasks. The agent can create one from chat.'
+  ));
+
+  if (templates.length) {
+    const wrap = document.createElement('section');
+    wrap.className = 'task-section';
+    const headT = document.createElement('div');
+    headT.className = 'task-section-head';
+    headT.innerHTML = '<h3>Task templates</h3><span>Existing goal templates in .megamind/tasks/templates</span>';
+    wrap.appendChild(headT);
+    const chips = document.createElement('div');
+    chips.className = 'template-chips';
+    templates.forEach((t) => {
+      const chip = document.createElement('div');
+      chip.className = 'template-chip';
+      chip.textContent = t.name || String(t);
+      chips.appendChild(chip);
+    });
+    wrap.appendChild(chips);
+    host.appendChild(wrap);
+  }
+
+  const finishedSessions = sessions.filter((s) => ['done', 'failed', 'stopped'].includes(String(s.state || '').toLowerCase()));
+  const otherGoals = goals.filter((g) => ['completed', 'cancelled', 'archived'].includes(String(g.status || '').toLowerCase()));
+  const finishedCards = otherGoals.map((g) => goalCard(g, workspaceId))
+    .concat(finishedSessions.map((s) => sessionCard(s, workspaceId)));
+
+  host.appendChild(taskSection(
+    'Finished / archived',
+    finishedCards.length ? finishedCards.length + ' item(s)' : '',
+    finishedCards,
+    'Nothing finished yet.'
+  ));
 }
 
 async function loadTasks() {
@@ -1291,15 +1536,37 @@ async function loadTasks() {
   host.innerHTML = '<div class="empty-state compact">Loading tasks...</div>';
   try {
     const data = await NodeApi.get('/api/workspaces/' + encodeURIComponent(state.selectedWorkspace.id) + '/tasks');
-    state.tasks = normalizeTasks(data);
-    renderTasks(state.tasks, state.selectedWorkspace.name);
+    state.taskData = data;
+    renderTasks(data, state.selectedWorkspace.name, state.selectedWorkspace.id);
   } catch (e) {
     host.innerHTML = '<div class="empty-state compact">Could not load tasks: ' + esc(e.message) + '</div>';
     toast('Tasks failed: ' + e.message, 'error');
   }
 }
 
-/* â”€â”€ Global tasks â”€â”€ */
+async function setGoalStatus(workspaceId, goalId, status) {
+  try {
+    await NodeApi.post('/api/workspaces/' + encodeURIComponent(workspaceId) + '/goals/' + encodeURIComponent(goalId) + '/status', { status });
+    toast('Goal ' + status + '.', 'success');
+    await loadTasks();
+    await refreshWorkspace(workspaceId).catch(() => {});
+  } catch (e) {
+    toast('Goal update failed: ' + e.message, 'error');
+  }
+}
+
+async function stopTask(workspaceId, taskid) {
+  try {
+    await NodeApi.del('/api/workspaces/' + encodeURIComponent(workspaceId) + '/tasks/' + encodeURIComponent(taskid));
+    toast('Task stopped.', 'warn');
+    await loadTasks();
+    await refreshWorkspace(workspaceId).catch(() => {});
+  } catch (e) {
+    toast('Could not stop task: ' + e.message, 'error');
+  }
+}
+
+/* ── Global tasks ── */
 async function showGlobalTasks() {
   state.view = 'globalTasks';
   state.selectedSession = null;
@@ -1312,46 +1579,55 @@ async function showGlobalTasks() {
   renderSessionHeader();
 
   const host = $('globalTasksContent');
-  host.innerHTML =
-    '<h2>Global tasks</h2>' +
-    '<div class="global-tasks-sub">Tasks across all workspaces.</div>' +
+  host.innerHTML = '<h2>Global tasks</h2>' +
+    '<div class="global-tasks-sub">Tasks across ' + state.workspaces.length + ' workspace(s).</div>' +
     '<div class="empty-state compact">Loading tasks...</div>';
 
   const results = await Promise.all(state.workspaces.map(async (ws) => {
     try {
       const data = await NodeApi.get('/api/workspaces/' + encodeURIComponent(ws.id) + '/tasks');
-      return { ws, tasks: normalizeTasks(data) };
+      return { ws, data };
     } catch (e) {
-      return { ws, tasks: [], error: e.message };
+      return { ws, data: null, error: e.message };
     }
   }));
 
   host.innerHTML = '<h2>Global tasks</h2>' +
     '<div class="global-tasks-sub">Tasks across ' + state.workspaces.length + ' workspace(s).</div>';
 
-  let total = 0;
   const groups = document.createElement('div');
   groups.className = 'global-task-groups';
+  let total = 0;
 
-  results.forEach(({ ws, tasks, error }) => {
-    if (!tasks.length && !error) return;
-    total += tasks.length;
+  results.forEach(({ ws, data, error }) => {
+    const goals = arr(data && data.goals);
+    const sessions = arr(data && data.sessions);
+    const activeGoals = goals.filter((g) => ['active', 'paused'].includes(String(g.status || '').toLowerCase()));
+    const activeSessions = sessions.filter((s) => ['planned', 'running', 'starting', 'waiting'].includes(String(s.state || '').toLowerCase()));
+    const proposed = goals.filter((g) => String(g.status || '').toLowerCase() === 'proposed');
+    const cards = activeGoals.map((g) => goalCard(g, ws.id))
+      .concat(activeSessions.map((s) => sessionCard(s, ws.id)));
+
+    if (!cards.length && !proposed.length && !error) return;
+    total += cards.length + proposed.length;
+
     const group = document.createElement('div');
     group.className = 'global-group';
     group.innerHTML = '<h3><i class="fa-solid fa-grid-2"></i> ' + esc(ws.name || ws.id) + '</h3>';
     if (error) {
       group.innerHTML += '<div class="form-hint">Could not load: ' + esc(error) + '</div>';
     }
-    if (tasks.length) {
+    if (cards.length) {
       const grid = document.createElement('div');
       grid.className = 'task-grid';
-      tasks.forEach((t) => {
-        const card = taskCard(t, ws.name);
-        if (card) grid.appendChild(card);
-      });
+      cards.forEach((c) => { if (c) grid.appendChild(c); });
       group.appendChild(grid);
-    } else if (!error) {
-      group.innerHTML += '<div class="form-hint">No tasks.</div>';
+    }
+    if (proposed.length) {
+      group.innerHTML += '<div class="form-hint">' + proposed.length + ' proposed task(s).</div>';
+    }
+    if (!cards.length && !proposed.length && !error) {
+      group.innerHTML += '<div class="form-hint">No active tasks.</div>';
     }
     groups.appendChild(group);
   });
@@ -1363,7 +1639,7 @@ async function showGlobalTasks() {
   }
 }
 
-/* â”€â”€ Notifications â”€â”€ */
+/* ── Notifications ── */
 async function refreshNotifications() {
   try {
     const data = await NodeApi.get('/api/notifications');
@@ -1402,7 +1678,7 @@ function renderNotifications() {
   }).join('');
 }
 
-/* â”€â”€ Navigation / events â”€â”€ */
+/* ── Navigation / events ── */
 function showTab(tab) {
   state.tab = tab;
   state.view = 'workspace';
@@ -1436,14 +1712,25 @@ function bindEvents() {
   $('btnCancelWorkspace').addEventListener('click', () => $('workspaceForm').classList.add('hidden'));
 
   $('workspaceTree').addEventListener('click', (e) => {
-    const add = e.target.closest('[data-add-child]');
-    if (add) {
+    const addSessionBtn = e.target.closest('[data-add-session]');
+    if (addSessionBtn) {
       e.stopPropagation();
-      openWorkspaceForm(add.dataset.addChild);
+      newSession(addSessionBtn.dataset.addSession);
       return;
     }
+
+    const addChild = e.target.closest('[data-add-child]');
+    if (addChild) {
+      e.stopPropagation();
+      openWorkspaceForm(addChild.dataset.addChild);
+      return;
+    }
+
     const link = e.target.closest('[data-ws-id]');
     if (link) selectWorkspace(link.dataset.wsId);
+
+    const session = e.target.closest('[data-session-id]');
+    if (session) selectSession(session.dataset.sessionId);
   });
 
   $('btnGlobalTasks').addEventListener('click', showGlobalTasks);
@@ -1453,25 +1740,6 @@ function bindEvents() {
   $('btnCloseSettings').addEventListener('click', closeSettings);
   $('settingsDialog').addEventListener('click', (e) => {
     if (e.target === $('settingsDialog')) closeSettings();
-  });
-
-  $('btnNewSession').addEventListener('click', () => {
-    if (!state.selectedWorkspace) {
-      toast('Select a workspace first.', 'warn');
-      return;
-    }
-    $('sessionForm').classList.remove('hidden');
-    $('sessionTitle').value = '';
-    $('sessionPrompt').value = '';
-    $('sessionModeSelect').value = 'normal';
-    $('sessionTitle').focus();
-  });
-  $('sessionForm').addEventListener('submit', (e) => { e.preventDefault(); createSession(); });
-  $('btnCancelSession').addEventListener('click', () => $('sessionForm').classList.add('hidden'));
-
-  $('sessionList').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-session-id]');
-    if (btn) selectSession(btn.dataset.sessionId);
   });
 
   $('modeToggle').addEventListener('click', (e) => {
@@ -1511,7 +1779,7 @@ function bindEvents() {
   });
 }
 
-/* â”€â”€ Boot â”€â”€ */
+/* ── Boot ── */
 async function init() {
   bindEvents();
 
@@ -1541,6 +1809,9 @@ async function init() {
 
   setInterval(() => refreshStats().catch(() => {}), 5000);
   setInterval(() => refreshNotifications().catch(() => {}), 12000);
+  setInterval(() => {
+    if (state.tab === 'architecture') loadArchitecture().catch(() => {});
+  }, 6000);
 }
 
 document.addEventListener('DOMContentLoaded', init);

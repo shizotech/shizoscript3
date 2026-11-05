@@ -1,6 +1,6 @@
 /* ── Workspace dashboard (issue #907) ── */
 :root {
-  --sidebar-width: 320px;
+  --sidebar-width: 300px;
   --topbar-height: 68px;
   --card-radius: 14px;
 }
@@ -207,13 +207,13 @@ textarea {
 .ws-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .ws-row {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 5px;
 }
 
 .ws-link {
@@ -221,10 +221,10 @@ textarea {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 9px 10px;
+  gap: 3px;
+  padding: 8px 9px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -261,14 +261,14 @@ textarea {
 }
 
 .ws-add {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--surface);
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   transition: all var(--transition);
 }
 
@@ -277,13 +277,105 @@ textarea {
   border-color: rgba(0, 168, 132, .35);
 }
 
+.ws-child-add {
+  opacity: .65;
+}
+
 .ws-children {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-left: 14px;
+  gap: 4px;
+  margin-left: 12px;
   padding-left: 8px;
   border-left: 1px dashed var(--border);
+}
+
+.ws-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 16px;
+  padding-left: 9px;
+  border-left: 1px solid rgba(0, 168, 132, .25);
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+  animation: fadeIn .22s ease both;
+}
+
+.session-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.session-item.active {
+  border-color: rgba(0, 168, 132, .45);
+  background: linear-gradient(135deg, rgba(0, 92, 75, .18), rgba(0, 168, 132, .07));
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.session-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.session-tokens {
+  font-size: 10px;
+  color: var(--success);
+  white-space: nowrap;
+}
+
+/* ── Status dots / pulses ── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-secondary);
+}
+
+.status-dot.running {
+  background: var(--success);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.status-dot.done {
+  background: var(--success);
+}
+
+.status-dot.failed {
+  background: var(--danger);
+}
+
+.status-dot.stopped {
+  background: var(--text-secondary);
+}
+
+.pulse-ring {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 var(--success-glow);
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
 /* ── Sidebar nav / stats ── */
@@ -564,16 +656,9 @@ textarea {
   padding: 14px 18px;
 }
 
-/* ── Chat layout ── */
-.chat-layout {
-  height: 100%;
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 14px;
-}
-
-.session-rail,
+/* ── Chat ── */
 .chat-panel {
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -581,126 +666,6 @@ textarea {
   border-radius: var(--card-radius);
   background: var(--panel);
   box-shadow: var(--shadow-sm);
-}
-
-.session-rail {
-  padding: 12px;
-  gap: 10px;
-}
-
-.session-rail-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--text-secondary);
-}
-
-.session-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.session-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
-  animation: fadeIn .22s ease both;
-}
-
-.session-item:hover {
-  border-color: rgba(0, 168, 132, .35);
-  transform: translateY(-1px);
-}
-
-.session-item.active {
-  border-color: rgba(0, 168, 132, .45);
-  background: linear-gradient(135deg, rgba(0, 92, 75, .18), rgba(0, 168, 132, .07));
-  box-shadow: 0 0 14px var(--accent-glow);
-}
-
-.session-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.session-name {
-  font-size: 13px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.session-info {
-  font-size: 10px;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.session-tokens {
-  font-size: 10px;
-  color: var(--success);
-  white-space: nowrap;
-}
-
-/* ── Status dots / pulses ── */
-.status-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 4px;
-  background: var(--text-secondary);
-}
-
-.status-dot.running {
-  background: var(--success);
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.status-dot.done {
-  background: var(--success);
-}
-
-.status-dot.failed {
-  background: var(--danger);
-}
-
-.status-dot.stopped {
-  background: var(--text-secondary);
-}
-
-.pulse-ring {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 0 0 var(--success-glow);
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-/* ── Chat panel ── */
-.chat-panel {
   overflow: hidden;
 }
 
@@ -1052,7 +1017,7 @@ textarea {
   flex-wrap: wrap;
 }
 
-.arch-head h2 {
+.arch-title-block h2 {
   font-size: 17px;
 }
 
@@ -1060,6 +1025,13 @@ textarea {
   max-width: 700px;
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.arch-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
 }
 
 .arch-cards {
@@ -1191,7 +1163,7 @@ textarea {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .task-headline {
@@ -1204,6 +1176,32 @@ textarea {
 
 .task-headline h2 {
   font-size: 17px;
+}
+
+.task-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task-section-head h3 {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-secondary);
+}
+
+.task-section-head span {
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .task-grid {
@@ -1247,10 +1245,13 @@ textarea {
 }
 
 .task-state.planned { background: rgba(0, 168, 132, .12); color: var(--success); }
-.task-state.research, .task-state.implement { background: rgba(0, 168, 132, .2); color: var(--success); }
-.task-state.done, .task-state.finished { background: rgba(0, 168, 132, .18); color: var(--success); }
-.task-state.failed { background: rgba(220, 53, 69, .18); color: #ff9a9a; }
-.task-state.stopped { background: rgba(134, 150, 160, .18); color: var(--text-secondary); }
+.task-state.running { background: rgba(0, 168, 132, .2); color: var(--success); }
+.task-state.active { background: rgba(0, 168, 132, .18); color: var(--success); }
+.task-state.proposed { background: rgba(255, 180, 80, .14); color: #ffca7a; }
+.task-state.paused { background: rgba(134, 150, 160, .18); color: var(--text-secondary); }
+.task-state.done, .task-state.finished, .task-state.completed { background: rgba(0, 168, 132, .18); color: var(--success); }
+.task-state.failed, .task-state.cancelled { background: rgba(220, 53, 69, .18); color: #ff9a9a; }
+.task-state.stopped, .task-state.archived { background: rgba(134, 150, 160, .18); color: var(--text-secondary); }
 
 .task-goal {
   font-size: 12px;
@@ -1266,9 +1267,26 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.task-workspace {
-  font-size: 10px;
-  color: var(--success);
+.task-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.template-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.template-chip {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 /* ── Global tasks ── */
@@ -1443,15 +1461,6 @@ textarea {
 
   .mobile-only {
     display: grid;
-  }
-
-  .chat-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: 180px minmax(0, 1fr);
-  }
-
-  .session-rail {
-    max-height: 180px;
   }
 
   .topbar {

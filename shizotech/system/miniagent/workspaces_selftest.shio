@@ -156,6 +156,7 @@ if(proc.running())
     proc.kill();
 
 // ── SessionManager check: spawn, read ready status, enforce max, stop ─────
+sid = "";
 cfg = ModelConfig();
 
 if(!cfg.load(config_path, false)) {
@@ -194,6 +195,18 @@ if(!cfg.load(config_path, false)) {
 
     stopped = manager.get_session(sid);
     check(!std.is_none(stopped) && stopped.status == "stopped", "session stopped");
+}
+
+check(ws_title_from("  Reply with ok  ", 48) == "Reply with ok", "title inference from prompt");
+
+req_query = [headers = [], query_params = [token = "abc"]];
+check(node_api_authorized(req_query, "abc"), "query token accepted for SSE");
+check(!node_api_authorized(req_query, "wrong"), "wrong query token refused");
+
+if(sid) {
+    loaded = SessionManager(store, cfg);
+    loaded_session = loaded.get_session(sid);
+    check(!std.is_none(loaded_session) && loaded_session.status == "stopped", "saved session loaded from .megamind");
 }
 
 fake = FakeServer();

@@ -58,7 +58,7 @@
           </button>
         </section>
 
-        <section class="sidebar-section stats-panel" id="statsPanel" aria-live="polite">
+        <section class="stats-panel" id="statsPanel" aria-live="polite">
           <div class="stats-title"><i class="fa-solid fa-bolt"></i> Live usage</div>
           <div id="statsBody" class="stats-body"></div>
         </section>
@@ -95,65 +95,39 @@
         </nav>
 
         <section id="tabChat" class="tab-panel">
-          <div class="chat-layout">
-            <aside class="session-rail">
-              <div class="session-rail-head">
-                <span><i class="fa-solid fa-clock"></i> Sessions</span>
-                <button id="btnNewSession" class="btn-icon accent" title="New session">
-                  <i class="fa-solid fa-plus"></i>
+          <div class="chat-panel">
+            <div class="chat-head">
+              <div class="chat-title-block">
+                <div id="sessionTitleEl" class="session-title">No session selected</div>
+                <div id="sessionMetaEl" class="session-meta">Select a session in the sidebar or create one with +.</div>
+              </div>
+              <div class="chat-actions">
+                <div id="modeToggle" class="mode-toggle">
+                  <button data-mode="normal" class="active">Normal</button>
+                  <button data-mode="goal">Goal</button>
+                </div>
+                <button id="btnStopSession" class="btn btn-danger btn-small" disabled>
+                  <i class="fa-solid fa-stop"></i> Stop
                 </button>
               </div>
+            </div>
 
-              <form id="sessionForm" class="inline-form hidden">
-                <input id="sessionTitle" type="text" placeholder="Session title" autocomplete="off" />
-                <select id="sessionModeSelect">
-                  <option value="normal">Normal</option>
-                  <option value="goal">Goal</option>
-                </select>
-                <textarea id="sessionPrompt" rows="3" placeholder="First prompt (optional)"></textarea>
-                <div class="form-row">
-                  <button type="submit" class="btn btn-small">Start</button>
-                  <button type="button" id="btnCancelSession" class="btn btn-small btn-ghost">Cancel</button>
-                </div>
-              </form>
-
-              <div id="sessionList" class="session-list"></div>
-            </aside>
-
-            <div class="chat-panel">
-              <div class="chat-head">
-                <div class="chat-title-block">
-                  <div id="sessionTitleEl" class="session-title">No session selected</div>
-                  <div id="sessionMetaEl" class="session-meta">Select a workspace session or create one.</div>
-                </div>
-                <div class="chat-actions">
-                  <div id="modeToggle" class="mode-toggle">
-                    <button data-mode="normal" class="active">Normal</button>
-                    <button data-mode="goal">Goal</button>
-                  </div>
-                  <button id="btnStopSession" class="btn btn-danger btn-small" disabled>
-                    <i class="fa-solid fa-stop"></i> Stop
-                  </button>
-                </div>
+            <div id="chatMessages" class="chat-messages">
+              <div class="empty-state">
+                <i class="fa-solid fa-comments"></i>
+                <div>No messages yet.</div>
+                <div class="empty-state-desc">Pick a session or create one with + in the sidebar.</div>
               </div>
+            </div>
 
-              <div id="chatMessages" class="chat-messages">
-                <div class="empty-state">
-                  <i class="fa-solid fa-comments"></i>
-                  <div>No messages yet.</div>
-                  <div class="empty-state-desc">Pick a session or start one with a prompt.</div>
-                </div>
-              </div>
-
-              <div class="composer">
-                <div id="composerHint" class="composer-hint">Select a session to chat.</div>
-                <textarea id="promptInput" rows="3" placeholder="Write a prompt... Ctrl+Enter to send"></textarea>
-                <div class="composer-actions">
-                  <button id="btnSendPrompt" class="btn">
-                    <i class="fa-solid fa-arrow-up"></i> Send
-                  </button>
-                  <span class="composer-note">Sending while running interrupts the current turn.</span>
-                </div>
+            <div class="composer">
+              <div id="composerHint" class="composer-hint">Select a session to chat.</div>
+              <textarea id="promptInput" rows="3" placeholder="Write a prompt... Ctrl+Enter to send"></textarea>
+              <div class="composer-actions">
+                <button id="btnSendPrompt" class="btn">
+                  <i class="fa-solid fa-arrow-up"></i> Send
+                </button>
+                <span class="composer-note">Sending while running interrupts the current turn.</span>
               </div>
             </div>
           </div>
@@ -188,7 +162,7 @@
       </div>
       <div class="dialog-body">
         <label for="maxSessionsInput" class="form-label">Max active sessions</label>
-        <input id="maxSessionsInput" type="number" min="1" max="20" value="2" />
+        <input id="maxSessionsInput" type="number" min="1" max="64" value="2" />
         <p class="form-hint">Applied globally to all workspaces. Sessions above this limit are refused.</p>
       </div>
       <div class="dialog-foot">

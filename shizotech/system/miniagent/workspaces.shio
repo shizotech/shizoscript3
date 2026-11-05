@@ -12,6 +12,7 @@
 #include "node_api"
 #include "architecture"
 #include "goal_engine"
+#include "goal_tools"
 #include "model_config"
 
 import webserver;
@@ -53,6 +54,22 @@ ws_slug(text) {
         out = "workspace";
 
     return out;
+}
+
+// a title inferred from the first prompt / goal, so "+" sessions get a real name
+ws_title_from(text, n = 48) {
+    s = ws_str(text).strip().replace("\r", " ").replace("\n", " ");
+
+    for(s.length() > n)
+        s = s.substr(0, n);
+
+    for(s.ends(" "))
+        s = s.substr(0, s.length() - 1);
+
+    if(!s)
+        s = "New session";
+
+    return s;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -107,6 +124,20 @@ class WorkspaceStore {
         fileio.mkdir(meg + "/sessions");
         fileio.mkdir(meg + "/architecture");
         fileio.mkdir(meg + "/tasks");
+
+        // A workspace that already had the old .agentspace/architecture.json
+        // keeps that graph when the per-workspace .megamind is created.
+        arch = meg + "/architecture/architecture.json";
+        legacy = path + "/.agentspace/architecture.json";
+
+        if(!fileio.exists(arch) && fileio.exists(legacy)) {
+            try {
+                fileio.write_text(arch, fileio.read_string(legacy));
+            } catch(e) {
+                std.error("[workspaces] architecture import failed: ", e);
+            }
+        }
+
         return meg;
     }
 
@@ -372,10 +403,65 @@ class SessionManager {
         store = _store;
         cfg = _cfg;
         sessions = [];
-    procs = [];
-    pump_active = [];
-    listeners = [];
+        procs = [];
+        pump_active = [];
+        listeners = [];
         notifications = [];
+        load_sessions();
+    }
+
+    // Restarting the node must not hide the sessions that were saved in each
+    // workspace's .megamind/sessions. They are shown with their chat history;
+    // non-terminal sessions are marked stopped because their process is gone.
+    load_sessions() {
+        for(w : store.list()) {
+            dir = w.path + "/.megamind/sessions";
+
+            if(!fileio.is_directory(dir))
+                continue;
+
+            for(d : fileio.dirs(dir, false)) {
+                sid = fileio.file_name(d);
+                path = dir + "/" + sid + "/session.json";
+                data = fileio.read_json(path, true);
+
+                if(!std.is_json(data))
+                    continue;
+
+                s = data.copy();
+                s.id = sid;
+                s.workspace_id = ws_str(s.workspace_id, w.id);
+                s.title = ws_str(s.title, "Session");
+                s.mode = ws_str(s.mode, "normal");
+                s.role = ws_str(s.role, "adaptive");
+                s.status = ws_str(s.status, "stopped");
+                s.prompt = ws_str(s.prompt);
+                s.report = ws_str(s.report);
+                s.error = ws_str(s.error);
+                s.token_usage = std.int(s.token_usage);
+                s.created = std.int(s.created);
+                s.updated = std.int(s.updated);
+                s.seq = std.int(s.seq);
+                s.attempts = std.int(s.attempts);
+
+                if(!s.events || !std.is_json(s.events))
+                    s.events = [];
+
+                restarted = false;
+
+                if(s.status == "starting" || s.status == "running" || s.status == "waiting") {
+                    s.status = "stopped";
+                    s.error = "the node was restarted while this session ran";
+                    s.updated = std.millis();
+                    restarted = true;
+                }
+
+                sessions[s.id] = s;
+
+                if(restarted)
+                    save_session(sid);
+            }
+        }
     }
 
     max_sessions() {
@@ -616,10 +702,20 @@ class SessionManager {
             role = "adaptive";
 
         title = ws_str(title).strip();
-        if(!title)
-            title = "Session-" + std.random_hash(6);
-
         prompt = ws_str(prompt).strip();
+
+        if(!title) {
+            if(prompt) {
+                title = ws_title_from(prompt, 48);
+            } else {
+                n = 0;
+                for(k, s : sessions) {
+                    if(s.workspace_id == workspace_id)
+                        n++;
+                }
+                title = "Session " + std.string(n + 1);
+            }
+        }
 
         cs = std.critical_section_named("workspace_sessions");
 
@@ -690,8 +786,11 @@ class SessionManager {
         if(!prompt)
             return [ok = false, error = "empty prompt"];
 
-        if(s.status == "stopped")
-            return [ok = false, error = "session stopped"];
+        // "+" creates an empty session with a placeholder title. The first
+        // prompt names it from the request text.
+        if(!s.title || s.title.starts("Session ")) {
+            s.title = ws_title_from(prompt, 48);
+        }
 
         p = procs[sid];
 
@@ -1131,6 +1230,28 @@ workspaces_board_reply(res) {
     return node_api_ok(res);
 }
 
+// Activate / pause / cancel a goal of this workspace (the task menu).
+workspaces_goal_status(ctx, workspace_id, goal_id, status) {
+    scheduler = workspaces_get_scheduler(ctx, workspace_id);
+
+    if(!scheduler) {
+        return [ok = false, error = "goal scheduler unavailable"];
+    }
+
+    res = scheduler.space.move(goal_id, status);
+
+    if(res.ok) {
+        try {
+            scheduler.rescan();
+            scheduler.write_overview();
+        } catch(e) {
+            std.error("[workspaces] goal rescan failed: ", e);
+        }
+    }
+
+    return res;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  HTTP API
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1465,9 +1586,25 @@ workspaces_api_register(server, cfg, api_token, store = None) {
             }
         }
 
+        templates = [];
+
+        if(scheduler) {
+            try {
+                for(f : fileio.files(scheduler.space.root + "/templates", false)) {
+                    templates.push_back([
+                        name = fileio.file_name(f),
+                        path = scheduler.space.root + "/templates/" + f,
+                    ]);
+                }
+            } catch(e) {
+                std.error("[workspaces] template list failed: ", e);
+            }
+        }
+
         return node_api_ok([
             goals = goals,
             sessions = ctx.manager.host_tasks(workspace_id),
+            templates = templates,
         ]);
     });
 
@@ -1492,11 +1629,12 @@ workspaces_api_register(server, cfg, api_token, store = None) {
 
         name = node_api_get(body, "name");
         role = node_api_get(body, "role", "adaptive");
+        mode = node_api_get(body, "mode", "normal");
 
         if(name.strip().empty())
             name = "Task-" + std.random_hash(6);
 
-        res = ctx.manager.create_session(workspace_id, name, "normal", goal, role);
+        res = ctx.manager.create_session(workspace_id, name, mode, goal, role);
 
         if(!res.ok)
             return node_api_err(res.error, 409);
@@ -1506,6 +1644,66 @@ workspaces_api_register(server, cfg, api_token, store = None) {
             name = name,
             state = "planned",
         ]);
+    });
+
+    // ── goal routes: the task menu can create / activate scheduled tasks ───
+    server.route("POST", "^/api/workspaces/([0-9a-zA-Z_-]+)/goals$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        workspace_id = std.string(req.matches[0]);
+
+        if(!ctx.store.get(workspace_id))
+            return node_api_err("unknown workspace", 404);
+
+        scheduler = workspaces_get_scheduler(ctx, workspace_id);
+
+        if(!scheduler)
+            return node_api_err("goal scheduler unavailable", 409);
+
+        body = node_api_body(req);
+
+        if(std.is_none(body))
+            return node_api_err("Invalid request body");
+
+        res = goal_tool_create(scheduler, body);
+
+        if(!res.ok)
+            return node_api_err(res.error, 400);
+
+        try {
+            scheduler.rescan();
+            scheduler.write_overview();
+        } catch(e) {
+            std.error("[workspaces] goal rescan failed: ", e);
+        }
+
+        return node_api_ok(res);
+    });
+
+    server.route("POST", "^/api/workspaces/([0-9a-zA-Z_-]+)/goals/([0-9a-zA-Z_-]+)/status$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        workspace_id = std.string(req.matches[0]);
+        goal_id = std.string(req.matches[1]);
+
+        if(!ctx.store.get(workspace_id))
+            return node_api_err("unknown workspace", 404);
+
+        body = node_api_body(req);
+
+        if(std.is_none(body))
+            return node_api_err("Invalid request body");
+
+        status = node_api_get(body, "status", "active");
+
+        res = workspaces_goal_status(ctx, workspace_id, goal_id, status);
+
+        if(!res.ok)
+            return node_api_err(res.error, 409);
+
+        return node_api_ok(res);
     });
 
     server.route("GET", "^/api/workspaces/([0-9a-zA-Z_-]+)/tasks/([0-9a-zA-Z_-]+)$", [ctx, token](req, writer) {
@@ -1660,6 +1858,7 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         }
 
         if(!writer.write_header(200, "text/event-stream", node_api_headers([
+            "Content-Type" = "text/event-stream; charset=utf-8",
             "Cache-Control" = "no-cache",
             "Connection" = "keep-alive",
             "X-Accel-Buffering" = "no",
@@ -1668,7 +1867,7 @@ workspaces_api_register(server, cfg, api_token, store = None) {
 
         writer.write_sse(std.string([session_id = sid, status = "connected"]), "status");
 
-        last_seq = 0;
+        last_seq = node_api_int(req.query_params, "since", 0);
         last_ping = std.millis();
 
         for(1) {

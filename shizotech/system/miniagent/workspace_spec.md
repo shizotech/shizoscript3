@@ -121,3 +121,21 @@ tasks tab. SSE keeps the chat fluid; animations for running/working states. No C
 The session agent also registers `create_task` (goal engine) so a chat can turn a prompt into a
 regular/recurring task in the workspace. Retry has no attempt cap: the manager restarts an exited
 non-terminal process, and the agent retries API failures with backoff capped at 30 s.
+
+## Follow-up fixes for the last #907 comment
+
+- The SSE route sets `Content-Type: text/event-stream` (it used to merge the JSON content type
+  into the header set), accepts `?token=<t>` because EventSource cannot send headers, and
+  accepts `?since=<last_seq>` so the dashboard does not replay history it already rendered.
+- `SessionManager` loads every `session.json` from each workspace's `.megamind/sessions/` on
+  start. Non-terminal saved sessions are marked stopped because their subprocess is gone.
+- `WorkspaceStore.ensure_megamind` copies a legacy `.agentspace/architecture.json` into
+  `.megamind/architecture/architecture.json` when that workspace has no per-workspace graph.
+- Task API: `GET /api/workspaces/<id>/tasks` returns `{goals, sessions, templates}`;
+  `POST /api/workspaces/<id>/goals` creates a validated goal (via `goal_tool_create`), and
+  `POST /api/workspaces/<id>/goals/<goal_id>/status` moves a proposed goal to active/paused.
+- The dashboard has one sidebar: workspace tree with the selected workspace's sessions nested
+  below it. A `+` creates an empty session immediately with an auto title (the first prompt
+  renames it); there is no session popup. Tasks are split into Active, Proposed, Templates and
+  Finished; the task menu can start a normal/goal session task. Architecture has Analyze,
+  Review plan, Apply and Discard buttons and imports an existing legacy model.

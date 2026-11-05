@@ -40,6 +40,9 @@ When `--api-token` is given, every endpoint except `GET /api/health` requires
 Authorization: Bearer <token>        or        X-Api-Token: <token>
 ```
 
+For a browser SSE stream (`EventSource`) the token may also be passed as `?token=<token>`;
+EventSource cannot send headers. SSE responses use `Content-Type: text/event-stream`.
+
 The model endpoint token (`ModelConfig.token`) is never returned by any endpoint.
 
 ## Endpoints

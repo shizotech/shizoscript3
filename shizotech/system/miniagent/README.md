@@ -480,3 +480,9 @@ Chat/Tasks/Architecture dashboard (`workspace_spec.md`).
   global workspace has a *Global tasks* view across all workspaces.
 - `max_sessions` is editable in the UI; `max_running_agents` comes from the model config.
 - Live token usage, active sessions and notifications are in the dashboard.
+
+Follow-up (#907 last comment): the SSE route returns `text/event-stream` and accepts
+`?token=` + `?since=`; saved sessions are loaded from disk; a legacy `.agentspace/architecture.json`
+is imported; the dashboard is one sidebar with workspace + session tree, `+` creates an empty
+session, and tasks are split into active / proposed / templates / finished with an activate
+action. `workspace_spec.md` has the details.
