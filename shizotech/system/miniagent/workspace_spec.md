@@ -118,3 +118,6 @@ API routes for architecture/tasks mirror the existing node routes under
 Single page at `/`. Sidebar: recursive workspace tree, global tasks, settings, live stats.
 Main: selected workspace header, sessions, chat with normal/goal toggle, architecture graph tab,
 tasks tab. SSE keeps the chat fluid; animations for running/working states. No CDN.
+The session agent also registers `create_task` (goal engine) so a chat can turn a prompt into a
+regular/recurring task in the workspace. Retry has no attempt cap: the manager restarts an exited
+non-terminal process, and the agent retries API failures with backoff capped at 30 s.
