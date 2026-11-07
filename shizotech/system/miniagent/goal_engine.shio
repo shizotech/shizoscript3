@@ -33,6 +33,7 @@
 
 #include "goal_time"
 #include "goal_frontmatter"
+#include "miniagent_storage"
 
 GOAL_SCHEMA_VERSION = 1;
 
@@ -417,31 +418,36 @@ goal_days_list(v, errors) {
 	return out;
 }
 
-// schedule.every: an interval in whole days ("2d", "14d") -> int days, None = not set.
+// Keep day intervals on their local-calendar cadence; sub-day intervals use elapsed minutes.
 // A bare number is refused on purpose: in a duration "2" means 2 minutes.
 goal_every_field(sch_in, errors) {
 	v = gj(sch_in, "every", None);
 	if(std.is_none(v))
-		return None;
+		return [days = None, seconds = None];
 
 	text = std.string(v).strip().lowercase();
 	if(gt_is_int_text(text)) {
-		errors.push_back("schedule.every: needs a day unit (examples: 2d, 3d, 14d)");
-		return None;
+		errors.push_back("schedule.every: add a unit (examples: 5m, 2h, 2d)");
+		return [days = None, seconds = None];
 	}
 
 	secs = gt_parse_duration(text);
-	if(std.is_none(secs) || secs % GT_DAY != 0) {
-		errors.push_back("schedule.every: needs whole days (examples: 2d, 3d, 14d)");
-		return None;
+	if(std.is_none(secs) || secs < 60 || secs > GOAL_EVERY_MAX_DAYS * GT_DAY) {
+		errors.push_back("schedule.every: between 1m and " + std.string(GOAL_EVERY_MAX_DAYS) + "d");
+		return [days = None, seconds = None];
 	}
-
-	days = secs / GT_DAY;
-	if(days < 1 || days > GOAL_EVERY_MAX_DAYS) {
-		errors.push_back("schedule.every: between 1d and " + std.string(GOAL_EVERY_MAX_DAYS) + "d");
-		return None;
+	if(secs < GT_DAY) {
+		if(secs % 60 != 0) {
+			errors.push_back("schedule.every: intervals under 1d must be whole minutes (examples: 5m, 30m, 2h)");
+			return [days = None, seconds = None];
+		}
+		return [days = None, seconds = secs];
 	}
-	return days;
+	if(secs % GT_DAY != 0) {
+		errors.push_back("schedule.every: intervals of 1d or longer must be whole days (examples: 2d, 14d)");
+		return [days = None, seconds = None];
+	}
+	return [days = secs / GT_DAY, seconds = None];
 }
 
 // the phase of an interval schedule: an explicit start_date wins, else the day the
@@ -631,8 +637,14 @@ goal_validate(data, body, prefs, folder_id, folder_status) {
 			end_secs = None;
 	}
 
-	if(stype && stype != "manual" && std.is_none(start_secs) && !window_name && !gj(sch_in, "start"))
-		errors.push_back("schedule.start: required (or schedule.window: a named window from the preferences)");
+	every_config = goal_every_field(sch_in, errors);
+	every = every_config.days;
+	interval_seconds = every_config.seconds;
+	if(stype && stype != "manual" && std.is_none(start_secs) && !window_name && !gj(sch_in, "start") && std.is_none(interval_seconds))
+		errors.push_back("schedule.start: required (or schedule.window: a named window from the preferences), unless using a sub-day schedule.every interval");
+
+	if(!std.is_none(interval_seconds) && (window_name || gj(sch_in, "start") || gj(sch_in, "end") || gj(sch_in, "duration")))
+		errors.push_back("schedule.every under 1d is a continuous interval and cannot be combined with window, start, end or duration");
 
 	if(!std.is_none(start_secs) && std.is_none(end_secs) && std.is_none(duration_secs))
 		duration_secs = gt_parse_duration(gj(prefs, "default_duration", "4h")) ?? 4 * 3600;
@@ -651,11 +663,9 @@ goal_validate(data, body, prefs, folder_id, folder_status) {
 	}
 
 	days = [];
-	every = goal_every_field(sch_in, errors);
-
 	if(stype == "recurring" || stype == "windowed") {
-		if(!std.is_none(every)) {
-			// an interval replaces the weekday set: both at once is ambiguous
+		if(!std.is_none(every) || !std.is_none(interval_seconds)) {
+			// an interval replaces the weekday set: both at once are ambiguous
 			if(gj(sch_in, "days"))
 				errors.push_back("schedule: give either days or every, not both");
 		}
@@ -666,7 +676,7 @@ goal_validate(data, body, prefs, folder_id, folder_status) {
 				errors.push_back("schedule.days: no weekday selected");
 		}
 	}
-	else if(!std.is_none(every))
+	else if(!std.is_none(every) || !std.is_none(interval_seconds))
 		errors.push_back("schedule.every: only for type recurring or windowed");
 
 	start_date = None;
@@ -696,6 +706,7 @@ goal_validate(data, body, prefs, folder_id, folder_status) {
 		date = date_days,
 		days = days,
 		every = every,
+		interval_seconds = interval_seconds,
 		start_date = start_date,
 		end_date = end_date,
 		misfire = misfire,
@@ -798,13 +809,61 @@ goal_window_for_day(def, zone, day, anchor_day = None) {
 	return w;
 }
 
+goal_interval_window(def, index, anchor_seconds) {
+	sch = def.schedule;
+	zone = gt_zone(sch.timezone);
+	if(!zone.ok)
+		return None;
+	start = anchor_seconds + index * sch.interval_seconds;
+	day = gt_floor_div(start + gt_offset_at(zone, start), GT_DAY);
+
+	if(!std.is_none(sch.start_date) && day < sch.start_date)
+		return None;
+	if(!std.is_none(sch.end_date) && day > sch.end_date)
+		return None;
+
+	return [
+		start = start,
+		end = start + sch.interval_seconds,
+		day = day,
+		akey = def.id + "@" + gt_format_utc(start),
+	];
+}
+
+goal_interval_anchor_time(sch, anchor_seconds = None) {
+	if(!std.is_none(sch.start_date)) {
+		zone = gt_zone(sch.timezone);
+		return gt_local_to_utc(zone, sch.start_date * GT_DAY);
+	}
+	if(!std.is_none(anchor_seconds))
+		return anchor_seconds;
+	return 0;
+}
+
 // windows overlapping [from, to] (UTC secs), oldest first
 goal_windows_between(def, from, to, anchor_day = None) {
 	out = [];
 	out.clear();
 	sch = def.schedule;
 
-	if(sch.type == "manual" || std.is_none(sch.start))
+	if(sch.type == "manual")
+		return out;
+
+	if(!std.is_none(sch.interval_seconds)) {
+		anchor = goal_interval_anchor_time(sch, anchor_day);
+		first = math.max(0, gt_floor_div(from - anchor, sch.interval_seconds) - 1);
+		last = gt_floor_div(to - anchor, sch.interval_seconds);
+		if(last - first > 499)
+			first = last - 499;
+		for(i = first; i <= last; i++) {
+			w = goal_interval_window(def, i, anchor);
+			if(!std.is_none(w) && w.end > from && w.start <= to)
+				out.push_back(w);
+		}
+		return out;
+	}
+
+	if(std.is_none(sch.start))
 		return out;
 
 	zone = gt_zone(sch.timezone);
@@ -836,7 +895,22 @@ goal_next_windows(def, now, count = 5, anchor_day = None) {
 	out.clear();
 	sch = def.schedule;
 
-	if(sch.type == "manual" || std.is_none(sch.start))
+	if(sch.type == "manual")
+		return out;
+
+	if(!std.is_none(sch.interval_seconds)) {
+		anchor = goal_interval_anchor_time(sch, anchor_day);
+		index = math.max(0, gt_floor_div(now - anchor, sch.interval_seconds));
+		for(n = 0; n < 800 && out.size() < count; n++) {
+			w = goal_interval_window(def, index, anchor);
+			if(!std.is_none(w) && w.end > now)
+				out.push_back(w);
+			index++;
+		}
+		return out;
+	}
+
+	if(std.is_none(sch.start))
 		return out;
 
 	zone = gt_zone(sch.timezone);
@@ -885,6 +959,16 @@ goal_schedule_text(def) {
 	if(sch.type == "once")
 		return "once on " + gt_format_date(sch.date) + " " + times + where;
 
+	if(!std.is_none(sch.interval_seconds)) {
+		interval = "";
+		secs = sch.interval_seconds;
+		if(secs % 3600 == 0)
+			interval = std.string(secs / 3600) + "h";
+		else
+			interval = std.string(secs / 60) + "m";
+		return sch.type + " every " + interval + where;
+	}
+
 	if(!std.is_none(sch.every)) {
 		what = "every " + std.string(sch.every) + "d";
 		if(!std.is_none(sch.start_date))
@@ -905,10 +989,12 @@ goal_schedule_text(def) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GoalSpace {
-	root = ".agentspace";
-
-	__init__(_root = ".agentspace") {
-		root = std.string(_root ?? ".agentspace");
+	root = "";
+	
+	__init__(_root = "") {
+		root = std.string(_root ?? "");
+		if(!root)
+			root = miniagent_node_agentspace();
 		for(root.length() > 1 && (root.ends("/") || root.ends("\\")))
 			root = root.substr(0, root.length() - 1);
 	}
@@ -1290,9 +1376,7 @@ class GoalScheduler {
 		return gt_now();
 	}
 
-	// the phase day of an interval schedule ("every 2d"): the local day the goal
-	// became active, so the cadence starts where the owner created it.
-	// An explicit schedule.start_date wins (goal_every_anchor).
+	// Day intervals stay on the local calendar; sub-day intervals use exact elapsed seconds.
 	interval_anchor(def) {
 		since = 0;
 		try {
@@ -1301,6 +1385,13 @@ class GoalScheduler {
 		catch(e) {}
 		if(!since)
 			since = clock_now();
+		if(!std.is_none(def.schedule.interval_seconds)) {
+			if(!std.is_none(def.schedule.start_date)) {
+				zone = gt_zone(def.schedule.timezone);
+				return gt_local_to_utc(zone, def.schedule.start_date * GT_DAY);
+			}
+			return since;
+		}
 		zone = gt_zone(def.schedule.timezone);
 		return gt_floor_div(since + gt_offset_at(zone, since), GT_DAY);
 	}
@@ -1596,7 +1687,9 @@ class GoalScheduler {
 					a.verify_pending = true;
 			}
 
-			notify("Goal " + a.goal + ": " + label + " finished (report in the task message).");
+			// The task's own terminal event (task_finished) already carries the
+			// report. A second [notify] here was the duplicate the owner saw:
+			// one message per completed task is the contract.
 			return;
 		}
 
@@ -1782,7 +1875,8 @@ class GoalScheduler {
 
 			g = ledger.goal(id);
 			since = gj(g, "active_since", t_now);
-			lookback_from = math.max(since, t_now - 8 * GT_DAY);
+			lookback_seconds = std.is_none(def.schedule.interval_seconds) ? 8 * GT_DAY : def.schedule.interval_seconds * 2;
+			lookback_from = math.max(since, t_now - lookback_seconds);
 
 			windows = goal_windows_between(def, lookback_from, t_now, interval_anchor(def));
 			missed_latest = None;
@@ -2250,12 +2344,18 @@ class GoalScheduler {
 		nxt = goal_next_windows(def, t_now, 1, interval_anchor(def));
 		last = None;
 		open = None;
+		active_run = None;
 
 		for(akey, a : ledger.data.activations) {
 			if(gj_str(a, "goal", "") != id)
 				continue;
-			if(!goal_activation_closed(a))
+			if(!goal_activation_closed(a)) {
 				open = a;
+				for(r : a.runs) {
+					if(goal_run_open(r))
+						active_run = r;
+				}
+			}
 			else if(!last || gj(a, "created", 0) > gj(last, "created", 0))
 				last = a;
 		}
@@ -2271,6 +2371,8 @@ class GoalScheduler {
 			next_window = nxt.size() ? goal_window_text(def, nxt[0]) : "",
 			active_window = open ? goal_window_text(def, open) : "",
 			active_state = open ? gj_str(open, "state", "") : "",
+			active_run_state = active_run ? gj_str(active_run, "state", "") : "",
+			active_taskid = active_run ? gj_str(active_run, "taskid", "") : "",
 			last_outcome = last ? gj_str(last, "state", "") + " (" + gt_format_local(zone, gj(last, "start", t_now)) + ")" : "",
 			revision = def.revision,
 			invalid_edit = gj_str(g, "invalid_revision", "") != "",

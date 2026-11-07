@@ -7,7 +7,7 @@
 //web interface (chat, tasks, architecture graph), the same as shz miniagent.node --web.
 //node.shio reads the same command line.
 for(_i = 1; _i < std.argc(); _i++) {
-	if(std.string(std.argv(_i) ?? "") == "--web" || std.string(std.argv(_i) ?? "").starts("--web=")) {
+	if(std.string(std.argv(_i) ?? "") == "--node" || std.string(std.argv(_i) ?? "") == "--web" || std.string(std.argv(_i) ?? "").starts("--web=")) {
 		_web_node = std.module();
 		_web_node.load_file(__DIR__ + "/node.shio");
 		return;

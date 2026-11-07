@@ -175,6 +175,11 @@ node_api_authorized(req, api_token) {
             token = auth.strip();
     }
 
+    // EventSource cannot send headers. The browser dashboard passes the token
+    // as ?token=<t> on the SSE URL, so accept it there as well.
+    if(token.empty())
+        token = node_api_get(req.query_params, "token");
+
     return token == expected;
 }
 
@@ -555,6 +560,7 @@ node_api_start(host, cfg, port, api_token = "", web_root = "") {
         }
 
         if(!writer.write_header(200, "text/event-stream", node_api_headers([
+            "Content-Type" = "text/event-stream; charset=utf-8",
             "Cache-Control" = "no-cache",
             "Connection" = "keep-alive",
             "X-Accel-Buffering" = "no",

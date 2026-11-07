@@ -172,7 +172,7 @@ check("plan goal with feedback", arch_plan_goal(m, FILES, "smaller steps").conta
 FILES.previous = "OLD.md";
 check("a revision names the previous plan file", arch_plan_goal(m, FILES, "smaller steps").contains("OLD.md"));
 ag = arch_apply_goal(m, m.pending, FILES);
-check("apply goal tells not to edit the graph", ag.contains("Do not edit .agentspace/architecture.json"), ag);
+check("apply goal tells not to edit the graph", ag.contains("Do not edit " + FILES.model), ag);
 check("the model is a file reference, not pasted", !ag.contains("the window") && ag.contains("M.json") && ag.contains("search_in_file"), ag);
 check("a small change set is not split", !arch_needs_split(m, m.pending) && ag.contains("small") && !ag.contains("split it"), ag);
 cm = arch_changes_markdown(m, m.pending);
@@ -299,7 +299,7 @@ check("the role of the job tasks can be set", host2.added[0].role == "planner", 
 
 std.print("\n── --web command line ──");
 o = web_ui_parse(["--web"]);
-check("--web", o.web && o.port == 13337 && o.agentspace == ".agentspace", std.string(o));
+check("--web", o.web && o.port == 13337 && o.agentspace == miniagent_node_architecture(), std.string(o));
 o = web_ui_parse(["--config", "gpu", "--web", "--port", "8080", "--api-token", "x"]);
 check("--web --port --api-token", o.web && o.port == 8080 && o.api_token == "x", std.string(o));
 o = web_ui_parse(["--web=9000", "--agentspace", "/tmp/space"]);

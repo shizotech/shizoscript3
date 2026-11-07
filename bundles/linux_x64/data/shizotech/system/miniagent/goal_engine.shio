@@ -417,31 +417,36 @@ goal_days_list(v, errors) {
 	return out;
 }
 
-// schedule.every: an interval in whole days ("2d", "14d") -> int days, None = not set.
+// Keep day intervals on their local-calendar cadence; sub-day intervals use elapsed minutes.
 // A bare number is refused on purpose: in a duration "2" means 2 minutes.
 goal_every_field(sch_in, errors) {
 	v = gj(sch_in, "every", None);
 	if(std.is_none(v))
-		return None;
+		return [days = None, seconds = None];
 
 	text = std.string(v).strip().lowercase();
 	if(gt_is_int_text(text)) {
-		errors.push_back("schedule.every: needs a day unit (examples: 2d, 3d, 14d)");
-		return None;
+		errors.push_back("schedule.every: add a unit (examples: 5m, 2h, 2d)");
+		return [days = None, seconds = None];
 	}
 
 	secs = gt_parse_duration(text);
-	if(std.is_none(secs) || secs % GT_DAY != 0) {
-		errors.push_back("schedule.every: needs whole days (examples: 2d, 3d, 14d)");
-		return None;
+	if(std.is_none(secs) || secs < 60 || secs > GOAL_EVERY_MAX_DAYS * GT_DAY) {
+		errors.push_back("schedule.every: between 1m and " + std.string(GOAL_EVERY_MAX_DAYS) + "d");
+		return [days = None, seconds = None];
 	}
-
-	days = secs / GT_DAY;
-	if(days < 1 || days > GOAL_EVERY_MAX_DAYS) {
-		errors.push_back("schedule.every: between 1d and " + std.string(GOAL_EVERY_MAX_DAYS) + "d");
-		return None;
+	if(secs < GT_DAY) {
+		if(secs % 60 != 0) {
+			errors.push_back("schedule.every: intervals under 1d must be whole minutes (examples: 5m, 30m, 2h)");
+			return [days = None, seconds = secs];
+		}
+		return [days = None, seconds = secs];
 	}
-	return days;
+	if(secs % GT_DAY != 0) {
+		errors.push_back("schedule.every: intervals of 1d or longer must be whole days (examples: 2d, 14d)");
+		return [days = None, seconds = None];
+	}
+	return [days = secs / GT_DAY, seconds = None];
 }
 
 // the phase of an interval schedule: an explicit start_date wins, else the day the

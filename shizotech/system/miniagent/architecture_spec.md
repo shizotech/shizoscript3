@@ -20,7 +20,7 @@ Everything runs on the node's own task system: every job is one `Megamind.add_ta
 task (it shows in the Tasks page, the Telegram router and `/api/tasks` like any other
 task), its end arrives through `Megamind.add_task_finished_listener`.
 
-## Files (in the agent space, `.agentspace/` by default, `--agentspace <dir>`)
+## Files (global node `.megamind/architecture/`, a workspace's `.megamind/architecture/`, or `--agentspace <dir>`)
 
 | File | Written by | What |
 |---|---|---|

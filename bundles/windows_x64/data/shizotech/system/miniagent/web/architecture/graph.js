@@ -1,4 +1,4 @@
-/* ── Architecture graph: .agentspace/architecture.json as an editable node graph ──
+/* ── Architecture graph: .megimind/architecture/architecture.json as an editable node graph ──
  *
  * GET  /api/architecture            model with the pending edits applied (marked)
  * POST /api/architecture/edits      one edit -> pending (nothing changes in the code)
@@ -16,24 +16,27 @@
   const NS = 'http://www.w3.org/2000/svg';
   const NODE_W = 200, NODE_H = 60;
   const KIND = {
-    module:   { color: '#00c49a', glyph: '◆' },
-    file:     { color: '#4fb3ff', glyph: '▤' },
-    service:  { color: '#b07cff', glyph: '⚙' },
-    ui:       { color: '#ff9f43', glyph: '▣' },
-    data:     { color: '#ffd166', glyph: '⛁' },
-    external: { color: '#8fa3ad', glyph: '☁' },
-    test:     { color: '#ef6f8f', glyph: '✔' },
-    config:   { color: '#6ee7d8', glyph: '⚑' },
+    module:   { color: '#d4ae45', glyph: '◆' },
+    file:     { color: '#b8c0c2', glyph: '▤' },
+    service:  { color: '#df6258', glyph: '⚙' },
+    ui:       { color: '#e7a54f', glyph: '▣' },
+    data:     { color: '#d8c46a', glyph: '⛁' },
+    external: { color: '#899397', glyph: '☁' },
+    test:     { color: '#bd8d50', glyph: '✔' },
+    config:   { color: '#ef806b', glyph: '⚑' },
   };
   const EDGE = {
-    calls:    { color: '#a9bcc6', dash: '' },
-    data:     { color: '#ffd166', dash: '' },
-    includes: { color: '#4fb3ff', dash: '2 5' },
-    events:   { color: '#b07cff', dash: '7 5' },
-    network:  { color: '#ff9f43', dash: '10 4 2 4' },
+    calls:    { color: '#a9afb0', dash: '' },
+    data:     { color: '#d8c46a', dash: '' },
+    includes: { color: '#b8c0c2', dash: '2 5' },
+    events:   { color: '#df6258', dash: '7 5' },
+    network:  { color: '#e7a54f', dash: '10 4 2 4' },
   };
 
   const $ = (id) => document.getElementById(id);
+  const workspaceId = new URLSearchParams(window.location.search).get('workspace');
+  const apiBase = workspaceId ? '/api/workspaces/' + encodeURIComponent(workspaceId) + '/architecture' : '/api/architecture';
+  const api = (path = '') => apiBase + path;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const md = window.markdownit ? window.markdownit({ html: false, linkify: true, breaks: true }) : { render: esc };
 
@@ -67,8 +70,8 @@
   }
 
   function groupColor(g) {
-    const hue = hash(g || '-') % 360;
-    return { fill: `hsla(${hue}, 55%, 45%, 0.07)`, stroke: `hsla(${hue}, 60%, 60%, 0.35)`, text: `hsla(${hue}, 70%, 72%, 0.85)` };
+    const hue = 18 + hash(g || '-') % 36;
+    return { fill: `hsla(${hue}, 48%, 38%, 0.08)`, stroke: `hsla(${hue}, 58%, 62%, 0.34)`, text: `hsla(${hue}, 66%, 76%, 0.88)` };
   }
 
   function toast(msg, err) {
@@ -205,7 +208,7 @@
       const positions = {};
       unsaved.forEach((id) => { const p = S.pos.get(id); if (p) positions[id] = [p.x, p.y]; });
       unsaved.clear();
-      try { await NodeApi.post('/api/architecture/layout', { positions }); } catch (e) { /* positions are a convenience */ }
+      try { await NodeApi.post(api('/layout'), { positions }); } catch (e) { /* positions are a convenience */ }
     }, 600);
   }
 
@@ -253,8 +256,8 @@
     const f = el('filter', { id: 'shadow', x: '-20%', y: '-20%', width: '140%', height: '160%' }, d);
     el('feDropShadow', { dx: 0, dy: 4, stdDeviation: 6, 'flood-color': '#000', 'flood-opacity': 0.45 }, f);
     const g = el('linearGradient', { id: 'cardGrad', x1: 0, y1: 0, x2: 0, y2: 1 }, d);
-    el('stop', { offset: '0%', 'stop-color': '#1d2a31' }, g);
-    el('stop', { offset: '100%', 'stop-color': '#141e24' }, g);
+    el('stop', { offset: '0%', 'stop-color': '#242526' }, g);
+    el('stop', { offset: '100%', 'stop-color': '#171819' }, g);
   }
 
   // where the line from the centre of a towards b leaves a's box
@@ -575,7 +578,7 @@
   const val = (id) => { const e = $(id); return e ? e.value.trim() : ''; };
 
   function edit(body, ok) {
-    return act(() => NodeApi.post('/api/architecture/edits', body), ok || 'Added to the pending changes');
+    return act(() => NodeApi.post(api('/edits'), body), ok || 'Added to the pending changes');
   }
 
   $('panel').addEventListener('click', (ev) => {
@@ -584,19 +587,19 @@
     const drop = t.closest('[data-drop]');
     const cut = t.closest('[data-cut]');
     const go = t.closest('[data-goto]');
-    if (drop) return act(() => NodeApi.del('/api/architecture/edits/' + drop.dataset.drop), 'Change dropped');
+    if (drop) return act(() => NodeApi.del(api('/edits/' + drop.dataset.drop)), 'Change dropped');
     if (cut) { ev.stopPropagation(); return edit({ op: 'remove_edge', target: cut.dataset.cut }); }
     if (go) { select('node', go.dataset.goto, true); return; }
     if (id === 'pBack') { ev.preventDefault(); S.form = null; select(null); return; }
-    if (id === 'pPlan') return act(() => NodeApi.post('/api/architecture/plan', {}), 'A worker writes the plan');
-    if (id === 'pRevise') return act(() => NodeApi.post('/api/architecture/plan', { feedback: val('pFeedback') }), 'A worker revises the plan');
+    if (id === 'pPlan') return act(() => NodeApi.post(api('/plan'), {}), 'A worker writes the plan');
+    if (id === 'pRevise') return act(() => NodeApi.post(api('/plan'), { feedback: val('pFeedback') }), 'A worker revises the plan');
     if (id === 'pApply') {
       const plan = S.data.plan || {};
       const msg = !plan.text ? 'Apply without reviewing a plan first?' : plan.outdated ? 'The plan is outdated. Apply anyway?' : 'Let a worker implement the pending changes?';
-      if (confirm(msg)) act(() => NodeApi.post('/api/architecture/apply', {}), 'A worker implements the changes');
+      if (confirm(msg)) act(() => NodeApi.post(api('/apply'), {}), 'A worker implements the changes');
       return;
     }
-    if (id === 'pDiscard') { if (confirm('Drop every pending change?')) act(() => NodeApi.post('/api/architecture/discard', {}), 'Pending changes dropped'); return; }
+    if (id === 'pDiscard') { if (confirm('Drop every pending change?')) act(() => NodeApi.post(api('/discard'), {}), 'Pending changes dropped'); return; }
     const sel = S.selected;
     if (id === 'pSave' && sel) {
       const n = nodeById(sel.id);
@@ -756,11 +759,12 @@
 
   $('btnFit').onclick = fit;
   $('btnLayout').onclick = () => { const ids = layout(true); draw(); fit(); savePositions(ids); };
+  $('btnRefresh').onclick = () => refresh(true);
   $('btnAdd').onclick = () => { S.form = 'add'; S.selected = null; draw(); renderPanel(); setTimeout(() => $('aLabel') && $('aLabel').focus(), 0); };
   const analyze = () => {
     const first = !nodes().length;
     if (first || confirm('Let a worker analyze the codebase again? Nodes keep their positions, pending changes stay.')) {
-      act(() => NodeApi.post('/api/architecture/analyze', {}), 'A worker analyzes the codebase');
+      act(() => NodeApi.post(api('/analyze'), {}), 'A worker analyzes the codebase');
     }
   };
   $('btnAnalyze').onclick = analyze;
@@ -768,10 +772,17 @@
   window.addEventListener('resize', () => { if (!S.fitted) fit(); });
 
   // ── data ───────────────────────────────────────────────────────────────────
+  let refreshTimer = null;
+  function scheduleJobRefresh() {
+    clearTimeout(refreshTimer);
+    if (!jobOpen(S.data && S.data.job)) return;
+    refreshTimer = setTimeout(() => refresh(false), 10000);
+  }
+
   async function refresh(force) {
     let d;
     try {
-      d = await NodeApi.get('/api/architecture');
+      d = await NodeApi.get(api());
     } catch (e) {
       $('summary').textContent = e.status === 401 ? 'The node needs its API token.' : 'The node does not answer: ' + e.message;
       return;
@@ -784,7 +795,7 @@
     $('project').textContent = d.project ? d.project + ' · architecture' : 'Architecture';
     $('summary').textContent = d.summary || 'The map of the codebase this node works on.';
     $('summary').title = d.summary || '';
-    $('emptyFile').textContent = d.file || '.agentspace/architecture.json';
+    $('emptyFile').textContent = d.file || '.megimind/architecture/architecture.json';
     $('empty').classList.toggle('hidden', nodes().length > 0);
     renderJob();
 
@@ -807,10 +818,10 @@
       renderPanel();
       if (!S.fitted && nodes().length) { fit(); S.fitted = true; }
     }
+    scheduleJobRefresh();
   }
 
   defs();
   applyView();
   refresh(true);
-  setInterval(() => refresh(false), 2500);
 })();

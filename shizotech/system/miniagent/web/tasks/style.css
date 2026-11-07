@@ -17,7 +17,7 @@ h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: v
 .task-out { margin-top: 8px; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; background: var(--bg); border-radius: var(--radius-sm); padding: 8px; max-height: 160px; overflow: auto; color: #b9c5cb; }
 .task-actions { display: flex; gap: 8px; margin-top: 8px; }
 .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; background: var(--surface); color: var(--text-secondary); }
-.badge.research, .badge.implement { background: rgba(0,168,132,.18); color: #3fe0b8; }
+.badge.research, .badge.implement, .badge.running { background: rgba(0,168,132,.18); color: #3fe0b8; }
 .badge.planned { background: rgba(120,140,255,.16); color: #a9b4ff; }
 .badge.finished { background: rgba(0,168,132,.12); color: #00a884; }
 .badge.failed, .badge.lost { background: rgba(230,90,90,.16); color: #ff8f8f; }

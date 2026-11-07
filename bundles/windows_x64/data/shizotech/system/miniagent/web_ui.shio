@@ -2,6 +2,7 @@
 //  web_ui.shio — the web interface of a node: shz miniagent --web
 //
 //      shz miniagent --web [--port 13337] [--api-token secret] [--agentspace dir]
+//                          [--architecture-role adaptive]
 //      shz miniagent.node --web ...                   (the same)
 //
 //  One HTTP server on the node:
@@ -21,6 +22,7 @@
 
 #include "node_api"
 #include "architecture"
+#include "workspaces"
 
 WEB_UI_DEFAULT_PORT = 13337;
 WEB_UI_ROOT = __DIR__ + "/web";
@@ -54,8 +56,11 @@ web_ui_has(args, flag) {
 	return false;
 }
 
-// -> [web, port, api_token, agentspace]
+// -> [web, port, api_token, agentspace, architecture_role]
 //    web: --web (also --web=<port>); port: --port, else 13337
+//    agentspace: the architecture board root; --agentspace <dir> wins, else the
+//                global node architecture dir (std.user_path()/miniagent/node/.megamind/architecture)
+//    architecture_role: --architecture-role, the role of the graph's job tasks (adaptive)
 web_ui_parse(args) {
 	web = web_ui_has(args, "--web");
 	port = WEB_UI_DEFAULT_PORT;
@@ -72,13 +77,18 @@ web_ui_parse(args) {
 
 	space = web_ui_value(args, "--agentspace");
 	if(!space)
-		space = ".agentspace";
+		space = miniagent_node_architecture();
+
+	role = web_ui_value(args, "--architecture-role");
+	if(!role)
+		role = "adaptive";
 
 	return [
 		web = web,
 		port = port,
 		api_token = web_ui_value(args, "--api-token"),
 		agentspace = space,
+		architecture_role = role,
 	];
 }
 
@@ -94,10 +104,10 @@ web_ui_chat_delta(action) {
 	if(action.has("text") && action.text)
 		return [agent = "planner", text = std.string(action.text)];
 
+	// a tool call arrives twice: as "tool" (the model's call) and as "tool_start"
+	// (the harness runs it); the chat shows it once
 	tool = None;
-	if(action.has("tool") && std.is_json(action.tool))
-		tool = action.tool;
-	else if(action.has("tool_start") && std.is_json(action.tool_start))
+	if(action.has("tool_start") && std.is_json(action.tool_start))
 		tool = action.tool_start;
 
 	if(!tool || !tool.has("name"))
@@ -292,16 +302,18 @@ web_ui_architecture_routes(server, board, api_token) {
 web_ui_start(host, cfg, opts) {
 	port = std.int(opts.port ?? WEB_UI_DEFAULT_PORT);
 	token = std.string(opts.api_token ?? "");
-	space = std.string(opts.agentspace ?? ".agentspace");
+	space = std.string(opts.agentspace ?? miniagent_node_architecture());
 
 	server = node_api_start(host, cfg, port, token, WEB_UI_ROOT);
 	if(!server)
 		return None;
 
-	board = ArchitectureBoard(host, space);
+	board = ArchitectureBoard(host, space, std.string(opts.architecture_role ?? "adaptive"));
 
 	web_ui_chat_routes(server, host, token);
 	web_ui_architecture_routes(server, board, token);
 
-	return [server = server, board = board];
+	workspaces = workspaces_api_register(server, cfg, token);
+
+	return [server = server, board = board, workspaces = workspaces];
 }

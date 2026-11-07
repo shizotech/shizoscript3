@@ -33,12 +33,14 @@ can be used.
 | `shizonet_ai.shio` | the node ⇄ router wire protocol (both sides, one place) |
 | `node_api.shio` | optional JSON web API of a node (`--webserver` / `--port`) |
 | `web_ui.shio` + `web/` | the web interface of a node (`--web`): the dashboard pages on top of the JSON API |
-| `architecture.shio` | the architecture graph: `.agentspace/architecture.json`, pending edits, analyze / plan / apply jobs (`architecture_spec.md`) |
+| `architecture.shio` | the architecture graph: `.megamind/architecture/architecture.json` (global node) or a workspace's `.megamind/architecture/architecture.json`, pending edits, analyze / plan / apply jobs (`architecture_spec.md`) |
 | `goal_engine.shio` | scheduled goals: `.agentspace/` Markdown goals, validation, the deterministic `GoalScheduler` (`goals_spec.md`) |
 | `goal_time.shio` / `goal_frontmatter.shio` | time zones + DST, work windows / the front matter reader and writer |
 | `goal_tools.shio` | the receptionist's goal tools (create / update / pause / run) |
 | `goals.shio` | `shz miniagent.goals ...`: list, validate, run, pause, history, diff |
 | `agent_slots.shio` | `max_running_agents` accounting: a waiting parent lends its slot to a child |
+| `miniagent_storage.shio` | the one global storage root (`std.user_path()/miniagent`) shared by node, goals and workspaces |
+| `flow_spec.md` | the runtime flow: global storage, web UI session subprocess, Telegram router path, the single signal contract |
 | `roles/` | the AI roles: `receptionist`, `router`, `adaptive`, `single_action/*`, `util/*` |
 
 ## Model configs
@@ -131,7 +133,7 @@ http://localhost:13337/ — every page works offline (no CDN):
 * **Tasks** — the worker tasks: running / planned with live output, finished ones with
   their report; start a task, send an update, stop it.
 * **Architecture** — the codebase as a node graph (`architecture_spec.md`). On first use
-  *Analyze the codebase* lets a worker write `.agentspace/architecture.json` (modules,
+   *Analyze the codebase* lets a worker write `.megamind/architecture/architecture.json` (modules,
   files, services with a one-line purpose; calls / data / includes / events / network
   between them). Add, change, connect or remove nodes on the graph: the edits stay
   **pending**. *Review plan* lets a worker write a plan for them (no code changes), you
@@ -146,16 +148,19 @@ same as with `--port`, its index moves to `/api`.
 ## Goals (scheduled autonomous work)
 
 A node can run work on its own at set times: "tonight, explore a new app idea", "every Sunday
-clean up the repository", "check the server logs every 2 days at 06:00" (`schedule.every: 2d`),
+clean up the repository", "check the server logs every 2 days at 06:00" (`schedule.every: 2d`) or
+"check the service every 5 minutes" (`schedule.every: 5m`),
 "fix GitHub issues from 05:00 to 10:00". Goals are Markdown files in
 `.agentspace/goals/<status>/<id>/goal.md` (front matter = schedule + policy, body = the
 instructions); the node's scheduler — plain code — activates each window exactly once, applies
 the stop policy at the window end, retries, verifies and reports. Contract: `goals_spec.md`.
+The node's own store is `std.user_path()/miniagent/node/.agentspace`; every project workspace
+also has its own `.agentspace`, and all registered workspace schedulers run at node startup.
 
 ```
-shz miniagent.goals init                 create .agentspace/ (preferences, examples, templates)
-shz miniagent.node                       a node started next to .agentspace/ runs the scheduler
-shz miniagent.node --agentspace <dir>    ... or point it there
+shz miniagent.goals init                 create the global node .agentspace/ (preferences, examples, templates)
+ shz miniagent.node                       a node uses std.user_path()/miniagent/node/.agentspace
+ shz miniagent.node --agentspace <dir>    ... or point it there
 shz miniagent.goals list | show <id> | validate | run <id> [--dry-run] | pause <id> | history <id>
 ```
 
@@ -327,7 +332,7 @@ shz node.shio --receptionist-config chat --worker-config gpu
 shz node.shio --worker-config ./endpoints.json#worker --max-workers 4
 shz node.shio --webserver --port 13337 --api-token secret   + JSON web API
 shz node.shio --web [--port 13337]                   + the web interface (= shz miniagent --web)
-shz node.shio --agentspace .agentspace               scheduled goals (auto when ./.agentspace exists)
+shz node.shio --agentspace <dir>                    scheduled goals (default: std.user_path()/miniagent/node/.agentspace)
 ```
 
 Tasks of a node (`Megamind`): `add_task(name, goal, role = "adaptive")`; a task of another role
@@ -406,10 +411,9 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                  (activation once per window, restart recovery, misfire
                                  policies, retries, stop policy, invalid edits, conflicts,
                                  pause, dry run, verification, capacity, a refused dispatch
-                                 is notified, the `every: 2d` interval schedules and the
-                                 agent goal
+                                 is notified, day and minute interval schedules, agent goal
                                  tools, stall watchdog, state/overview.md, fake host +
-                                 fake clock -> 162 checks, ALL PASSED
+                                 fake clock -> 172 checks, ALL PASSED
 shz architecture_selftest.shio   the architecture board: model file, merge of a re-sync,
                                  pending edits, analyze / plan / apply jobs on a fake
                                  host, restart, the --web command line
@@ -418,7 +422,7 @@ shz architecture_selftest.shio   the architecture board: model file, merge of a 
 shz web_ui_selftest.shio         the web interface under browser load, stub host: every
                                  page and file, 150 polls, chat turns with their /poll
                                  loop while the pages poll, 20 parallel requests,
-                                 keep-alive reuse -> 28 checks, ALL PASSED
+                                 keep-alive reuse -> 27 checks, ALL PASSED
 shz tests/megamind_tasks_test.shio  the task system of a node keeps running: an update
                                  during the implementation is continued by the worker
                                  thread (not by the caller), a follow-up of a running
@@ -470,15 +474,19 @@ and a check that asks a *second* server to see a *third* one can never pass: ask
 `shz miniagent --web` now serves a recursive **workspace tree** instead of the node-scoped
 Chat/Tasks/Architecture dashboard (`workspace_spec.md`).
 
-- The global workspace lives under `std.user_path()/miniagent/workspaces`; each workspace is
-  bound to a physical directory and owns `.megamind/` with sessions, architecture and goals.
+- The global workspace lives under `std.user_path()/miniagent/workspaces`; the node's own goal/architecture
+  store lives under `std.user_path()/miniagent/node`. Each workspace is
+  bound to a physical directory and owns `.megamind/` (sessions, architecture) plus its own
+  `.agentspace` (goals).
 - A session is an adaptive miniagent spawned as a subprocess in that workspace directory.
   Its output streams to the UI through SSE; a new prompt interrupts the running turn.
-- Goal mode loops until the agent calls `goal_finish(status=finished|failed)`; an exited or
-  API-failing process is restarted with backoff (always-retry policy).
+- The UI's Loop mode loops until the agent signals `finished`, `failed` or `question`; a
+  subprocess exit without a terminal result is reported as a failure, not silently restarted.
 - Architecture and tasks are per workspace, driven through the workspace host adapter. The
   global workspace has a *Global tasks* view across all workspaces.
 - `max_sessions` is editable in the UI; `max_running_agents` comes from the model config.
+- Removing a workspace stops and deletes its sessions automatically; its project files stay on
+  disk. A workspace with sub-workspaces is refused until the children are removed first.
 - Live token usage, active sessions and notifications are in the dashboard.
 
 Follow-up (#907 last comment): the SSE route returns `text/event-stream` and accepts

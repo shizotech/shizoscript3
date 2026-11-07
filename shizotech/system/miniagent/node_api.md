@@ -53,7 +53,7 @@ The model endpoint token (`ModelConfig.token`) is never returned by any endpoint
 | GET | `/api/health` | – | liveness, uptime, request counter (no token needed) |
 | GET | `/api/status` | – | node, model, receptionist, worker and task statistics |
 | GET | `/api/overview` | – | raw overview, exactly what the receptionist sees |
-| GET | `/api/tasks` | – | flattened task list (`planned`, `research`, `implement`, `finished`, `failed`) |
+| GET | `/api/tasks` | – | flattened task list (`planned`, `research`, `implement`, `finished`, `failed`, `question`, `stopped`) |
 | GET | `/api/task/<id>` | – | one task, full detail |
 | POST | `/api/task` | `{"name":"Sexy-Sushi","goal":"…"}` | `{"taskid":"…","name":"…","state":"planned"}` |
 | PUT | `/api/task/<id>` | `{"message":"…"}` | follow-up instruction for a planned/running task |

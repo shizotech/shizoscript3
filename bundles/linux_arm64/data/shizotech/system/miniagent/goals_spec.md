@@ -1,8 +1,9 @@
 # Goals: scheduled autonomous work (`goal_engine.shio`)
 
-A **goal** is work a node does on its own at set times: "tonight, explore a new app idea",
-"every Sunday clean up the repository", "check the server logs every 2 days at 06:00",
-"fix GitHub issues from 05:00 to 10:00". Goals are
+A **goal** is the goal engine's unit of scheduled work, including one-off, windowed, and recurring tasks.
+A **recurring task is a recurring goal**: for example, "every Sunday clean up the repository" or
+"check the server logs every 2 days at 06:00". Goals can also run once or in named windows, such as
+"tonight, explore a new app idea" or "fix GitHub issues from 05:00 to 10:00". Goals are
 Markdown files a person can read, edit, diff and version; the node's scheduler (plain code, no
 LLM) decides when they run.
 

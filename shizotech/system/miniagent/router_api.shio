@@ -52,12 +52,18 @@ ROUTER_MAX_OUTPUT_CHARS = 2000;
 ROUTER_INFO_REFRESH_MS = 5000;
 ROUTER_MAX_POLL_FAILS = 3;
 
+// A task whose node disappears is NOT lost on the first missed poll: the node
+// may reconnect. It becomes lost only after this grace period (or after a
+// definitive "not found" on an online node). Transient poll failures only
+// update last_error and keep the task open.
+ROUTER_TASK_LOST_GRACE_MS = 120000;
+
 // C2 stall watchdog: an OPEN task (queued|generating) that shows no progress for
 // this long gets ONE task_stalled event. Deliberately far above any test runtime —
 // opts.stall_ms overrides it, 0 turns the watchdog off.
 ROUTER_TASK_STALL_MS = 900000;
 
-// remote task states (router_api.md): queued | generating | finished | failed | stopped | lost
+// remote task states (router_api.md): queued | generating | finished | failed | question | stopped | lost
 router_is_open_state(state) {
 	if(state == "queued") {
 		return true;
@@ -103,7 +109,7 @@ router_map_task_state(state) {
 		return "generating";
 	}
 	if(state == "question") {
-		return "generating";
+		return "question";
 	}
 	if(state == "finished") {
 		return "finished";
@@ -492,6 +498,7 @@ class Router {
 				// the node is no longer announced online: a later reconnect is a
 				// transition again (see _announce_node_online)
 				_nodes[i].online_announced = false;
+				_nodes[i].offline_since = std.millis();
 			}
 		}
 		cs.release();
@@ -1008,9 +1015,9 @@ class Router {
 			dup = _task_state_announced(ev);
 		}
 
-		_mirror_event(ev);
+		emit = _mirror_event(ev);
 
-		if(dup) {
+		if(dup || !emit) {
 			return "ok";
 		}
 
@@ -1055,21 +1062,20 @@ class Router {
 		cs = std.critical_section_named(_lock);
 		for(i = 0; i < _nodes.size(); i++) {
 			if(_nodes[i].nodekey == nkey) {
-				_nodes[i].online = false;
-				_nodes[i].online_announced = false;
-				_nodes[i].dev = dev;
-				node_name = _nodes[i].name;
+			// Record WHEN the node went offline; the poller applies the grace.
+			// A transient disconnect must not turn every open task into "lost"
+			// immediately (the old behavior produced false lost messages).
+			if(_nodes[i].online) {
+				_nodes[i].offline_since = std.millis();
 			}
+			_nodes[i].online = false;
+			_nodes[i].online_announced = false;
+			_nodes[i].dev = dev;
+			node_name = _nodes[i].name;
 		}
-		_pushed_online[std.string(node_name).lowercase()] = false;
-		for(i = 0; i < remote_tasks.size(); i++) {
-			if(remote_tasks[i].node == node_name && router_is_open_state(remote_tasks[i].state)) {
-				remote_tasks[i].state = "lost";
-				remote_tasks[i].updated = std.millis();
-				remote_tasks[i].last_error = "node offline";
-			}
-		}
-		cs.release();
+	}
+	_pushed_online[std.string(node_name).lowercase()] = false;
+	cs.release();
 
 		_emit_event([
 			kind = "node_state",
@@ -1118,8 +1124,9 @@ class Router {
 				was_online = _nodes[i].online ? true : false;
 				_nodes[i].dev = dev;
 				_nodes[i].online = true;
-				_nodes[i].seen = std.millis();
-				if(ver) {
+			_nodes[i].seen = std.millis();
+			_nodes[i].offline_since = 0;
+			if(ver) {
 					_nodes[i].version = ver;
 				}
 				found = _nodes[i];
@@ -1147,6 +1154,7 @@ class Router {
 				uptime_ms = 0,
 				goals = false,		// C5: node runs a GoalScheduler (ai_node_info)
 				seen = std.millis(),
+				offline_since = 0,	// when the node last went offline (grace clock)
 				last_info = 0,
 				dev = dev,
 			]);
@@ -1327,6 +1335,64 @@ class Router {
 		return rec.online ? true : false;
 	}
 
+	// How long the task's node has been offline. 0 when it is online or when
+	// the offline time is unknown (a task from an event for a node not in the
+	// table is handled by the definitive checks in _poll_task).
+	_node_offline_ms(rec) {
+		node = _find_node(rec.node);
+
+		if(!node) {
+			return 0;
+		}
+
+		online = false;
+		try {
+			online = _node_online(node) ? true : false;
+		}
+		catch(e) {
+			online = node.online ? true : false;
+		}
+
+		if(online) {
+			return 0;
+		}
+
+		since = std.int(node.offline_since ?? 0);
+
+		if(since <= 0) {
+			return 0;
+		}
+
+		return std.millis() - since;
+	}
+
+	// The definitive lost reason: only after the node has been offline for the
+	// grace. A transient poll hiccup does not produce this.
+	_task_lost_reason(rec) {
+		ms = _node_offline_ms(rec);
+
+		if(ms >= ROUTER_TASK_LOST_GRACE_MS) {
+			mins = std.int(ms / 60000);
+			if(mins < 1) {
+				mins = 1;
+			}
+			return "node offline for " + std.string(mins) + " min";
+		}
+
+		return "";
+	}
+
+	_settle_lost_if_grace(rec) {
+		reason = _task_lost_reason(rec);
+
+		if(reason) {
+			_set_task_state(rec, "lost", reason);
+			return true;
+		}
+
+		return false;
+	}
+
 	_find_node(node_name) {
 		want = std.string(node_name).lowercase();
 
@@ -1427,7 +1493,7 @@ class Router {
 		return [ok = true, routed = true, taskid = taskid, node = rec.name, name = task_name, request_id = reply.request_id ?? "", answer = "", error = ""];
 	}
 
-	_add_remote_task(rec) {
+	_add_remote_task(rec, announce = true) {
 		rec.created = std.millis();
 		rec.updated = std.millis();
 		rec.last_poll = 0;
@@ -1458,16 +1524,22 @@ class Router {
 			cs.release();
 		}
 
-		_emit_event([
-			kind = "task_state",
-			time = std.millis(),
-			node = rec.node,
-			taskid = rec.taskid,
-			name = rec.name,
-			state = rec.state,
-			report = "",
-			error = "",
-		]);
+		// A task adopted from a node's task_finished push is already a terminal
+		// fact: emitting a second, empty "creation" task_state here would make the
+		// chat show the terminal state before the report (and two messages when a
+		// front end does not dedupe). Normal delegation still announces creation.
+		if(announce) {
+			_emit_event([
+				kind = "task_state",
+				time = std.millis(),
+				node = rec.node,
+				taskid = rec.taskid,
+				name = rec.name,
+				state = rec.state,
+				report = "",
+				error = "",
+			]);
+		}
 
 		return rec.taskid;
 	}
@@ -1570,7 +1642,13 @@ class Router {
 			return false;
 		}
 
-		old = rec.state;
+		old = std.string(rec.state ?? "");
+
+		// A terminal state is final: a late poll/push may carry different wording,
+		// but it must not become a second terminal task_state for the same task.
+		if(old.length() > 0 && old != new_state && !router_is_open_state(old)) {
+			return true;
+		}
 
 		cs = std.critical_section_named(_lock);
 		rec.state = new_state;
@@ -1756,9 +1834,25 @@ class Router {
 			return false;
 		}
 
-		return std.string(rec.state) == router_map_task_state(std.string(ev.state ?? "finished"));
+		st = std.string(rec.state);
+
+		if(st == router_map_task_state(std.string(ev.state ?? "finished"))) {
+			return true;
+		}
+
+		// One task, one terminal message: an already terminal mirror record
+		// absorbs a second terminal push (the poller may have announced it first).
+		if(st.length() > 0 && !router_is_open_state(st)) {
+			return true;
+		}
+
+		return false;
 	}
 
+	// Returns true when the event should be emitted to the owner. The mirror is
+	// updated in every case; false means the event was consumed/dropped (for
+	// example the node's internal worker task of an already-open delegated
+	// request, which is the request itself and not a second completion).
 	_mirror_event(ev) {
 		if(ev.kind == "node_state") {
 			rec = _find_node(ev.node);
@@ -1766,13 +1860,19 @@ class Router {
 				cs = std.critical_section_named(_lock);
 				rec.online = ev.online ? true : false;
 				rec.seen = std.millis();
+				if(ev.online) {
+					rec.offline_since = 0;
+				}
+				else if(!rec.offline_since) {
+					rec.offline_since = std.millis();
+				}
 				cs.release();
 			}
-			return;
+			return true;
 		}
 
 		if(!ev.has("taskid")) {
-			return;
+			return true;
 		}
 
 		rec = _find_task(ev.taskid);
@@ -1787,11 +1887,11 @@ class Router {
 			// user two tasks for one goal and notify twice. The request record is
 			// settled by ai_request_poll (state + report), so the push is dropped.
 			if(ev.kind != "task_finished") {
-				return;
+				return true;
 			}
 
 			if(_node_has_open_request(std.string(ev.node ?? ""))) {
-				return;
+				return false;
 			}
 
 			_add_remote_task([
@@ -1804,8 +1904,8 @@ class Router {
 				goal = "",
 				state = router_map_task_state(std.string(ev.state ?? "finished")),
 				report = std.string(ev.report ?? ""),
-			]);
-			return;
+			], false);
+			return true;
 		}
 
 		cs = std.critical_section_named(_lock);
@@ -1823,6 +1923,8 @@ class Router {
 		rec.last_progress = std.millis();
 		rec.stall_announced = false;
 		cs.release();
+
+		return true;
 	}
 
 	_emit_event(ev) {
@@ -1990,12 +2092,12 @@ class Router {
 				rec.poll_fails += 1;
 				rec.last_error = std.string(e);
 				std.error("[router] polling task ", std.string(rec.taskid), " failed: ", e);
-				if(rec.poll_fails >= ROUTER_MAX_POLL_FAILS) {
-					try {
-						_set_task_state(rec, "lost", "polling failed: " + rec.last_error);
-					}
-					catch(e2) {}
+				// A transient poll failure keeps the task open; only the grace
+				// (node offline long enough) can make it lost.
+				try {
+					_settle_lost_if_grace(rec);
 				}
+				catch(e2) {}
 			}
 			// C2: the watchdog rides the poller — an open task that stops making
 			// progress is reported once, not polled into silence forever.
@@ -2009,13 +2111,25 @@ class Router {
 	}
 
 	_poll_task(rec) {
+		// No remote id is a definitive fact: a record with a report is complete,
+		// one without a report is gone. It does not need a live device to decide.
+		if(!rec.remote_request_id && !rec.remote_taskid) {
+			if(std.string(rec.report ?? "").length() > 0) {
+				_set_task_state(rec, "finished", "");
+			}
+			else {
+				_set_task_state(rec, "lost", "no remote id to poll");
+			}
+			return;
+		}
+
 		dev = _task_device(rec);
 
 		if(!dev) {
 			rec.poll_fails += 1;
-			if(rec.poll_fails >= ROUTER_MAX_POLL_FAILS) {
-				_set_task_state(rec, "lost", "node offline");
-			}
+			rec.last_error = "node offline";
+			// Transient disconnect: keep the task open until the grace passes.
+			_settle_lost_if_grace(rec);
 			return;
 		}
 
@@ -2030,10 +2144,6 @@ class Router {
 			cmd = AI_CMD_TASK;
 			payload = [taskid = rec.remote_taskid];
 		}
-		else {
-			_set_task_state(rec, "lost", "no remote id to poll");
-			return;
-		}
 
 		reply = None;
 		try {
@@ -2042,9 +2152,7 @@ class Router {
 		catch(e) {
 			rec.poll_fails += 1;
 			rec.last_error = std.string(e);
-			if(rec.poll_fails >= ROUTER_MAX_POLL_FAILS) {
-				_set_task_state(rec, "lost", rec.last_error);
-			}
+			_settle_lost_if_grace(rec);
 			return;
 		}
 
@@ -2052,22 +2160,40 @@ class Router {
 
 		if(!std.is_json(reply)) {
 			rec.poll_fails += 1;
-			if(rec.poll_fails >= ROUTER_MAX_POLL_FAILS) {
-				_set_task_state(rec, "lost", "no reply from node");
+			rec.last_error = "no reply from node";
+			_settle_lost_if_grace(rec);
+			return;
+		}
+
+		if(!reply.ok) {
+			err = std.string(reply.error ?? "poll failed");
+
+			if(err == "not found") {
+				// The request is definitively gone on an ONLINE node (the old
+				// reaper erased it, or the task really is gone). A report in the
+				// mirror proves completion; otherwise this is a real loss.
+				if(!router_is_open_state(std.string(rec.state ?? ""))) {
+					return;
+				}
+				if(std.string(rec.report ?? "").length() > 0) {
+					_set_task_state(rec, "finished", "");
+				}
+				else {
+					_set_task_state(rec, "lost", "remote request expired");
+				}
+				return;
 			}
+
+			// Any other reply error is a transient hiccup: keep the task open,
+			// record the reason and count the failure. Only the grace (node
+			// offline long enough) can make it lost.
+			rec.poll_fails += 1;
+			rec.last_error = err;
+			_settle_lost_if_grace(rec);
 			return;
 		}
 
 		rec.poll_fails = 0;
-
-		if(!reply.ok) {
-			if(std.string(reply.error ?? "") == "not found") {
-				_set_task_state(rec, "lost", "unknown remote id");
-				return;
-			}
-			rec.last_error = std.string(reply.error ?? "poll failed");
-			return;
-		}
 
 		// ai_task -> [ok, task]
 		if(reply.has("task") && std.is_json(reply.task)) {
@@ -2101,9 +2227,6 @@ class Router {
 			}
 			if(new_state == "failed" && reply.has("error")) {
 				// C3: the node's error text lands in BOTH report and last_error.
-				// A front end renders the report of a finished task and the error
-				// of a failed one — a failure has nothing else to show, and the
-				// report field is what the notification sinks already read.
 				cs = std.critical_section_named(_lock);
 				rec.last_error = std.string(reply.error);
 				rec.report = rec.last_error;

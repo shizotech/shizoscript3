@@ -956,7 +956,7 @@ arch_apply_goal(model, edits, files) {
 	text += arch_split_rules(model, edits, files, "implement") +
 		"# What to do\n" +
 		"Implement every change in the code (new modules / files, changed responsibilities, new or removed connections), keep the build and the tests working, and follow the conventions of the repository.\n" +
-		"Do not edit .agentspace/" + ARCH_FILE + ": the graph is updated when you signal finished. Signal failed (with the reason) if a change cannot be done; signal question if the owner has to decide something.\n";
+		"Do not edit " + files.model + ": the graph is updated when you signal finished. Signal failed (with the reason) if a change cannot be done; signal question if the owner has to decide something.\n";
 	return text;
 }
 
@@ -975,7 +975,7 @@ class ArchitectureBoard {
 	host = None;
 	model = None;
 
-	__init__(_host, _root = ".agentspace", _role = "adaptive") {
+	__init__(_host, _root = ".agentspace", _role = "adaptive", _recover_jobs = true) {
 		host = _host;
 		role = std.string(_role ?? "adaptive");
 		if(!role)
@@ -991,7 +991,7 @@ class ArchitectureBoard {
 		model = arch_load(path);
 
 		// a job of an earlier run whose task this node does not know is lost
-		if(job_open() && !task_known(model.job.taskid)) {
+		if(_recover_jobs && job_open() && !task_known(model.job.taskid)) {
 			model.job.state = "lost";
 			model.job.error = "the node was restarted while the job ran";
 			model.job.finished = std.millis();
@@ -1076,6 +1076,7 @@ class ArchitectureBoard {
 
 	add_edit(edit) {
 		cs = std.critical_section_named(ARCH_LOCK);
+		model = arch_load(path);
 		if(arch_str(model.job, "kind", "") == "apply" && job_open()) {
 			cs.release();
 			return [ok = false, error = "an Apply job is running: wait until it is done"];

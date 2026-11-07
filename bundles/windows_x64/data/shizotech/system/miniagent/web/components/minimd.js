@@ -21,6 +21,13 @@
     return s.replace(/\u0000(\d+)\u0000/g, (m, i) => '<code>' + esc(codes[+i]) + '</code>');
   }
 
+  function tableCells(row) {
+    let s = String(row).trim();
+    if (s.startsWith('|')) s = s.slice(1);
+    if (s.endsWith('|')) s = s.slice(0, -1);
+    return s.split('|').map((c) => c.trim());
+  }
+
   function render(src, opts) {
     const lines = String(src || '').replace(/\r\n/g, '\n').split('\n');
     const out = [];
@@ -45,6 +52,23 @@
         for (i++; i < lines.length && !lines[i].trim().startsWith(fence[1]); i++) body.push(lines[i]);
         out.push('<pre><code class="language-' + esc(fence[2] || 'text') + '">' + esc(body.join('\n')) + '</code></pre>');
         continue;
+      }
+      if (line.includes('|') && i + 1 < lines.length) {
+        const sep = lines[i + 1].trim();
+        if (/^\|?\s*:?-{2,}:?(\s*\|\s*:?-{2,}:?)*\s*\|?$/.test(sep)) {
+          flushPara(); flushList();
+          const head = tableCells(line);
+          const rows = [];
+          let j = i + 2;
+          while (j < lines.length && lines[j].includes('|')) {
+            const row = tableCells(lines[j]);
+            if (row.length) rows.push(row);
+            j++;
+          }
+          out.push('<table><thead><tr>' + head.map((c) => '<th>' + inline(c) + '</th>').join('') + '</tr></thead><tbody>' + rows.map((row) => '<tr>' + row.map((c) => '<td>' + inline(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table>');
+          i = j - 1;
+          continue;
+        }
       }
       const h = line.match(/^(#{1,6})\s+(.*)$/);
       if (h) { flushPara(); flushList(); out.push('<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>'); continue; }

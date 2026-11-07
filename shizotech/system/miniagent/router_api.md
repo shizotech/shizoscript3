@@ -183,7 +183,7 @@ The router answers `"ok"` (it registers `on_get("ai_event", ...)`); no other dev
 | `task_stalled` | `[kind, time, node, taskid, name, state, idle_ms, error]` | the router's stall watchdog |
 
 `task_state` gained `error`: the failure text of that transition — the node's `status="error"`
-answer, `"node offline"`, `"no reply from node"`, `"unknown remote id"`, ... — and `""` when
+answer, `"node offline for N min"`, `"remote request expired"`, `"no reply from node"`, ... — and `""` when
 there is none. A front end renders it, so the user sees **why** a task failed, not only that it
 did. `report` stays the node's report on a terminal state.
 
@@ -283,7 +283,7 @@ class Router
         # [taskid, node, name, state, open, goal, report, last_error,
         #  user_updates, created, updated]
         # state: "all" (default) | "open"/"running" (queued+generating) |
-        #        "finished" | "failed" | "stopped" | "lost"; node_name restricts to one node.
+        #        "finished" | "failed" | "question" | "stopped" | "lost"; node_name restricts to one node.
     get_overview()                 # nodes + remote_tasks + events, device objects stripped
     notify_user(msg)
     on_notify(cb) / on_event(cb) / on_action(cb)
@@ -301,8 +301,10 @@ Remote task record (the router's mirror):
 `error`), `last_progress` the ms timestamp of the last visible progress (state change, report,
 delta, a poll with new data) — the stall watchdog measures against it.
 
-`state`: `queued | generating | finished | failed | stopped | lost`
-(`lost` = the node went offline and the request id is gone).
+`state`: `queued | generating | finished | failed | question | stopped | lost`
+(`question` is terminal: the node's `signal(event=question)` needs the owner. `lost` means the
+node/task is definitively gone — after a grace period while the node is offline, or a
+definitive `not found` with no report. A transient poll failure keeps the task open.)
 
 ### Mirror rules (why one user goal is exactly one task)
 

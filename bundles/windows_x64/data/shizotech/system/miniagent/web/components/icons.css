@@ -16,6 +16,8 @@
 
 .fa-bars::before { content: "\2630"; }
 .fa-xmark::before, .fa-times::before { content: "\2715"; }
+.fa-chevron-right::before { content: "\25B8"; }
+.fa-chevron-down::before { content: "\25BE"; }
 .fa-plus::before { content: "+"; }
 .fa-trash::before { content: "\2716"; }
 .fa-pen::before { content: "\270E"; }

@@ -56,7 +56,7 @@ AI_MAX_KEPT = 200;
 
 AI_REFRESH_MS = 5000;			// AINodeInfo / AIRouterInfo refresh period
 AI_REAPER_MS = 1000;			// finished-request sweep period
-AI_REQUEST_TTL_MS = 120000;		// keep a finished request this long for re-polls
+AI_REQUEST_TTL_MS = 3600000;	// keep a finished request this long for re-polls (1 hour)
 AI_WORKER_IDLE_MS = 25;			// worker sleep on an empty queue
 AI_UPDATE_MS = 50;				// follow-up (ai_request_update) apply period
 

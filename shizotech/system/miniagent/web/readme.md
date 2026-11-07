@@ -5,7 +5,7 @@ HTML / CSS / JS, no build step and no CDN: the pages work without internet.
 
 ```
 web/
-├── index.html, dashboard.js/.css   the shell: one sidebar workspace tree + main pane (no iframe)
+├── index.html, dashboard.js/.css   the shell: compact workspace tree + main pane
 ├── chat/                           chat with the node's receptionist (POST /api/adminagent, /poll, /stop)
 ├── tasks/                          the worker tasks (/api/tasks, /api/status, /api/events, POST/PUT/DELETE /api/task)
 ├── architecture/                   the architecture graph (/api/architecture/..., ../architecture_spec.md)
@@ -35,10 +35,39 @@ Notes for changes:
   `.megamind/architecture/architecture.json` when the workspace is created.
 ## Workspace dashboard (issue #907)
 
-`index.html`, `dashboard.css` and `dashboard.js` are the workspace dashboard. They replace the
-old node-scoped navigation with a recursive workspace tree; each workspace has sessions,
-architecture and tasks under its own `.megamind/`. Chat streams through
+`index.html`, `dashboard.css` and `dashboard.js` provide a compact Project tree: the store's synthetic
+`root` is hidden, actual projects are top-level rows, subprojects and their sessions form a connected
+hierarchy, and clicking a project or subproject toggles only its own branch. Open branches stay open
+when selection moves elsewhere. Sessions are opened only when clicked; selecting a project never creates
+or auto-opens a session. Tree connectors use 13px per level.
+Session streams resume from the latest sequence and the manager drains buffered agent output before
+restarting a child process, preserving the final delta and terminal event. Each worker saves the model's
+chat transcript to `.megamind/sessions/<id>/chat.json` after a turn and imports it on the next spawn, so
+new prompts continue the session conversation. For older sessions without that file, retained user and
+assistant events seed a transcript on the next spawn. Sessions, architecture and tasks live under that
+project's `.megamind/`. Chat streams through
 `GET /api/sessions/<id>/stream`; a new prompt interrupts the running turn. Settings edits
-`max_sessions`; live token/usage stats and notifications are shown in the shell.
-API contract: `../workspace_spec.md`. The old `chat/`, `tasks/` and `architecture/` pages remain
-as standalone files but are no longer the dashboard's primary navigation.
+`max_sessions`; live token/usage stats and notifications are shown in the shell. Removing a workspace stops and deletes its sessions automatically; its project files stay on disk, and sub-workspaces must be removed first.
+API contract: `../workspace_spec.md`. The architecture tab embeds `architecture/` for the pan/zoom,
+node editing and layout controls, scoped to the selected workspace. The graph refreshes explicitly
+and polls every 10 seconds only while a worker job is active; it does not poll while idle.
+Reasoning events are incremental chunks: the dashboard accumulates each contiguous run, then shows only
+its latest sentence. Tool cards show selected identifying parameters and completion/failure, not raw
+argument or result payloads. Normal-mode turns finish after one agent task; Loop mode retries until
+its goal is reported finished or failed. Per-session `low` / `medium` / `high` reasoning effort is
+persisted and applied to every worker turn; the
+sidebar status indicator updates from the lightweight stats endpoint without rebuilding the tree. Workers
+initialize the workspace goal store and receive validated goal/task tools plus architecture inspection and
+pending-edit tools (including node and relationship edits); architecture jobs and source edits remain under
+owner control. New dashboard one-off tasks are active manual goals queued through the scheduler, while a
+session switch only replaces the browser's event stream and never stops the worker. Every registered workspace
+and subworkspace is initialized with `.agentspace/` from `agentspace_template/` for the goal engine, without
+replacing existing files. Older goal files under `.megamind/tasks/` are imported into `.agentspace/` on load;
+the legacy directory is retained as a backup and is not an active store. For workers, a recurring task is a
+recurring Goal: use `create_recurring_goal`, never the one-off `create_workspace_task` tool.
+The hazard stripe is a compact sidebar footer. The workspace task tab and Global Tasks view poll every 15 seconds and skip unchanged
+render signatures. The task form is a persistent sibling of `taskContent`, so task polling only replaces task
+cards and leaves an open form and its typed values intact. On the first prompt, the dashboard displays the accepted
+user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/`
+worker-pool page polls only while visible; it reconciles changed cards by task ID and preserves unchanged card nodes
+and the task-creation form, so updates do not repaint the full dashboard.

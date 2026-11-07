@@ -11,10 +11,10 @@
 //           shz node.shio --port 13337 --api-token secret
 //           shz node.shio --agentspace .agentspace             scheduled goals
 //
-//  Goals: when the working directory has an .agentspace/ (shz miniagent.goals init)
-//  or --agentspace <dir> is given, the node runs the goal scheduler
-//  (goal_engine.shio, goals_spec.md): scheduled work starts on its own, in its
-//  window, through the same worker pool. --no-goals turns it off.
+//  Goals: the node runs the goal scheduler on the global node store
+//  std.user_path()/miniagent/node/.agentspace by default (goal_engine.shio,
+//  goals_spec.md): scheduled work starts on its own, in its window, through the
+//  same worker pool. --agentspace <dir> overrides the root; --no-goals turns it off.
 //
 //  Model configs:
 //           --config <name|path[#profile]>
@@ -190,6 +190,8 @@ mind_host_report(agt) {
 }
 
 // the .agentspace this node schedules goals from ("" = goals off)
+// default: the global node store, std.user_path()/miniagent/node/.agentspace;
+// --agentspace <dir> wins (a relative path is used exactly as given)
 node_goals_root() {
 	if(model_config_cli_has_flag("--no-goals"))
 		return "";
@@ -199,10 +201,7 @@ node_goals_root() {
 	if(r)
 		return std.string(r);
 
-	if(fileio.is_directory(".agentspace/goals"))
-		return ".agentspace";
-
-	return "";
+	return miniagent_node_agentspace();
 }
 
 node_print_goals(sch) {
@@ -424,7 +423,7 @@ else if(web_mode) {
 
 		if(ui) {
 			api = ui.server;
-			std.print("Web interface: http://localhost:" + opts.port + "/  (architecture: " + ui.board.path + ")\n");
+			std.print("Web interface: http://127.0.0.1:" + opts.port + "/  (architecture: " + ui.board.path + ")\n");
 		}
 		else
 			api_port = opts.port;

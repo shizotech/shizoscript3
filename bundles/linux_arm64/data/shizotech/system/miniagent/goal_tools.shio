@@ -207,6 +207,22 @@ goal_tool_create(sch, args) {
 	return out;
 }
 
+goal_tool_create_recurring(sch, args) {
+	return goal_tool_create(sch, [
+		title = goal_arg(args, "title"),
+		instructions = goal_arg(args, "instructions"),
+		schedule_type = "recurring",
+		days = goal_arg(args, "days"),
+		every = goal_arg(args, "every"),
+		window = goal_arg(args, "window"),
+		start = goal_arg(args, "start"),
+		end = goal_arg(args, "end"),
+		duration = goal_arg(args, "duration"),
+		timezone = goal_arg(args, "timezone"),
+		activate = goal_arg(args, "activate"),
+	]);
+}
+
 goal_tool_update(sch, args) {
 	id = goal_arg(args, "id");
 	f = sch.space.find(id);
@@ -322,7 +338,7 @@ goal_tool_run_now(sch, args) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 GOAL_TOOL_SCHEDULE_PARAMS = [
-	schedule_type = "string(): once | recurring | windowed (repeats work inside the window) | manual",
+	schedule_type = "string(): once | recurring | windowed (repeats work inside the window) | manual; recurring tasks are goals with type=recurring",
 	date = "string(): OPTIONAL YYYY-MM-DD, required for once",
 	days = "string(): OPTIONAL weekdays for recurring/windowed: 'monday,thursday', 'daily', 'weekdays', 'weekends'",
 	window = "string(): OPTIONAL a named window from get_goals().windows, e.g. 'tonight'",
@@ -349,7 +365,7 @@ goal_tools_add(agt) {
 	create_params = [
 		title = "&string(): Short title of the goal",
 		instructions = "&string(): What the worker should do, in the user's words plus scope and acceptance criteria (Markdown)",
-		schedule_type = "&string(): once | recurring | windowed (repeats work inside the window) | manual",
+		schedule_type = "&string(): once | recurring | windowed (repeats work inside the window) | manual; recurring tasks are goals with type=recurring",
 		id = "string(): OPTIONAL id (lowercase-with-dashes), derived from the title otherwise",
 		project = "string(): OPTIONAL project folder in .agentspace/projects/",
 		priority = "string(): OPTIONAL low | normal | high | urgent (urgent ignores the background limits)",
@@ -367,7 +383,7 @@ goal_tools_add(agt) {
 
 	agt.add_tool(
 		"create_goal",
-		"Create a scheduled goal (autonomous work at set times) from the user's request. The code validates it, refuses duplicates and writes .agentspace/goals/<status>/<id>/goal.md. Resolve times with get_goals() first. Tell the user the resulting window and time zone.",
+		"Create a scheduled work item in the goal engine. A 'goal' is the engine's unit of work, not only an abstract objective: recurring tasks are goals with schedule_type=recurring. For any task the user wants repeated, use the dedicated create_recurring_goal tool when available; otherwise create_goal(schedule_type=recurring) with days or every. Do not turn recurring work into a one-off/manual task. Use get_goals() first to resolve the local time zone and named windows. New goals stay proposed unless the user explicitly asks to activate them; report the resulting schedule and time zone.",
 		create_params,
 		[](agt, args) {
 			sch = goal_tool_scheduler(agt);

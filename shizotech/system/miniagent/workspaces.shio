@@ -36,6 +36,11 @@ ws_str(v, def = "") {
     return std.string(v);
 }
 
+ws_valid_reasoning_effort(value) {
+    effort = ws_str(value).lowercase();
+    return effort == "low" || effort == "medium" || effort == "high";
+}
+
 ws_slug(text) {
     s = ws_str(text).lowercase().strip();
     out = "";
@@ -72,6 +77,54 @@ ws_title_from(text, n = 48) {
     return s;
 }
 
+ws_chat_from_events(events) {
+    chat = [];
+    assistant_text = "";
+    assistant_report = "";
+
+    for(event : events) {
+        if(!std.is_json(event))
+            continue;
+
+        if(event.type == "user") {
+            if(assistant_report || assistant_text) {
+                content = assistant_report ? assistant_report : assistant_text;
+                chat.push_back([role = "assistant", content = content]);
+            }
+
+            assistant_text = "";
+            assistant_report = "";
+            user_text = ws_str(event.text);
+
+            if(user_text)
+                chat.push_back([role = "user", content = user_text]);
+        }
+        else if(event.type == "delta") {
+            action = event.action;
+
+            if(std.is_json(action) && action.has("text"))
+                assistant_text += ws_str(action.text);
+        }
+        else if(event.type == "done") {
+            assistant_report = ws_str(event.report);
+            content = assistant_report ? assistant_report : assistant_text;
+
+            if(content)
+                chat.push_back([role = "assistant", content = content]);
+
+            assistant_text = "";
+            assistant_report = "";
+        }
+    }
+
+    if(assistant_report || assistant_text) {
+        content = assistant_report ? assistant_report : assistant_text;
+        chat.push_back([role = "assistant", content = content]);
+    }
+
+    return chat;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  WorkspaceStore — physical directory tree + registry + settings
 // ═══════════════════════════════════════════════════════════════════════════
@@ -91,14 +144,7 @@ class WorkspaceStore {
 
             root = fileio.absolute_path(base);
         } else {
-            base = ws_str(std.user_path());
-            if(!base)
-                base = ws_str(std.wd());
-
-            for(base.length() > 1 && (base.ends("/") || base.ends("\\")))
-                base = base.substr(0, base.length() - 1);
-
-            root = fileio.absolute_path(base + "/miniagent/workspaces");
+            root = fileio.absolute_path(miniagent_workspaces_root());
         }
         registry_path = root + "/" + WS_REGISTRY_FILE;
         settings_path = root + "/" + WS_SETTINGS_FILE;
@@ -123,7 +169,6 @@ class WorkspaceStore {
         fileio.mkdir(meg);
         fileio.mkdir(meg + "/sessions");
         fileio.mkdir(meg + "/architecture");
-        fileio.mkdir(meg + "/tasks");
 
         // A workspace that already had the old .agentspace/architecture.json
         // keeps that graph when the per-workspace .megamind is created.
@@ -139,6 +184,56 @@ class WorkspaceStore {
         }
 
         return meg;
+    }
+
+    migrate_legacy_goal_space(path, template) {
+        legacy = path + "/.megamind/tasks";
+        target = path + "/.agentspace";
+        if(!fileio.is_directory(legacy))
+            return true;
+
+        for(f : fileio.files(legacy, true)) {
+            src = legacy + "/" + f;
+            dst = target + "/" + f;
+            text = goal_read(src);
+
+            if(fileio.exists(dst)) {
+                template_file = template + "/" + f;
+                if(f.starts("preferences/") && fileio.exists(template_file) && goal_read(dst) == goal_read(template_file)) {
+                    if(!fileio.write_text(dst, text)) {
+                        std.error("[workspaces] could not import legacy goal preferences from ", src);
+                        return false;
+                    }
+                }
+                continue;
+            }
+
+            goal_mkdir(fileio.file_dir(dst));
+            if(!fileio.write_text(dst, text)) {
+                std.error("[workspaces] could not import legacy goal data from ", src);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    ensure_agentspace(path) {
+        template = __DIR__ + "/agentspace_template";
+        if(!fileio.is_directory(template)) {
+            std.error("[workspaces] goal-engine template is missing: ", template);
+            return false;
+        }
+
+        if(!migrate_legacy_goal_space(path, template))
+            return false;
+
+        space = GoalSpace(path + "/.agentspace");
+        space.init(template);
+        if(!space.exists() || !fileio.exists(path + "/.agentspace/preferences/scheduling.md")) {
+            std.error("[workspaces] could not initialize goal engine at ", path + "/.agentspace");
+            return false;
+        }
+        return true;
     }
 
     save() {
@@ -175,8 +270,11 @@ class WorkspaceStore {
         }
 
         for(w : items) {
-            if(w.path)
-                ensure_megamind(w.path);
+            if(!w.path)
+                continue;
+            ensure_megamind(w.path);
+            if(w.id != "root" && !ensure_agentspace(w.path))
+                return false;
         }
 
         return true;
@@ -296,6 +394,10 @@ class WorkspaceStore {
 
         fileio.mkdir(phys);
         ensure_megamind(phys);
+        if(!ensure_agentspace(phys)) {
+            cs.release();
+            return [ok = false, error = "could not initialize the workspace goal engine"];
+        }
 
         id = std.random_hash(16);
 
@@ -394,8 +496,11 @@ class SessionManager {
     store = None;
     cfg = None;
     sessions = [];
+    live_texts = [];
+    live_text_seqs = [];
     procs = [];
     pump_active = [];
+    deleting_sessions = [];
     listeners = [];
     notifications = [];
 
@@ -403,8 +508,11 @@ class SessionManager {
         store = _store;
         cfg = _cfg;
         sessions = [];
+        live_texts = [];
+        live_text_seqs = [];
         procs = [];
         pump_active = [];
+        deleting_sessions = [];
         listeners = [];
         notifications = [];
         load_sessions();
@@ -434,6 +542,9 @@ class SessionManager {
                 s.title = ws_str(s.title, "Session");
                 s.mode = ws_str(s.mode, "normal");
                 s.role = ws_str(s.role, "adaptive");
+                s.reasoning_effort = ws_str(s.reasoning_effort, "medium");
+                if(!ws_valid_reasoning_effort(s.reasoning_effort))
+                    s.reasoning_effort = "medium";
                 s.status = ws_str(s.status, "stopped");
                 s.prompt = ws_str(s.prompt);
                 s.report = ws_str(s.report);
@@ -447,13 +558,41 @@ class SessionManager {
                 if(!s.events || !std.is_json(s.events))
                     s.events = [];
 
+                live_texts[s.id] = "";
+                live_text_seqs[s.id] = 0;
+                s.chat_history_size_at_prompt = std.int(s.chat_history_size_at_prompt);
                 restarted = false;
 
                 if(s.status == "starting" || s.status == "running" || s.status == "waiting") {
-                    s.status = "stopped";
-                    s.error = "the node was restarted while this session ran";
-                    s.updated = std.millis();
-                    restarted = true;
+                    recovered = recovered_turn(dir + "/" + sid, s);
+
+                    if(std.is_json(recovered)) {
+                        s.status = recovered.status == "finished" ? "done" : recovered.status;
+                        s.report = recovered.report;
+                        s.error = recovered.status == "failed" ? s.report : "";
+                        s.token_usage = recovered.token_usage;
+                        s.updated = recovered.completed;
+                        if(!s.updated) s.updated = std.millis();
+                        push_event(s, "done", [
+                            ok = json.bool(recovered.status == "finished"),
+                            status = recovered.status,
+                            report = s.report,
+                            token_usage = s.token_usage,
+                        ]);
+                        restarted = true;
+                    } else {
+                        s.status = "failed";
+                        s.error = "the session process exited without a terminal result";
+                        s.report = s.error;
+                        s.updated = std.millis();
+                        push_event(s, "done", [
+                            ok = json.bool(false),
+                            status = "failed",
+                            report = s.report,
+                            token_usage = s.token_usage,
+                        ]);
+                        restarted = true;
+                    }
                 }
 
                 sessions[s.id] = s;
@@ -502,25 +641,68 @@ class SessionManager {
         return dir + "/session.json";
     }
 
+    // A terminal result written by the worker before it exited. It must match the
+    // current prompt and add history, so an old result is not mistaken for this turn.
+    recovered_turn(dir, s) {
+        path = dir + "/chat.json.result.json";
+
+        if(!fileio.exists(path))
+            return None;
+
+        result = None;
+
+        try {
+            result = fileio.read_json(path, true);
+        } catch(e) {
+            return None;
+        }
+
+        if(!std.is_json(result))
+            return None;
+
+        status = ws_str(result.status);
+
+        if(status != "finished" && status != "failed" && status != "question")
+            return None;
+
+        if(ws_str(result.prompt) != ws_str(s.prompt))
+            return None;
+
+        if(std.int(result.history_size) <= std.int(s.chat_history_size_at_prompt))
+            return None;
+
+        return [
+            status = status,
+            report = ws_str(result.report),
+            token_usage = std.int(result.token_usage),
+            completed = std.int(result.completed),
+        ];
+    }
+
     save_session(sid) {
-        s = sessions[sid];
-
-        if(!s)
-            return false;
-
         path = session_path(sid);
 
         if(!path)
             return false;
+
+        cs = std.critical_section_named("workspace_session_save:" + path);
+        s = sessions[sid];
+
+        if(!s) {
+            cs.release();
+            return false;
+        }
 
         saved = [
             id = s.id,
             workspace_id = s.workspace_id,
             title = s.title,
             mode = s.mode,
+            reasoning_effort = s.reasoning_effort,
             status = s.status,
             prompt = s.prompt,
             events = s.events.copy(),
+            chat_history_size_at_prompt = std.int(s.chat_history_size_at_prompt),
             token_usage = s.token_usage,
             created = s.created,
             updated = s.updated,
@@ -530,7 +712,9 @@ class SessionManager {
             seq = s.seq,
         ];
 
-        return fileio.write_json(path, saved, true, true);
+        result = fileio.write_json(path, saved, true, true);
+        cs.release();
+        return result;
     }
 
     push_event(s, type, payload) {
@@ -551,6 +735,8 @@ class SessionManager {
             return "finished";
         if(status == "failed")
             return "failed";
+        if(status == "question")
+            return "question";
         if(status == "starting")
             return "planned";
         if(status == "running" || status == "waiting")
@@ -576,6 +762,71 @@ class SessionManager {
 
     get_session(sid) {
         return session_view(sid);
+    }
+
+    delete_session(sid) {
+        sid = ws_str(sid);
+        s = sessions[sid];
+
+        if(!s)
+            return [ok = false, error = "unknown session"];
+
+        guard = std.critical_section_named("workspace_sessions");
+        if(deleting_sessions[sid]) {
+            guard.release();
+            return [ok = false, error = "session deletion is already in progress"];
+        }
+        deleting_sessions[sid] = true;
+        guard.release();
+
+        if(s.status == "starting" || s.status == "running" || s.status == "waiting")
+            stop_session(sid);
+
+        dir = session_dir(sid);
+        save_lock = std.critical_section_named("workspace_session_save:" + dir + "/session.json");
+        removed = fileio.remove(dir);
+        if(!removed) {
+            save_lock.release();
+            guard = std.critical_section_named("workspace_sessions");
+            deleting_sessions.erase(sid);
+            guard.release();
+            return [ok = false, error = "could not remove session files: " + dir];
+        }
+
+        guard = std.critical_section_named("workspace_sessions");
+        sessions.erase(sid);
+        live_texts.erase(sid);
+        live_text_seqs.erase(sid);
+        procs.erase(sid);
+        pump_active.erase(sid);
+        deleting_sessions.erase(sid);
+        guard.release();
+        save_lock.release();
+
+        return [ok = true, removed = sid];
+    }
+
+    session_live_state(sid) {
+        return [text = ws_str(live_texts[sid]), seq = std.int(live_text_seqs[sid])];
+    }
+
+    session_chat_history(sid) {
+        dir = session_dir(sid);
+
+        if(!dir)
+            return None;
+
+        path = dir + "/chat.json";
+
+        if(!fileio.exists(path))
+            return [];
+
+        history = fileio.read_json(path, true);
+
+        if(!std.is_list(history))
+            return None;
+
+        return history;
     }
 
     list_sessions(workspace_id) {
@@ -608,6 +859,7 @@ class SessionManager {
             taskid = s.id,
             name = s.title,
             state = host_state(s.status),
+            active = s.status == "starting" || s.status == "running" || s.status == "waiting",
             report = s.report,
             error = s.error,
             token_usage = s.token_usage,
@@ -641,7 +893,18 @@ class SessionManager {
         fileio.mkdir(dir);
 
         config_path = dir + "/config.json";
+        history_path = dir + "/chat.json";
         fileio.write_json(config_path, cfg.to_json(), true, true);
+
+        if(!fileio.exists(history_path) && std.is_json(s.events) && s.events.size()) {
+            legacy_chat = ws_chat_from_events(s.events);
+
+            if(legacy_chat.size() && !fileio.write_json(history_path, legacy_chat, true, true)) {
+                s.error = "Cannot migrate session chat history: " + history_path;
+                save_session(sid);
+                return false;
+            }
+        }
 
         p = subprocess.process();
         p.pipes(true, true, true);
@@ -652,6 +915,8 @@ class SessionManager {
             "--workspace", w.path,
             "--config-file", config_path,
             "--session-id", sid,
+            "--history-file", history_path,
+            "--reasoning-effort", ws_str(s.reasoning_effort, "medium"),
             "--role", s.role,
             "--mode", s.mode,
         ];
@@ -687,7 +952,7 @@ class SessionManager {
         return p.write_line(obj.compact_string());
     }
 
-    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive") {
+    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive", reasoning_effort = "medium") {
         w = store.get(workspace_id);
 
         if(!w)
@@ -700,6 +965,10 @@ class SessionManager {
         role = ws_str(role);
         if(!role)
             role = "adaptive";
+
+        reasoning_effort = ws_str(reasoning_effort, "medium").lowercase();
+        if(!ws_valid_reasoning_effort(reasoning_effort))
+            return [ok = false, error = "reasoning_effort must be low, medium, or high"];
 
         title = ws_str(title).strip();
         prompt = ws_str(prompt).strip();
@@ -731,9 +1000,11 @@ class SessionManager {
             workspace_id = workspace_id,
             title = title,
             mode = mode,
+            reasoning_effort = reasoning_effort,
             status = "starting",
             prompt = prompt,
             events = [],
+            chat_history_size_at_prompt = 0,
             token_usage = 0,
             created = std.millis(),
             updated = std.millis(),
@@ -745,6 +1016,8 @@ class SessionManager {
         ];
 
         sessions[sid] = s;
+        live_texts[sid] = "";
+        live_text_seqs[sid] = 0;
         cs.release();
 
         dir = session_dir(sid);
@@ -758,8 +1031,9 @@ class SessionManager {
         }
 
         if(prompt) {
-            send_json(sid, [type = "prompt", text = prompt]);
+            send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
             s.status = "running";
+            push_event(s, "user", [text = prompt]);
             push_event(s, "status", [status = "running"]);
         }
 
@@ -775,22 +1049,37 @@ class SessionManager {
         return [ok = true, session = session_view(sid)];
     }
 
-    send_prompt(sid, prompt) {
+    send_prompt(sid, prompt, reasoning_effort = None) {
         s = sessions[sid];
 
         if(!s)
             return [ok = false, error = "unknown session"];
+
+        if(deleting_sessions[sid])
+            return [ok = false, error = "session deletion is in progress"];
 
         prompt = ws_str(prompt).strip();
 
         if(!prompt)
             return [ok = false, error = "empty prompt"];
 
-        // "+" creates an empty session with a placeholder title. The first
+        if(!std.is_none(reasoning_effort)) {
+            reasoning_effort = ws_str(reasoning_effort).lowercase();
+            if(!ws_valid_reasoning_effort(reasoning_effort))
+                return [ok = false, error = "reasoning_effort must be low, medium, or high"];
+            s.reasoning_effort = reasoning_effort;
+        }
+
+        // "+" creates an empty session with a placeholder title.
         // prompt names it from the request text.
         if(!s.title || s.title.starts("Session ")) {
             s.title = ws_title_from(prompt, 48);
         }
+
+        history = session_chat_history(sid);
+
+        if(!std.is_list(history))
+            return [ok = false, error = "Cannot read session chat history"];
 
         p = procs[sid];
 
@@ -815,9 +1104,12 @@ class SessionManager {
             send_json(sid, [type = "interrupt"]);
         }
 
-        send_json(sid, [type = "prompt", text = prompt]);
+        send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
 
         s.prompt = prompt;
+        live_texts[sid] = "";
+        live_text_seqs[sid] = s.seq;
+        s.chat_history_size_at_prompt = history.size();
         s.status = "running";
         s.updated = std.millis();
         push_event(s, "user", [text = prompt]);
@@ -832,6 +1124,9 @@ class SessionManager {
 
         if(!s)
             return [ok = false, error = "unknown session"];
+
+        if(deleting_sessions[sid])
+            return [ok = false, error = "session deletion is in progress"];
 
         mode = ws_str(mode);
 
@@ -885,7 +1180,7 @@ class SessionManager {
             if(!s)
                 break;
 
-            if(s.status == "done" || s.status == "failed" || s.status == "stopped")
+            if(s.status == "done" || s.status == "failed" || s.status == "question" || s.status == "stopped")
                 break;
 
             p = procs[sid];
@@ -893,28 +1188,8 @@ class SessionManager {
             if(!p)
                 break;
 
-            if(!p.running()) {
-                s.attempts++;
-                s.status = "starting";
-                s.updated = std.millis();
-                push_event(s, "status", [status = "starting"]);
-                save_session(sid);
-
-                std.sleep(math.min(WS_RETRY_BACKOFF_MAX_MS, 1000 * s.attempts));
-
-                if(!spawn(sid)) {
-                    s.error = "could not restart the session process";
-                    push_event(s, "error", [message = s.error]);
-                    save_session(sid);
-                    continue;
-                }
-
-                if(s.prompt)
-                    send_json(sid, [type = "prompt", text = s.prompt]);
-
-                continue;
-            }
-
+            // Drain stdout before checking running(): the child can exit after
+            // writing its final delta and done line, while both remain buffered.
             line = p.read_line("stdout", 100);
 
             if(line.empty()) {
@@ -924,6 +1199,49 @@ class SessionManager {
                     s.error = err;
                     push_event(s, "error", [message = err]);
                     save_session(sid);
+                }
+
+                if(!p.running()) {
+                    s.attempts++;
+                    recovered = recovered_turn(session_dir(sid), s);
+
+                    if(std.is_json(recovered)) {
+                        s.status = recovered.status == "finished" ? "done" : recovered.status;
+                        s.report = recovered.report;
+                        live_texts[sid] = "";
+                        s.token_usage = recovered.token_usage;
+                        s.error = recovered.status == "failed" ? s.report : "";
+                        s.updated = recovered.completed;
+                        if(!s.updated) s.updated = std.millis();
+
+                        e = push_event(s, "done", [
+                            ok = json.bool(recovered.status == "finished"),
+                            status = recovered.status,
+                            report = s.report,
+                            token_usage = s.token_usage,
+                        ]);
+                        live_text_seqs[sid] = e.seq;
+                        save_session(sid);
+                        notify_listeners(s);
+                        break;
+                    }
+
+                    s.status = "failed";
+                    s.report = err ? "the session process exited without a terminal result: " + err
+                        : "the session process exited without a terminal result";
+                    s.error = s.report;
+                    s.updated = std.millis();
+                    push_event(s, "error", [message = s.error]);
+                    e = push_event(s, "done", [
+                        ok = json.bool(false),
+                        status = "failed",
+                        report = s.report,
+                        token_usage = s.token_usage,
+                    ]);
+                    live_text_seqs[sid] = e.seq;
+                    save_session(sid);
+                    notify_listeners(s);
+                    break;
                 }
 
                 std.sleep(20);
@@ -957,39 +1275,54 @@ class SessionManager {
 
                 s.status = "running";
                 s.updated = std.millis();
-                push_event(s, "delta", [action = action]);
+                e = push_event(s, "delta", [action = action]);
+                if(!std.is_none(action.text)) {
+                    live_texts[sid] = ws_str(live_texts[sid]) + ws_str(action.text);
+                    live_text_seqs[sid] = e.seq;
+                }
                 save_session(sid);
             }
             else if(type == "stats") {
                 s.token_usage = std.int(data.token_usage);
+                live_texts[sid] = "";
                 s.updated = std.millis();
-                push_event(s, "stats", [token_usage = s.token_usage]);
+                e = push_event(s, "stats", [token_usage = s.token_usage]);
+                live_text_seqs[sid] = e.seq;
                 save_session(sid);
             }
             else if(type == "error") {
                 s.error = ws_str(data.message);
+                if(!s.error)
+                    s.error = "Agent reported an unspecified error";
+                s.status = "failed";
+                s.report = s.error;
                 s.updated = std.millis();
                 push_event(s, "error", [message = s.error]);
+                push_event(s, "done", [ok = json.bool(false), status = "failed", report = "", token_usage = s.token_usage]);
                 save_session(sid);
+                notify_listeners(s);
+                break;
             }
             else if(type == "done") {
                 status = ws_str(data.status, "failed");
 
-                if(status != "finished" && status != "failed")
+                if(status != "finished" && status != "failed" && status != "question")
                     status = "failed";
 
-                s.status = status == "finished" ? "done" : "failed";
+                s.status = status == "finished" ? "done" : status;
                 s.report = ws_str(data.report);
+                live_texts[sid] = "";
                 s.token_usage = std.int(data.token_usage);
                 s.error = status == "failed" ? s.report : "";
                 s.updated = std.millis();
 
-                push_event(s, "done", [
+                e = push_event(s, "done", [
                     ok = json.bool(status == "finished"),
                     status = status,
                     report = s.report,
                     token_usage = s.token_usage,
                 ]);
+                live_text_seqs[sid] = e.seq;
 
                 save_session(sid);
                 notify_listeners(s);
@@ -1044,8 +1377,10 @@ class SessionManager {
         active = 0;
         running = 0;
         tokens = [];
+        session_status = std.json();
 
         for(k, s : sessions) {
+            session_status[k] = s.status;
             if(s.status == "starting" || s.status == "running" || s.status == "waiting")
                 active++;
 
@@ -1062,6 +1397,7 @@ class SessionManager {
             total_sessions = sessions.size(),
             running_processes = running,
             token_usage = tokens,
+            session_status = session_status,
             max_sessions = max_sessions(),
         ];
     }
@@ -1188,6 +1524,12 @@ workspaces_get_scheduler(ctx, workspace_id) {
         return ctx.schedulers[workspace_id];
     }
 
+    // The synthetic root workspace is not a project and has no .agentspace.
+    if(workspace_id == "root") {
+        cs.release();
+        return None;
+    }
+
     w = ctx.store.get(workspace_id);
 
     if(!w) {
@@ -1202,7 +1544,7 @@ workspaces_get_scheduler(ctx, workspace_id) {
         return None;
     }
 
-    space = GoalSpace(w.path + "/.megamind/tasks");
+    space = GoalSpace(w.path + "/.agentspace");
 
     if(!space.exists())
         space.init(__DIR__ + "/agentspace_template");
@@ -1223,11 +1565,98 @@ workspaces_get_scheduler(ctx, workspace_id) {
     return scheduler;
 }
 
+// Start the goal engine of every registered real workspace once, at node startup.
+// The synthetic root workspace is only a container and has no goal store.
+workspaces_start_all_schedulers(ctx) {
+    started = 0;
+
+    for(w : ctx.store.list()) {
+        if(w.id == "root")
+            continue;
+
+        scheduler = workspaces_get_scheduler(ctx, w.id);
+
+        if(scheduler)
+            started++;
+    }
+
+    return started;
+}
+
 workspaces_board_reply(res) {
     if(std.is_json(res) && res.has("ok") && !res.ok)
         return node_api_err(ws_str(res.error, "failed"), 409);
 
     return node_api_ok(res);
+}
+
+// Remove a workspace and every session that belongs to it. Project files stay
+// on disk. Children are refused before sessions are deleted, so a refused delete
+// leaves the workspace and its sessions intact.
+workspaces_delete_workspace(ctx, workspace_id) {
+    workspace_id = ws_str(workspace_id);
+    w = ctx.store.get(workspace_id);
+
+    if(!w)
+        return [ok = false, error = "unknown workspace", code = 404];
+
+    if(workspace_id == "root")
+        return [ok = false, error = "the root workspace cannot be deleted", code = 409];
+
+    for(c : ctx.store.list()) {
+        if(c.parent == workspace_id)
+            return [ok = false, error = "workspace has children", code = 409];
+    }
+
+    sessions = ctx.manager.list_sessions(workspace_id);
+    removed_sessions = [];
+
+    for(s : sessions) {
+        res = ctx.manager.delete_session(s.id);
+
+        if(!res.ok) {
+            return [
+                ok = false,
+                error = "could not delete session " + ws_str(s.id) + ": " + ws_str(res.error, "failed"),
+                code = 409,
+                sessions_removed = removed_sessions,
+            ];
+        }
+
+        removed_sessions.push_back(ws_str(s.id));
+    }
+
+    res = ctx.store.delete(workspace_id);
+
+    if(!res.ok)
+        return [
+            ok = false,
+            error = ws_str(res.error, "failed"),
+            code = 409,
+            sessions_removed = removed_sessions,
+        ];
+
+    scheduler = None;
+    cs = std.critical_section_named("workspace_schedulers");
+    if(ctx.schedulers.has(workspace_id)) {
+        scheduler = ctx.schedulers[workspace_id];
+        ctx.schedulers.erase(workspace_id);
+    }
+    cs.release();
+    if(scheduler)
+        scheduler.stop();
+
+    cs = std.critical_section_named("workspace_boards");
+    ctx.boards.erase(workspace_id);
+    cs.release();
+    ctx.hosts.erase(workspace_id);
+
+    return [
+        ok = true,
+        removed = workspace_id,
+        sessions_removed = removed_sessions,
+        files_kept = true,
+    ];
 }
 
 // Activate / pause / cancel a goal of this workspace (the task menu).
@@ -1271,6 +1700,8 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         hosts = [],
     ];
 
+    workspaces_start_all_schedulers(ctx);
+
     // ── global routes ──────────────────────────────────────────────────────
     server.route("GET", "^/api/workspaces$", [ctx, token](req, writer) {
         if(!node_api_authorized(req, token))
@@ -1306,6 +1737,8 @@ workspaces_api_register(server, cfg, api_token, store = None) {
 
         if(!res.ok)
             return node_api_err(res.error, 400);
+
+        workspaces_get_scheduler(ctx, res.workspace.id);
 
         return node_api_ok(res.workspace);
     });
@@ -1393,12 +1826,16 @@ workspaces_api_register(server, cfg, api_token, store = None) {
             return node_api_err("Unauthorized", 401);
 
         workspace_id = std.string(req.matches[0]);
-        res = ctx.store.delete(workspace_id);
+        res = workspaces_delete_workspace(ctx, workspace_id);
 
         if(!res.ok)
-            return node_api_err(res.error, 409);
+            return node_api_err(res.error, res.code);
 
-        return node_api_ok([removed = workspace_id]);
+        return node_api_ok([
+            removed = res.removed,
+            sessions_removed = res.sessions_removed,
+            files_kept = res.files_kept,
+        ]);
     });
 
     server.route("GET", "^/api/workspaces/([0-9a-zA-Z_-]+)/sessions$", [ctx, token](req, writer) {
@@ -1431,8 +1868,12 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         mode = node_api_get(body, "mode", "normal");
         prompt = node_api_get(body, "prompt");
         role = node_api_get(body, "role", "adaptive");
+        reasoning_effort = node_api_get(body, "reasoning_effort", "medium");
 
-        res = ctx.manager.create_session(workspace_id, title, mode, prompt, role);
+        if(!workspaces_get_scheduler(ctx, workspace_id))
+            return node_api_err("workspace goal scheduler unavailable", 409);
+
+        res = ctx.manager.create_session(workspace_id, title, mode, prompt, role, reasoning_effort);
 
         if(!res.ok)
             return node_api_err(res.error, 409);
@@ -1634,6 +2075,9 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         if(name.strip().empty())
             name = "Task-" + std.random_hash(6);
 
+        if(!workspaces_get_scheduler(ctx, workspace_id))
+            return node_api_err("workspace goal scheduler unavailable", 409);
+
         res = ctx.manager.create_session(workspace_id, name, mode, goal, role);
 
         if(!res.ok)
@@ -1679,6 +2123,28 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         }
 
         return node_api_ok(res);
+    });
+
+    server.route("POST", "^/api/workspaces/([0-9a-zA-Z_-]+)/goals/([0-9a-zA-Z_-]+)/run$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        workspace_id = std.string(req.matches[0]);
+        goal_id = std.string(req.matches[1]);
+
+        if(!ctx.store.get(workspace_id))
+            return node_api_err("unknown workspace", 404);
+
+        scheduler = workspaces_get_scheduler(ctx, workspace_id);
+        if(!scheduler)
+            return node_api_err("goal scheduler unavailable", 409);
+
+        scheduler.rescan();
+        res = scheduler.request_run(goal_id);
+        if(!res.ok)
+            return node_api_err(res.error, 409);
+
+        return node_api_ok([goal_id = goal_id, queued = true]);
     });
 
     server.route("POST", "^/api/workspaces/([0-9a-zA-Z_-]+)/goals/([0-9a-zA-Z_-]+)/status$", [ctx, token](req, writer) {
@@ -1771,6 +2237,17 @@ workspaces_api_register(server, cfg, api_token, store = None) {
     });
 
     // ── session routes ─────────────────────────────────────────────────────
+    server.route("DELETE", "^/api/sessions/([0-9a-zA-Z_-]+)$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        sid = std.string(req.matches[0]);
+        res = ctx.manager.delete_session(sid);
+        if(!res.ok)
+            return node_api_err(res.error, res.error == "unknown session" ? 404 : 409);
+        return node_api_ok([removed = sid]);
+    });
+
     server.route("GET", "^/api/sessions/([0-9a-zA-Z_-]+)$", [ctx, token](req, writer) {
         if(!node_api_authorized(req, token))
             return node_api_err("Unauthorized", 401);
@@ -1781,6 +2258,15 @@ workspaces_api_register(server, cfg, api_token, store = None) {
         if(!s)
             return node_api_err("unknown session", 404);
 
+        history = ctx.manager.session_chat_history(sid);
+
+        if(!std.is_list(history))
+            return node_api_err("Cannot read session chat history", 500);
+
+        live = ctx.manager.session_live_state(sid);
+        s.chat_history = history;
+        s.live_text = live.text;
+        s.live_text_seq = live.seq;
         return node_api_ok(s);
     });
 
@@ -1795,11 +2281,12 @@ workspaces_api_register(server, cfg, api_token, store = None) {
             return node_api_err("Invalid request body");
 
         prompt = node_api_get(body, "prompt");
+        reasoning_effort = node_api_get(body, "reasoning_effort", None);
 
         if(prompt.strip().empty())
             return node_api_err("Missing 'prompt'");
 
-        res = ctx.manager.send_prompt(sid, prompt);
+        res = ctx.manager.send_prompt(sid, prompt, reasoning_effort);
 
         if(!res.ok)
             return node_api_err(res.error, 409);
@@ -1886,14 +2373,13 @@ workspaces_api_register(server, cfg, api_token, store = None) {
                 if(e.seq > last_seq) {
                     last_seq = e.seq;
                     payload = e.copy();
-                    payload.erase("seq");
                     payload.erase("type");
                     writer.write_sse(std.string(payload), std.string(e.type));
                     sent = true;
                 }
             }
 
-            if(s.status == "done" || s.status == "failed" || s.status == "stopped")
+            if(s.status == "done" || s.status == "failed" || s.status == "question" || s.status == "stopped")
                 break;
 
             if(!sent && std.millis() - last_ping > WS_STREAM_PING_MS) {

@@ -1,122 +1,71 @@
-# Web Dashboard Ecosystem
+# web/ — the web interface of a node
 
-A modern dashboard ecosystem that integrates with the existing chat interface while maintaining its perfect UI.
-
-## Architecture Overview
-
-The dashboard ecosystem follows a modular architecture where:
-
-- **Main Dashboard**: `dashboard.html` serves as the central hub
-- **Chat Module**: `chat/` - Original chat interface as one module among others
-- **Feature Tracker**: `features/` - Track feature requests and progress
-- **Bug Tracker**: `bugs/` - Manage bugs with status workflow
-- **History**: `history/` - Track all dashboard actions
-- **Shared Components**: `components/` - Common CSS and JS utilities
-
-## Files and Directories
+Served by `web_ui.shio` when a node runs with `--web` (`shz miniagent --web`). Plain
+HTML / CSS / JS, no build step and no CDN: the pages work without internet.
 
 ```
 web/
-├── dashboard.html          # Main dashboard container
-├── dashboard.css           # Dashboard-specific styles
-├── dashboard.js            # Dashboard orchestration logic
+├── index.html, dashboard.js/.css   the shell: compact workspace tree + main pane
+├── chat/                           chat with the node's receptionist (POST /api/adminagent, /poll, /stop)
+├── tasks/                          the worker tasks (/api/tasks, /api/status, /api/events, POST/PUT/DELETE /api/task)
+├── architecture/                   the architecture graph (/api/architecture/..., ../architecture_spec.md)
+│   ├── graph.js                    SVG renderer, layout, editing, side panel
+│   └── style.css
 ├── components/
-│   ├── ui.css             # Shared UI components
-│   └── utils.js           # Shared utility functions
-├── chat/                  # Chat module
-│   ├── index.html         # Chat container
-│   ├── style.css          # Chat styling
-│   └── script.js          # Chat integration logic
-├── features/              # Feature tracker
-│   ├── index.html         # Feature view
-│   ├── style.css          # Feature styles
-│   └── script.js          # Feature management
-├── bugs/                  # Bug tracker
-│   ├── index.html         # Bug view
-│   ├── style.css          # Bug styles
-│   └── script.js          # Bug management
-└── history/               # Action history
-    ├── index.html         # History view
-    ├── style.css          # History styles
-    └── script.js          # History management
+│   ├── nodeapi.js                  fetch helper: the {ok, data} envelope, the API token (X-Api-Token)
+│   ├── icons.css                   the fa-* icon classes as plain glyphs (no Font Awesome download)
+│   ├── minimd.js                   small Markdown renderer + highlight.js stand-in for the chat
+│   ├── theme.css, ui.css, utils.js shared theme (green / black) and helpers
+└── cow_lays_eggs.html              the secret egg
 ```
 
-## Theme Palette
+Notes for changes:
 
-All components use the green/black theme:
+* An empty list arrives as `{}` (ShizoScript json): turn API lists into arrays before
+  using them (`Array.isArray(x) ? x : Object.values(x || {})`).
+* With `--api-token` every `/api/` call needs the token; `NodeApi` asks once and keeps it
+  in `localStorage` (`?token=<t>` in the URL sets it as well).
+* The API is documented in `../node_api.md` (node) and `../architecture_spec.md` (graph).
+* The session SSE URL is `/api/sessions/<id>/stream?token=<t>&since=<seq>`. EventSource cannot
+  send headers, so the token is accepted as a query value; `since` stops the page from
+  replaying the history it already rendered. The route sets `Content-Type: text/event-stream`.
+* On restart the session manager loads the saved `session.json` files from each workspace's
+  `.megamind/sessions/`; sessions that were running are marked stopped.
+* A workspace that already has a legacy `.agentspace/architecture.json` gets it copied into
+  `.megamind/architecture/architecture.json` when the workspace is created.
+## Workspace dashboard (issue #907)
 
-- **--accent**: `linear-gradient(135deg, #005c4b 0%, #00a884 100%)`
-- **--success**: `#00a884`
-- **--danger**: `#8b6c6c`
-
-## Navigation
-
-Use the sidebar to navigate between modules:
-
-- **Chat** - Original chat interface
-- **Features** - Feature tracker
-- **Bug Tracker** - Bug management
-- **History** - Action history
-
-## Features
-
-### Work Mode
-- **Toggle agent activity**: Enable/disable automated agent processing
-- **Backend persistence**: State synchronized with LevelDB via `/api/workmode` endpoints
-- **localStorage backup**: Offline support with fallback synchronization
-- **Real-time sync**: API calls on toggle with error handling and UI rollback
-
-### Feature Tracker
-- Add, update, delete features
-- Priority levels (low, medium, high, critical)
-- Status workflow (planned, in-progress, completed)
-- Progress tracking with visual progress bars
-- Category tags
-- Target dates
-
-### Bug Tracker
-- Report and track bugs
-- Priority levels
-- Status workflow (new, investigating, fixing, verified, closed)
-- Human verification interface
-- Environment tracking
-- Source tracking
-
-### History
-- Timeline view of all actions
-- Filter by type and time range
-- Revert functionality for supported actions
-- Detailed action history
-
-### Shared Components
-
-#### UI Components (`components/ui.css`)
-- Cards, badges, buttons
-- Responsive grid system
-- Modal and dialog styles
-- Status badge styles
-- Progress indicators
-- Timeline visualization
-
-#### Utilities (`components/utils.js`)
-- Date formatters
-- Status badge generator
-- Modal manager
-- Storage utilities
-- DOM utilities
-- Feature/Bug/History managers
-
-## Usage
-
-1. Open `dashboard.html` in your browser
-2. Navigate between modules using the sidebar
-3. Each module operates independently but shares the dashboard theme
-4. Data is persisted using localStorage with optional backend sync
-5. **Work Mode**: Toggle agent activity via the Work Mode button in the sidebar (syncs with backend `/api/workmode` endpoints)
-
-## Constraints
-
-- The original `index.html`, `style.css`, and `script.js` files are NOT modified
-- Each dashboard module is self-contained with its own HTML/CSS/JS
-- All modules share the green/black theme
-- Mobile-responsive design throughout
+`index.html`, `dashboard.css` and `dashboard.js` provide a compact Project tree: the store's synthetic
+`root` is hidden, actual projects are top-level rows, subprojects and their sessions form a connected
+hierarchy, and clicking a project or subproject toggles only its own branch. Open branches stay open
+when selection moves elsewhere. Sessions are opened only when clicked; selecting a project never creates
+or auto-opens a session. Tree connectors use 13px per level.
+Session streams resume from the latest sequence and the manager drains buffered agent output before
+restarting a child process, preserving the final delta and terminal event. Each worker saves the model's
+chat transcript to `.megamind/sessions/<id>/chat.json` after a turn and imports it on the next spawn, so
+new prompts continue the session conversation. For older sessions without that file, retained user and
+assistant events seed a transcript on the next spawn. Sessions, architecture and tasks live under that
+project's `.megamind/`. Chat streams through
+`GET /api/sessions/<id>/stream`; a new prompt interrupts the running turn. Settings edits
+`max_sessions`; live token/usage stats and notifications are shown in the shell.
+API contract: `../workspace_spec.md`. The architecture tab embeds `architecture/` for the pan/zoom,
+node editing and layout controls, scoped to the selected workspace. The graph refreshes explicitly
+and polls every 10 seconds only while a worker job is active; it does not poll while idle.
+Reasoning events are incremental chunks: the dashboard accumulates each contiguous run, then shows only
+its latest sentence. Tool cards show selected identifying parameters and completion/failure, not raw
+argument or result payloads. Normal-mode turns finish after one agent task; Loop mode retries until
+its goal is reported finished or failed. Per-session `low` / `medium` / `high` reasoning effort is
+persisted and applied to every worker turn; the
+sidebar status indicator updates from the lightweight stats endpoint without rebuilding the tree. Workers
+initialize the workspace goal store and receive validated goal/task tools plus architecture inspection and
+pending-edit tools (including node and relationship edits); architecture jobs and source edits remain under
+owner control. New dashboard one-off tasks are active manual goals queued through the scheduler, while a
+session switch only replaces the browser's event stream and never stops the worker. Every registered workspace
+and subworkspace is initialized with `.agentspace/` from `agentspace_template/` for the goal engine, without
+replacing existing files; `.megamind/tasks/` remains the workspace UI scheduler store. For workers, a recurring
+task is a recurring Goal: use `create_recurring_goal`, never the one-off `create_workspace_task` tool. The hazard
+stripe is a compact sidebar footer. The workspace task tab and Global Tasks view poll every 15 seconds and skip unchanged
+render signatures. The task form is a persistent sibling of `taskContent`, so task polling only replaces task
+cards and leaves an open form and its typed values intact. On the first prompt, the dashboard displays the accepted
+user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/`
+worker-pool page polls every 10 seconds and skips rebuilding its lists when visible data is unchanged.

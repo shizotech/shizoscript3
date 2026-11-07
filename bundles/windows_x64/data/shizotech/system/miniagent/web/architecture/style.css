@@ -193,3 +193,68 @@ code { font: 12px ui-monospace, Menlo, Consolas, monospace; background: rgba(255
   z-index: 10; max-width: 420px;
 }
 .toast.err { border-color: #8b4545; color: #ffb3b3; }
+
+:root {
+  --bg: #0c0d0e;
+  --panel: #151719;
+  --surface: #202326;
+  --text: #e8e5da;
+  --text-secondary: #9a9990;
+  --accent: linear-gradient(135deg, #8f2022, #d83a35);
+  --border: #343638;
+}
+
+.topbar {
+  position: relative;
+  padding-left: 60px;
+  background: linear-gradient(180deg, #1a1b1d, #141516);
+  border-bottom: 4px solid transparent;
+  border-image: repeating-linear-gradient(135deg, #d4ae3f 0 9px, #171819 9px 18px) 4;
+}
+.topbar::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #6c2724;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffb3a5 0 4%, #ff5b50 14%, #c91f20 42%, #590c10 76%, #21090b 100%);
+  box-shadow: inset 0 0 8px rgba(255, 213, 192, .42), 0 0 12px 2px rgba(230, 48, 42, .48), 0 0 28px rgba(206, 35, 32, .2);
+}
+.topbar::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(212, 176, 90, .28);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.project { text-transform: uppercase; letter-spacing: .08em; }
+.btn, #search, .panel input, .panel select, .panel textarea { border-radius: 4px; }
+.btn:hover { border-color: #b4933c; }
+.btn.primary { background: linear-gradient(135deg, #8f2022, #d83a35); }
+.job { background: rgba(228, 189, 76, .12); color: #e4bd4c; border-radius: 4px; }
+.job.failed, .job.lost { background: rgba(226, 85, 77, .14); color: #f07870; }
+.stage {
+  background: radial-gradient(circle at 20% 10%, rgba(183, 54, 46, .07), transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(210, 170, 61, .035), transparent 40%), var(--bg);
+}
+.stage::before { background-image: radial-gradient(rgba(205, 194, 164, .09) 1px, transparent 1px); background-size: 24px 24px; }
+.node.selected .card { filter: drop-shadow(0 0 8px rgba(228, 189, 76, .35)); }
+.panel { background: #151719; }
+.panel .stat, .plan { border-radius: 4px; }
+.toast { background: #191a1b; border-color: #414345; border-radius: 4px; }
+
+@media (max-width: 600px) {
+  .topbar { padding-left: 52px; }
+  .topbar::before { left: 14px; width: 24px; height: 24px; }
+  .topbar::after { left: 10px; width: 32px; height: 32px; }
+}

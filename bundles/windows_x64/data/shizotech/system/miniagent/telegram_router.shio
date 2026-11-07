@@ -100,6 +100,7 @@ class TelegramRouter : Router
     tg_last_chat = 0;       // the last accepted message, for duplicate deliveries
     tg_last_text = "";
     tg_last_ms = 0;
+    tg_terminal_seen = [];   // taskids already rendered as a terminal message
     tg_events = "reports";  // "reports" = only what deserves attention (default)
                             // "all"    = every node event (the verbose stream)
     tg_lock = "telegram:chats";
@@ -1098,6 +1099,23 @@ class TelegramRouter : Router
 
     tg_push_event(e)
     {
+        kind = std.string(e.kind ?? "");
+        taskid = std.string(e.taskid ?? "");
+        st = std.string(e.state ?? "");
+
+        // One task, one terminal message. The Router de-duplicates its own
+        // task_finished/task_state pair, but this guard makes the chat safe even
+        // if both kinds arrive: the first terminal message wins.
+        if(taskid.length() > 0 && (kind == "task_finished" || kind == "task_state") &&
+            (st == "finished" || st == "failed" || st == "lost" || st == "stopped" || st == "question")) {
+            for(i = 0; i < tg_terminal_seen.size(); i++) {
+                if(tg_terminal_seen[i] == taskid) {
+                    return;
+                }
+            }
+            tg_terminal_seen.push_back(taskid);
+        }
+
         msg = tg_render_event(e);
 
         if(!msg) {

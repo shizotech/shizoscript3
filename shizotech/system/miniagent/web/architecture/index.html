@@ -17,6 +17,7 @@
       <div id="job" class="job hidden"></div>
       <div class="tools">
         <input id="search" type="search" placeholder="Find a node…" autocomplete="off" />
+        <button class="btn" id="btnRefresh" title="Refresh the architecture data">Refresh</button>
         <button class="btn" id="btnAdd" title="Add a node (pending until Apply)">+ Node</button>
         <button class="btn" id="btnLayout" title="Arrange the nodes again">Auto layout</button>
         <button class="btn" id="btnFit" title="Fit the graph into the view">Fit</button>
@@ -46,7 +47,7 @@
             <h2>No architecture map yet</h2>
             <p>A worker agent reads the codebase in the node's working directory and writes a
               high-level model of it: modules, files, services and how they are connected.
-              It is saved in <code id="emptyFile">.agentspace/architecture.json</code>.</p>
+              It is saved in <code id="emptyFile">.megimind/architecture/architecture.json</code>.</p>
             <button class="btn primary big" id="btnAnalyzeEmpty">Analyze the codebase</button>
             <div class="empty-job" id="emptyJob"></div>
           </div>
@@ -55,6 +56,10 @@
 
       <aside class="panel" id="panel"></aside>
     </div>
+
+    <footer class="hazard-banner" aria-label="Authorized personnel only">
+      <span>AUTHORIZED PERSONNEL ONLY</span>
+    </footer>
   </div>
 
   <script src="../components/minimd.js"></script>

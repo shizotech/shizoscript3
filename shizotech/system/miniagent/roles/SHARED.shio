@@ -175,7 +175,7 @@ agt_add_read_tools(agt) {
 
 		txt = txt.replace("\r\n", "\n").replace("\r", "\n");
 
-		has_line_numbers = args.include_line_numbers.starts("true");
+		has_line_numbers = std.string(args.include_line_numbers ?? "false").lowercase() == "true";
 		has_line_start = args.start_line ?? false;
 		has_line_end = args.end_line ?? false;
 
