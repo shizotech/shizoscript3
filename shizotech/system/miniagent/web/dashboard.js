@@ -1383,6 +1383,14 @@ function handleStreamEvent(name, raw) {
 
   if (name === 'status') {
     const status = data && (data.status || data.state || data.value);
+    if (data && data.reasoning_effort) {
+      const effort = String(data.reasoning_effort).toLowerCase();
+      if (['low', 'medium', 'high'].includes(effort) && state.session) {
+        state.session.reasoning_effort = effort;
+        state.composerEffort = effort;
+        $('reasoningEffort').value = effort;
+      }
+    }
     if (status !== 'connected') setSessionStatus(status);
     return;
   }
