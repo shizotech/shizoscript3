@@ -73,6 +73,8 @@ Routes:
 - `POST /api/sessions/<id>/prompt` body `{prompt, reasoning_effort?}`; an effort override is persisted,
   then the running turn is interrupted and the new prompt is sent.
 - `POST /api/sessions/<id>/mode` body `{mode}`.
+- `POST /api/sessions/<id>/effort` body `{reasoning_effort}`; persists `low`, `medium` or `high` for every
+  future turn and returns the updated session.
 - `POST /api/sessions/<id>/stop`
 - `GET /api/sessions/<id>/stream` => SSE `delta`, `user`, `status`, `done`, `error`, `stats`
 - `GET /api/settings`, `PUT /api/settings` body `{max_sessions}`

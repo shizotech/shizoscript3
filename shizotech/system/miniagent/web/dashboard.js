@@ -168,6 +168,7 @@ const state = {
   currentReasoningText: '',
   pendingUser: null,
   composerMode: 'normal',
+  composerEffort: 'medium',
   renderingHistory: false
 };
 
@@ -769,6 +770,7 @@ function renderSessionHeader() {
   if (!s) {
     titleEl.textContent = 'No session selected';
     metaEl.textContent = 'Select a session in the sidebar or create one with +.';
+    $('reasoningEffort').value = state.composerEffort;
     modeButtons.forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === state.composerMode);
       b.disabled = false;
@@ -785,7 +787,9 @@ function renderSessionHeader() {
   titleEl.textContent = s.title || 'Session';
   metaEl.textContent = statusLabel(s.status) + ' - ' + modeLabel(s.mode || 'normal') +
     ' - ' + fmtNum(s.token_usage) + ' tokens';
-  if (s.reasoning_effort) $('reasoningEffort').value = s.reasoning_effort;
+  const effort = String(s.reasoning_effort || state.composerEffort || 'medium').toLowerCase();
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
 
   modeButtons.forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === (s.mode || 'normal'));
@@ -1424,6 +1428,43 @@ function handleStreamEvent(name, raw) {
 /* ── Chat actions ── */
 function currentMode() {
   return state.session ? (state.session.mode || state.composerMode) : state.composerMode;
+}
+
+async function setReasoningEffort(value) {
+  const effort = String(value || '').toLowerCase();
+  if (!['low', 'medium', 'high'].includes(effort)) return;
+
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
+
+  if (!state.session) {
+    toast('New sessions will use ' + effort + ' reasoning effort.', 'info');
+    return;
+  }
+
+  const previous = String(state.session.reasoning_effort || 'medium').toLowerCase();
+  const sessionId = state.session.id;
+  state.session.reasoning_effort = effort;
+  const listed = state.sessions.find((item) => String(item.id) === String(sessionId));
+  if (listed) listed.reasoning_effort = effort;
+
+  try {
+    const data = await NodeApi.post('/api/sessions/' + encodeURIComponent(sessionId) + '/effort', {
+      reasoning_effort: effort
+    });
+    if (data && data.reasoning_effort && state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = String(data.reasoning_effort).toLowerCase();
+    }
+    if (state.session.reasoning_effort === effort) toast('Reasoning effort set to ' + effort + '.', 'info');
+  } catch (e) {
+    if (state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = previous;
+      state.composerEffort = previous;
+      if (listed) listed.reasoning_effort = previous;
+      $('reasoningEffort').value = previous;
+      toast('Could not set reasoning effort: ' + e.message, 'error');
+    }
+  }
 }
 
 async function sendPrompt() {
@@ -2480,6 +2521,7 @@ function bindEvents() {
 
   $('btnStopSession').addEventListener('click', stopSession);
   $('btnSendPrompt').addEventListener('click', sendPrompt);
+  $('reasoningEffort').addEventListener('change', (e) => setReasoningEffort(e.target.value));
   $('taskForm').addEventListener('submit', submitTaskForm);
   $('taskView').addEventListener('click', (e) => {
     if (e.target.closest('#btnNewTask')) {

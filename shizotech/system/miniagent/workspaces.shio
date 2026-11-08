@@ -1142,6 +1142,28 @@ class SessionManager {
         return [ok = true, session = session_view(sid)];
     }
 
+    set_reasoning_effort(sid, effort) {
+        s = sessions[sid];
+
+        if(!s)
+            return [ok = false, error = "unknown session"];
+
+        if(deleting_sessions[sid])
+            return [ok = false, error = "session deletion is in progress"];
+
+        effort = ws_str(effort).lowercase();
+
+        if(!ws_valid_reasoning_effort(effort))
+            return [ok = false, error = "reasoning_effort must be low, medium, or high"];
+
+        s.reasoning_effort = effort;
+        s.updated = std.millis();
+        push_event(s, "status", [status = s.status, reasoning_effort = effort]);
+        save_session(sid);
+
+        return [ok = true, session = session_view(sid)];
+    }
+
     stop_session(sid) {
         s = sessions[sid];
 
@@ -2312,6 +2334,26 @@ workspaces_api_register(server, cfg, api_token, store = None) {
             return node_api_err(res.error, 409);
 
         return node_api_ok([session_id = sid, mode = res.session.mode]);
+    });
+
+    server.route("POST", "^/api/sessions/([0-9a-zA-Z_-]+)/effort$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        sid = std.string(req.matches[0]);
+        body = node_api_body(req);
+
+        if(std.is_none(body))
+            return node_api_err("Invalid request body");
+
+        reasoning_effort = node_api_get(body, "reasoning_effort");
+
+        res = ctx.manager.set_reasoning_effort(sid, reasoning_effort);
+
+        if(!res.ok)
+            return node_api_err(res.error, 409);
+
+        return node_api_ok(res.session);
     });
 
     server.route("POST", "^/api/sessions/([0-9a-zA-Z_-]+)/stop$", [ctx, token](req, writer) {

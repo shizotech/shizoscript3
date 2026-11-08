@@ -368,6 +368,11 @@ if(!cfg.load(config_path, false)) {
     loaded_session = SessionManager(store, cfg).get_session(sid);
     check(!std.is_none(loaded_session) && loaded_session.status == "stopped", "saved session loaded from .megamind");
     check(!std.is_none(loaded_session) && loaded_session.reasoning_effort == "high", "session reasoning effort survives manager reload");
+    effort_change = manager.set_reasoning_effort(sid, "low");
+    check(effort_change.ok && effort_change.session.reasoning_effort == "low", "session manager changes reasoning effort");
+    check(!manager.set_reasoning_effort(sid, "extreme").ok, "invalid reasoning effort change is refused");
+    reloaded_effort = SessionManager(store, cfg).get_session(sid);
+    check(!std.is_none(reloaded_effort) && reloaded_effort.reasoning_effort == "low", "changed reasoning effort survives manager reload");
     deleted_session_dir = manager.session_dir(sid);
     deleted_session = manager.delete_session(sid);
     check(deleted_session.ok && std.is_none(manager.get_session(sid)) && !fileio.exists(deleted_session_dir), "session deletion removes its stored conversation");
@@ -504,6 +509,12 @@ for(route : fake.routes) {
         run_goal_route = true;
 }
 check(run_goal_route, "goal-engine run route is registered");
+    effort_route = false;
+    for(route : fake.routes) {
+        if(route.method == "POST" && route.path == "^/api/sessions/([0-9a-zA-Z_-]+)/effort$")
+            effort_route = true;
+    }
+    check(effort_route, "session effort route is registered");
 
 if(fileio.exists(test_root))
     fileio.remove(test_root);

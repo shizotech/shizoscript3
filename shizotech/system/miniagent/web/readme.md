@@ -55,7 +55,8 @@ Reasoning events are incremental chunks: the dashboard accumulates each contiguo
 its latest sentence. Tool cards show selected identifying parameters and completion/failure, not raw
 argument or result payloads. Normal-mode turns finish after one agent task; Loop mode retries until
 its goal is reported finished or failed. Per-session `low` / `medium` / `high` reasoning effort is
-persisted and applied to every worker turn; the
+persisted and applied to every worker turn; changing it in the composer persists immediately through
+`POST /api/sessions/<id>/effort`, and the selector is not reset by SSE status/token updates. The
 sidebar status indicator updates from the lightweight stats endpoint without rebuilding the tree. Workers
 initialize the workspace goal store and receive validated goal/task tools plus architecture inspection and
 pending-edit tools (including node and relationship edits); architecture jobs and source edits remain under

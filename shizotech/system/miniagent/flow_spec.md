@@ -48,6 +48,7 @@ workspace gets its scheduler immediately.
    - `GET /api/workspaces` -> tree, settings, stats
    - `POST /api/workspaces/<id>/sessions` -> new session (title, mode, prompt, reasoning_effort)
    - `POST /api/sessions/<id>/prompt` -> prompt into an existing session
+   - `POST /api/sessions/<id>/effort` -> persist low/medium/high reasoning effort for future turns
    - `GET /api/sessions/<id>/stream` -> SSE (`delta`, `user`, `status`, `done`, `error`, `stats`)
 7. Creating a session (`SessionManager.create_session`) writes `session.json` and `config.json`
    below the workspace's `.megamind/sessions/<sid>/`, then spawns a subprocess:
