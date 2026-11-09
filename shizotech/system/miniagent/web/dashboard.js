@@ -930,74 +930,102 @@ function renderSessionHistory(events, chatHistory, liveText) {
 
   const status = String(state.session && state.session.status || '').toLowerCase();
   const active = ['starting', 'running', 'waiting'].includes(status);
-  if (Array.isArray(chatHistory) && (chatHistory.length || liveText || active)) {
-    state.renderingHistory = true;
-    let lastAssistant = '';
-    chatHistory.forEach((message) => {
+  const hist = Array.isArray(chatHistory) ? chatHistory : [];
+  const live = String(liveText || '');
+  const prompt = String(state.session && state.session.prompt || '');
+  const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
+  const historySize = hist.length;
+
+  state.renderingHistory = true;
+
+  if (historySize) {
+    hist.forEach((message) => {
       if (!message || typeof message !== 'object') return;
       const role = String(message.role || '');
       const text = chatContentText(message.content);
       if (!text) return;
+      // Hide miniagent's synthetic "finalize()" reminder prompts; they are not user messages.
+      if (role === 'user' && text.startsWith('<---SYTEM MESSAGE--->')) return;
       if (role === 'user') {
         addUser(text);
-        lastAssistant = '';
       } else if (role === 'assistant') {
         resetAgentBubble();
         addAgentText(text);
-        lastAssistant = text;
       }
     });
 
-    const prompt = String(state.session && state.session.prompt || '');
-    const historySize = chatHistory.length;
-    const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
-    const unarchivedTurn = prompt && historySize <= promptHistorySize;
-    if (unarchivedTurn) {
+    // The prompt was accepted before the disk snapshot grew: show it now.
+    if (prompt && historySize <= promptHistorySize) {
       addUser(prompt);
-      lastAssistant = '';
+      resetAgentBubble();
     }
 
-    if (!chatHistory.length && !unarchivedTurn && !liveText) setChatEmpty();
+    // chat.json may only contain a partial current turn saved at a tool start.
+    const currentTurn = hist.slice(historySize > promptHistorySize ? promptHistorySize : historySize);
+    let savedAssistant = '';
+    currentTurn.forEach((message) => {
+      if (!message || typeof message !== 'object' || message.role !== 'assistant') return;
+      const text = chatContentText(message.content);
+      if (text) savedAssistant = text;
+    });
 
-    if (unarchivedTurn || liveText) {
-      let start = -1;
-      for (let i = list.length - 1; i >= 0; i--) {
-        if (list[i] && list[i].type === 'user') { start = i; break; }
-      }
-      if (start < 0) {
-        for (let i = list.length - 1; i >= 0; i--) {
-          if (list[i] && list[i].type === 'done') { start = i; break; }
-        }
-      }
-      for (let i = start + 1; i < list.length; i++) {
-        const ev = list[i];
-        if (!ev || ev.type !== 'delta') continue;
-        const action = ev.action || ev.delta || ev;
-        if (action.reasoning != null) addReasoning(String(action.reasoning));
-        else if (action.tool_start) addToolStart(action.tool_start);
-        else if (action.tool_end) addToolEnd(action.tool_end);
-        else if (action.milestone != null) addMilestone(String(action.milestone));
-      }
-      if (liveText && !lastAssistant.endsWith(liveText)) {
+    if (live || !savedAssistant) {
+      renderCurrentTurnEvents(list, Boolean(live));
+    }
+
+    if (live) {
+      if (savedAssistant && live.startsWith(savedAssistant)) {
+        state.currentAgentText = live;
+        if (state.currentAgentBubble) state.currentAgentBubble.innerHTML = mdRender(live);
+      } else if (savedAssistant && savedAssistant.startsWith(live)) {
+        // The saved snapshot is already at least as complete as the live text.
+      } else if (savedAssistant !== live) {
         resetAgentBubble();
-        addAgentText(liveText);
+        addAgentText(live);
       }
     }
-
-    state.renderingHistory = false;
-    scrollChat();
-    return;
+  } else {
+    // No chat.json yet: render the rolling event window, without duplicating the prompt.
+    const hasUser = list.some((ev) => ev && ev.type === 'user' &&
+      String(ev.text || ev.prompt || ev.message || '') === prompt);
+    if (prompt && !hasUser) addUser(prompt);
+    list.forEach((ev) => applySessionEvent(ev));
   }
 
-  if (!list.length) {
-    setChatEmpty();
-    return;
-  }
-  state.renderingHistory = true;
-
-  list.forEach((ev) => applySessionEvent(ev));
+  if (!historySize && !prompt && !live && !list.length) setChatEmpty();
   state.renderingHistory = false;
   scrollChat();
+}
+
+function renderCurrentTurnEvents(list, skipText = false) {
+  if (!Array.isArray(list) || !list.length) return;
+
+  let start = -1;
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (list[i] && list[i].type === 'user') { start = i; break; }
+  }
+  if (start < 0) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i] && list[i].type === 'done') { start = i; break; }
+    }
+  }
+
+  for (let i = start + 1; i < list.length; i++) {
+    const ev = list[i];
+    if (!ev) continue;
+    if (ev.type === 'delta') {
+      const action = ev.action || ev.delta || ev;
+      if (action.reasoning != null) addReasoning(String(action.reasoning));
+      else if (action.tool_start) addToolStart(action.tool_start);
+      else if (action.tool_end) addToolEnd(action.tool_end);
+      else if (action.milestone != null) addMilestone(String(action.milestone));
+      else if (action.text != null && !skipText) addAgentText(String(action.text));
+    } else if (ev.type === 'done' && ev.report) {
+      addReport(ev.report);
+    } else if (ev.type === 'error') {
+      addError(ev.message || ev.error || 'Agent reported an error');
+    }
+  }
 }
 
 function chatContentText(content) {

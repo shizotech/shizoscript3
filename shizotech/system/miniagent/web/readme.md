@@ -29,6 +29,13 @@ Notes for changes:
 * The session SSE URL is `/api/sessions/<id>/stream?token=<t>&since=<seq>`. EventSource cannot
   send headers, so the token is accepted as a query value; `since` stops the page from
   replaying the history it already rendered. The route sets `Content-Type: text/event-stream`.
+* Selecting a session loads the complete transcript from `chat.json` (via `GET /api/sessions/<id>`)
+  and the in-flight `live_text`, then starts the stream at the latest sequence. The bounded
+  `session.json.events` window is only a live/replay buffer, never the chat transcript.
+* The worker serializes and retries `chat.json` saves after every turn and at tool starts; a
+  transient save failure emits a warning instead of killing the session.
+* The dashboard hides miniagent's synthetic `<---SYTEM MESSAGE--->` finalize reminder prompts;
+  they are internal context, not user messages.
 * On restart the session manager loads the saved `session.json` files from each workspace's
   `.megamind/sessions/`; sessions that were running are marked stopped.
 * A workspace that already has a legacy `.agentspace/architecture.json` gets it copied into

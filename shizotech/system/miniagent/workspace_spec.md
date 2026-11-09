@@ -105,9 +105,9 @@ It reads stdin JSON lines:
 
 The UI labels the existing `goal` mode as **Loop**. A new prompt while a turn runs interrupts:
 the agent calls `stop()`, the turn returns, and the new prompt is taken next. Loop mode loops the
-same prompt until the agent signals `finished`, `failed` or `question`. A `question` is terminal
+same prompt until the agent finalizes with `finished`, `failed` or `question`. A `question` is terminal
 and needs the owner; a crash / API failure / process exit before a terminal state is reported as
-`failed` with its reason (the subprocess exit is the signal, not an invisible retry).
+`failed` with its reason (the subprocess exit is the terminal result, not an invisible retry).
 
 ## Architecture and tasks
 
@@ -134,7 +134,9 @@ API routes for architecture/tasks mirror the existing node routes under
 Single page at `/`. Sidebar: recursive workspace tree, global tasks, settings, live stats.
 Main: selected workspace header, sessions, chat with normal/goal toggle, architecture graph tab,
 tasks tab. Selecting a different session only replaces the browser's SSE listener; it never stops the
-session worker, and the next selection reloads that session's event history before streaming new events.
+session worker. On selection the dashboard reloads the complete `chat.json` transcript plus the
+in-flight `live_text`, then resumes the SSE stream from the latest sequence; it does not rebuild the
+transcript from the bounded `session.json.events` window.
 SSE keeps the chat fluid; animations for running/working states. No CDN.
 The session agent initializes the workspace goal store and registers the validated `get_goals`,
 `create_goal`, `create_recurring_goal`, `update_goal`, `set_goal_status`, and `run_goal_now` tools plus

@@ -821,12 +821,22 @@ class SessionManager {
         if(!fileio.exists(path))
             return [];
 
-        history = fileio.read_json(path, true);
+        history = None;
 
-        if(!std.is_list(history))
-            return None;
+        for(i = 0; i < 5; i++) {
+            try {
+                history = fileio.read_json(path, true);
+            } catch(e) {
+                history = None;
+            }
 
-        return history;
+            if(std.is_list(history))
+                return history;
+
+            std.sleep(50);
+        }
+
+        return None;
     }
 
     list_sessions(workspace_id) {
@@ -1100,10 +1110,10 @@ class SessionManager {
                     this.pump(sid);
                 }).run();
             }
-        } else {
-            send_json(sid, [type = "interrupt"]);
         }
 
+        // A prompt while the subprocess is generating updates its running task
+        // (miniagent.task_update); an interrupt would stop that task instead.
         send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
 
         s.prompt = prompt;
@@ -2282,8 +2292,10 @@ workspaces_api_register(server, cfg, api_token, store = None) {
 
         history = ctx.manager.session_chat_history(sid);
 
-        if(!std.is_list(history))
-            return node_api_err("Cannot read session chat history", 500);
+        if(!std.is_list(history)) {
+            std.error("[workspaces] session chat history unavailable: ", sid);
+            history = [];
+        }
 
         live = ctx.manager.session_live_state(sid);
         s.chat_history = history;

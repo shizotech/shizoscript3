@@ -11,6 +11,7 @@
 //      {"type":"stats","token_usage":0}
 //      {"type":"done","ok":true|false,"status":"finished|failed|question","report":"...","token_usage":0}
 //      {"type":"error","message":"..."}
+ //      {"type":"warning","message":"..."}
 //
 //  stdin: JSON lines
 //      {"type":"prompt","text":"...","reasoning_effort":"low|medium|high"}
@@ -65,7 +66,10 @@ result_report(res) {
     out = "";
 
     if(std.is_json(res)) {
-        if(res.has("reports") && std.is_json(res.reports) && res.reports.size())
+        if(res.has("result") && !std.is_none(res.result))
+            out = std.string(res.result ?? "");
+
+        if(!out && res.has("reports") && std.is_json(res.reports) && res.reports.size())
             out = std.string(res.reports[0].report ?? "");
 
         if(!out && res.has("error"))
@@ -90,21 +94,37 @@ save_turn_result(prompt, status, report) {
 }
 
 save_chat_history() {
-    chat = agent.export_chat();
+    // Parallel tool starts can call this at the same time. Serialize the snapshot and
+    // retry the atomic write; a transient save failure must not kill the session.
+    lock = std.critical_section_named("workspace_agent_history:" + history_file);
+    saved = false;
 
-    if(!std.is_json(chat)) {
-        emit([type = "error", message = "Cannot export session chat history"]);
-        terminal = true;
-        return false;
+    try {
+        chat = agent.export_chat();
+
+        if(std.is_json(chat)) {
+            for(i = 0; i < 5; i++) {
+                if(fileio.write_json(history_file, chat, true, true)) {
+                    saved = true;
+                    break;
+                }
+                std.sleep(50);
+            }
+
+            // Last resort: write without the atomic rename when a reader holds the target.
+            if(!saved)
+                saved = fileio.write_json(history_file, chat, true, false);
+        }
+    } catch(e) {
+        std.error("[workspace_agent] chat history save failed: ", e);
     }
 
-    if(!fileio.write_json(history_file, chat, true, true)) {
-        emit([type = "error", message = "Cannot save session chat history: " + history_file]);
-        terminal = true;
-        return false;
-    }
+    lock.release();
 
-    return true;
+    if(!saved)
+        emit([type = "warning", message = "Cannot save session chat history: " + history_file]);
+
+    return saved;
 }
 
 // ── one turn ──────────────────────────────────────────────────────────────
@@ -114,31 +134,27 @@ run_turn(prompt, effort) {
     attempts = 0;
 
     for(1) {
-        agent.env.signal_event = "";
-        agent.env.signal_report = "";
-
         res = None;
 
         try {
             agent.set_reasoning_effort(effort);
             res = agent.task(prompt);
         } catch(e) {
-            res = [ok = false, error = std.string(e)];
+            res = [signal = "failed", result = std.string(e)];
         }
 
-        if(!save_chat_history())
-            break;
+        save_chat_history();
 
         emit([type = "stats", token_usage = token_usage()]);
 
         if(stop_pending)
             break;
 
-        event = std.string(agent.env.signal_event ?? "");
+        event = std.is_json(res) ? std.string(res.signal ?? "") : "";
 
         if(event == "finished" || event == "failed" || event == "question") {
             status = event;
-            report = std.string(agent.env.signal_report ?? "");
+            report = std.is_json(res) ? std.string(res.result ?? "") : "";
 
             if(!report)
                 report = result_report(res);
@@ -146,11 +162,8 @@ run_turn(prompt, effort) {
             break;
         }
 
-        if(std.is_json(res) && res.stopped)
-            break;
-
         if(mode != "goal") {
-            status = std.is_json(res) && res.ok ? "finished" : "failed";
+            status = std.is_json(res) && std.string(res.signal ?? "") == "finished" ? "finished" : "failed";
             report = result_report(res);
             break;
         }
@@ -201,23 +214,28 @@ read_protocol() {
         type = std.string(data.type ?? "");
 
         if(type == "prompt") {
-            text = std.string(data.text ?? "");
-            effort = std.string(data.reasoning_effort ?? reasoning_effort).lowercase();
+             text = std.string(data.text ?? "");
+             effort = std.string(data.reasoning_effort ?? reasoning_effort).lowercase();
 
-            if(text.strip().empty()) {
-                emit([type = "error", message = "Empty prompt"]);
-                continue;
-            }
-            if(effort != "low" && effort != "medium" && effort != "high") {
-                emit([type = "error", message = "reasoning_effort must be low, medium, or high"]);
-                continue;
-            }
+             if(text.strip().empty()) {
+                 emit([type = "error", message = "Empty prompt"]);
+                 continue;
+             }
+             if(effort != "low" && effort != "medium" && effort != "high") {
+                 emit([type = "error", message = "reasoning_effort must be low, medium, or high"]);
+                 continue;
+             }
 
-            prompt_queue.push_back([text = text, reasoning_effort = effort]);
-
-            if(agent && agent.running)
-                agent.stop();
-        }
+             // A prompt while the agent is generating updates the running task;
+             // it does not spawn a new task. Otherwise it is the next queued turn.
+             if(agent && agent.running) {
+                 agent.set_reasoning_effort(effort);
+                 agent.task_update(text);
+             }
+             else {
+                 prompt_queue.push_back([text = text, reasoning_effort = effort]);
+             }
+         }
         else if(type == "interrupt") {
             if(agent && agent.running)
                 agent.stop();
@@ -317,7 +335,7 @@ agent.on_action = [](action) {
     }
 };
 
-// goal_finish is an alias for signal finished/failed, not a separate state contract.
+// goal_finish is an alias for a finalize finished/failed signal, not a separate state contract.
 agent.add_tool(
     "goal_finish",
     "Finish a goal run. status=finished when the goal is met, status=failed when it cannot be completed. Include a short report.",
@@ -331,9 +349,7 @@ agent.add_tool(
         if(st != "finished" && st != "failed")
             return [ok = false, error = "status must be finished or failed"];
 
-        agt.env.signal_event = st;
-        agt.env.signal_report = std.string(args.report ?? "");
-        agt.stop();
+        agt.finalize_run(st, std.string(args.report ?? ""), true);
 
         return "Goal finished.";
     }

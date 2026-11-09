@@ -1,4 +1,4 @@
-# miniagent runtime flow: web UI, Telegram router, goals and signals
+# miniagent runtime flow: web UI, Telegram router, goals and finalize
 
 This is the operational contract after the 2026-11-07 alignment. It describes what actually
 happens when a prompt is sent from the web UI or from the Telegram router, which directories
@@ -72,22 +72,27 @@ workspace gets its scheduler immediately.
    - registers `get_goals`, `create_goal`, `create_recurring_goal`, `update_goal`,
      `set_goal_status`, `run_goal_now`, `create_workspace_task`, `goal_finish`;
    - registers the architecture board at `workspace + "/.megamind/architecture"`;
-   - emits one JSON object per stdout line: `ready`, `delta`, `stats`, `done`, `error`.
+   - emits one JSON object per stdout line: `ready`, `delta`, `stats`, `done`, `error`, `warning`.
 9. The parent `SessionManager.pump()` thread reads those lines and updates `session.json`,
    pushes SSE events, and calls the finished-task listeners (the workspace goal scheduler).
    The chat itself is loaded from `chat.json`; `session.json.events` is only a bounded replay
-   window, not a second transcript.
+    window, not a second transcript. The worker serializes and retries `chat.json` snapshots
+    after each turn and at tool starts; a transient save failure is a `warning`, not a terminal
+    `error`, so the live answer still streams.
 10. A new prompt while the turn is running:
-    - `send_prompt()` sends `{"type":"interrupt"}` then `{"type":"prompt",...}`.
-    - `workspace_agent.shio`'s protocol reader calls `agent.stop()` and queues the new prompt.
-    - `run_turn()` sees the stopped result, breaks the old turn, and starts the new prompt on the
-    same thread. The old turn does not emit a `done`; the new turn owns the terminal result.
+    - `SessionManager.send_prompt()` sends `{"type":"prompt",...}` only.
+    - `workspace_agent.shio`'s protocol reader calls `agent.task_update(text)` when the agent is
+      running; it does not spawn a new task. If the agent is idle, the prompt is queued as the
+      next turn. `task_update` ends the current generation and continues the same running task
+      with the injected prompt.
+    - `{"type":"interrupt"}` remains an explicit stop channel (no prompt attached).
 11. Terminal result:
-    - the adaptive `signal` tool is the single model endpoint:
-      `signal(event=finished|failed|question, report=...)`;
-    - `run_turn()` reads `agent.env.signal_event` and emits
+    - the adaptive `finalize` tool is the single model endpoint:
+      `finalize(signal=finished|failed|question|continue, result=...)`;
+    - `run_turn()` reads `agent.task_result.signal` and `.result` and emits
       `{"type":"done","status":"finished|failed|question",...}`.
-    - `goal_finish(status=finished|failed)` is an alias used by Loop mode.
+    - `goal_finish(status=finished|failed, report=...)` is an alias that sets the same
+      `task_result` (used by Loop mode).
     - a `question` is terminal and needs the owner; it is not mapped to `failed`.
     - an exited subprocess with a matching `chat.json.result.json` is recovered as
       `finished|failed|question`; an exit without a terminal result is reported as `failed`
@@ -145,16 +150,18 @@ workspace gets its scheduler immediately.
    node `notify`, and `file` (send_file) are rendered. Node online/offline, running progress,
     and tool calls are silent unless `--verbose-events` is used.
 
-## 4. The single signal contract
+## 4. The single finalize contract
 
 | State | Produced by | Meaning |
 |---|---|---|
-| `finished` | `signal(event=finished, report)` / `goal_finish(status=finished)` / a normal turn result | the task met its contract; report is the result |
-| `failed` | `signal(event=failed, report)` / `goal_finish(status=failed)` / crash, API failure, exit without result | the task could not complete; report is the reason |
-| `question` | `signal(event=question, report)` | terminal; the owner must answer before work continues |
+| `finished` | `finalize(signal=finished, result)` / `goal_finish(status=finished)` / a normal turn result | the task met its contract; result is the report |
+| `failed` | `finalize(signal=failed, result)` / `goal_finish(status=failed)` / crash, API failure, exit without result | the task could not complete; result is the reason |
+| `question` | `finalize(signal=question, result)` | terminal; the owner must answer before work continues |
+| `continue` | `finalize(signal=continue, result)` | hand-over; not terminal for the task, the same task continues with a fresh context |
 | `stopped` | `stop_task`, window end, pause/cancel | the task was intentionally stopped |
 | `lost` | router only | the node/task is definitively gone after grace or a definitive not-found |
 
-The model does **not** invent `lost`; it only emits `finished`, `failed`, `question`. `lost` is a
-transport/mirror observation, not a model signal. This keeps the Telegram messages truthful:
-a task with a complete execution log is not reported as lost because a poll hiccupped.
+The model does **not** invent `lost`; it emits `finished`, `failed`, `question` or `continue`.
+`stopped` and `lost` are transport/runtime observations, not model signals. This keeps the
+Telegram messages truthful: a task with a complete execution log is not reported as lost
+because a poll hiccupped.
