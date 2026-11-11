@@ -691,6 +691,32 @@ function updateSessionTokenLabels() {
   });
 }
 
+function updateConsoleLamps() {
+  const statuses = state.stats && state.stats.session_status && typeof state.stats.session_status === 'object'
+    ? state.stats.session_status
+    : {};
+  let active = 0;
+  let busy = 0;
+  let warn = 0;
+
+  Object.values(statuses).forEach((status) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'running' || s === 'generating' || s === 'starting' || s === 'waiting' || s === 'planned') busy++;
+    if (s === 'question' || s === 'failed' || s === 'error' || s === 'cancelled') warn++;
+    if (s === 'running' || s === 'generating' || s === 'question' || s === 'done' || s === 'failed') active++;
+  });
+
+  if (!active) active = state.sessions.length;
+  const st = state.stats || {};
+  busy = Math.max(busy, num(st.running_processes ?? st.running ?? st.processes ?? 0));
+
+  [['lampPower', true], ['lampLink', active > 0], ['lampBusy', busy > 0], ['lampWarn', warn > 0]]
+    .forEach(([id, on]) => {
+      const lamp = $(id);
+      if (lamp) lamp.classList.toggle('on', on);
+    });
+}
+
 function renderStats() {
   const st = state.stats || {};
   const sessionTokens = state.sessions.reduce((sum, s) => sum + num(s.token_usage), 0);
@@ -710,6 +736,7 @@ function renderStats() {
     '<span class="stat-chip">active <b>' + active + '</b></span>' +
     '<span class="stat-chip">running <b>' + running + '</b></span>' +
     '<span class="stat-chip">max <b>' + max + '</b></span>';
+  updateConsoleLamps();
 }
 
 function updateSessionActivity() {
@@ -732,6 +759,7 @@ function updateSessionActivity() {
       activity.remove();
     }
   });
+  updateConsoleLamps();
 }
 
 async function refreshStats() {
@@ -1246,6 +1274,7 @@ function setSessionStatus(status) {
   state.stats.session_status[state.session.id] = mapped;
   renderSessionHeader();
   renderWorkspaceTree();
+  updateConsoleLamps();
 }
 
 function updateTokenUsage(value) {

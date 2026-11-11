@@ -191,10 +191,15 @@ for(1) {
 		continue;
 	
 	if(planner_prompt) {
-		planner_stopped = true;
-		planner.stop();
-		for(!planner_prompt.empty()) {
-			std.sleep(100);
+		//A new prompt while the agent is generating updates the running task
+		//(task_update); it no longer stops the task and spawns a fresh one.
+		if(!cmd) {
+			planner.stop();
+		}
+		else {
+			if(planner.running)
+				planner.task_update(cmd);
+			planner_prompt = cmd;
 		}
 		continue;
 	}

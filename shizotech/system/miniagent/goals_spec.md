@@ -4,7 +4,7 @@ A **goal** is the goal engine's unit of scheduled work, including one-off, windo
 A **recurring task is a recurring goal**: for example, "every Sunday clean up the repository" or
 "check the server logs every 2 days at 06:00". Goals can also run once or in named windows, such as
 "tonight, explore a new app idea" or "fix GitHub issues from 05:00 to 10:00". Goals are
-Markdown files a person can read, edit, diff and version; the node's scheduler (plain code, no
+Markdown files a person can read, edit, diff and version; the workspace scheduler (plain code, no
 LLM) decides when they run.
 
 ```
@@ -12,7 +12,7 @@ LLM (receptionist)  interprets the request  ──► create_goal / update_goal 
                                                      │
 .agentspace/goals/active/<id>/goal.md  ◄─────────────┘   ◄── or a person edits the file
         │  rescan (every tick, content hash = revision)
-GoalScheduler.tick()  ── windows, misfires, retries, stop policy, limits ──►  Megamind.add_task
+GoalScheduler.tick()  ── windows, misfires, retries, stop policy, limits ──►  Workspace.add_task
         │                                                                          │
 .agentspace/.runtime/ledger.json  ◄──── task_finished listener / inspect_task ◄────┘
 ```
@@ -48,9 +48,9 @@ GoalScheduler.tick()  ── windows, misfires, retries, stop policy, limits ─
 folder wins. Moving the folder is the status change (the CLI and the tools do exactly that).
 Sub-day `every` schedules accept whole-minute intervals from `1m` through `23h59m`, start at goal activation (or local midnight on `start_date`), and do not need a named window or clock time. Intervals of `1d` or longer remain whole local-calendar days.
 
-The node finds its own tree at `std.user_path()/miniagent/node/.agentspace` or through
+The Node's own Workspace finds its tree at `std.user_path()/miniagent/node/.agentspace` or through
 `--agentspace <dir>`; each project workspace has its own `.agentspace`, and every registered
-workspace scheduler runs in the background. `--no-goals` turns the node scheduler off.
+workspace scheduler runs in the background. `--no-goals` turns the Node's own scheduler off.
 
 ## `goal.md` — schema 1
 
@@ -147,14 +147,21 @@ scheduling a few weeks ahead needs.
 
 ## Scheduler
 
-`GoalScheduler(space, host)` runs `tick()` every 15 s on its own thread:
+`GoalScheduler(space_or_path, host = None, opts = None)` is bound to one
+workspace's `.agentspace`; `opts` may contain `workspace_id`, `tick_ms` and `notify`.
+It exposes `root` and `workspace_id`. `start()` runs `tick()` every 15 s on its own
+thread, and `update()` is a synchronous alias for one `tick()`.
 
 1. **Rescan** the tree (definitions, status folders, preferences).
-2. **Settle runs**: task-finished pushes (`Megamind.add_task_finished_listener`) and
-   `inspect_task` polls. `finished` → success (and a verification run if `verify`);
+2. **Settle runs**: terminal task events (`Workspace.add_task_finished_listener`) are
+   stored once per taskid; `inspect_task` polls return `finished` / `failed` /
+   `question` / `stopped`, a definitive not-found is `lost`, and a transient
+   exception / `None` / other result is `unknown` and keeps the run open. Each run
+   is settled at most once; repeated ticks do not duplicate terminal reports or
+   notifications. `finished` → success (and a verification run if `verify`);
    `question` → the window is `blocked` and the owner is asked; `failed` / `lost` → retry after
    `retry_backoff` while `max_attempts` allows; a stop the scheduler asked for is no failure.
-   A running task with no agent action for `stall_timeout` (`Megamind` task `last_update_ms`)
+   A running task with no agent action for `stall_timeout` (`Workspace` task `last_update_ms`)
    is stopped and counts as a failed attempt — a deterministic watchdog, no LLM check.
 3. **Window end**: no new runs; open runs follow the stop policy — `drain` lets them finish,
    `checkpoint` sends an update ("save your progress, report what is left") and stops after
@@ -166,9 +173,10 @@ scheduling a few weeks ahead needs.
    late while it is still open), `skip` (record it as skipped), `catch_up` (missed windows run
    once, now, for the original length). A window that ended unseen is recorded as `missed` and
    reported. Windows before the goal became active are never "missed".
-5. **Dispatch** runs within the limits: `max_background_tasks` (node), free workers minus
-   `reserve_interactive_workers`, no new run within `yield_after_interactive` of the owner's
-   last request (`Megamind.background_capacity()`), per goal `max_parallel_workers`. A run is
+5. **Dispatch** runs within the limits: `max_background_tasks` (node), free workspace task
+   capacity minus `reserve_interactive_workers`, no new run within `yield_after_interactive` of
+   the owner's last request (`Workspace.background_capacity()`), per goal
+   `max_parallel_workers`. A run is
    written to the ledger before `add_task` (outbox): after a crash it is found and settled as
    `interrupted`, then retried while its window is open. A dispatch the host **refuses** (no
    taskid) is a failed attempt: `dispatch_failed` in the ledger **and** a notification to the
@@ -230,7 +238,7 @@ shz miniagent.goals pause|resume|cancel|complete|archive|propose|activate <id>
                     [--root <dir>]   (default std.user_path()/miniagent/node/.agentspace)
 ```
 
-The CLI never writes the ledger: `run` drops a request file the node's scheduler consumes.
+The CLI never writes the ledger: `run` drops a request file that the workspace scheduler consumes.
 
 ## Router / Telegram
 
@@ -239,18 +247,19 @@ The CLI never writes the ledger: `run` drops a request file the node's scheduler
 and `/goal <run|pause|resume|cancel|archive> <id> [node]`. Creating goals goes through the
 normal routing: the router delegates the request, the node's receptionist owns the goal.
 
-The node info (`AINodeInfo` / `ai_info`) advertises `goals = 1|0` — the node runs a scheduler —
-so `Router.nodes_summary()`, the router role's `get_nodes` and Telegram `/nodes` show per node
-whether scheduled work is possible there. On a node without an `.agentspace` every goal tool
-answers `ok = false` with the reason ("Goals are not enabled on this node: start it in a folder
-with an .agentspace (shz miniagent.goals init) or with --agentspace <dir>."); the receptionist
-relays that text into its turn report, and the router agent says it in its `finish(report)` —
-a scheduling request that cannot become a goal is reported, never quietly turned into plain work.
+The node info (`AINodeInfo` / `ai_info`) advertises `goals = 1|0` — the Node's own Workspace runs
+a scheduler — so `Router.nodes_summary()`, the router role's `get_nodes` and Telegram `/nodes`
+show per node whether scheduled work is possible there. On a node without an `.agentspace` every
+goal tool answers `ok = false` with the reason ("Goals are not enabled on this node: start it in a
+folder with an .agentspace (shz miniagent.goals init) or with --agentspace <dir>."); the
+receptionist relays that text into its turn report, and the router agent says it in its
+`finish(report)` — a scheduling request that cannot become a goal is reported, never quietly
+turned into plain work.
 
 ## Not done yet (issue #477 phases)
 
-- Leases / heartbeats for workers on other nodes, cross-node dispatch and capability-based
-  allocation (phase 2 / 5): runs are local to the node that owns the `.agentspace`.
+- Leases / heartbeats for workspace sessions on other nodes, cross-node dispatch and capability-based
+  allocation (phase 2 / 5): runs are local to the workspace that owns the `.agentspace`.
 - PostgreSQL / multi-node shared ledger: the ledger is one JSON file per node.
 - Recursive planning budgets and project monitors (phase 6): `monitors.md` is documentation.
 - Dashboards (phase 7): `goals list/status`, `/goals`, `state/overview.md` and `history.md`

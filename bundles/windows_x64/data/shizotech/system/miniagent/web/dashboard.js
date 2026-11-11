@@ -168,6 +168,7 @@ const state = {
   currentReasoningText: '',
   pendingUser: null,
   composerMode: 'normal',
+  composerEffort: 'medium',
   renderingHistory: false
 };
 
@@ -690,6 +691,32 @@ function updateSessionTokenLabels() {
   });
 }
 
+function updateConsoleLamps() {
+  const statuses = state.stats && state.stats.session_status && typeof state.stats.session_status === 'object'
+    ? state.stats.session_status
+    : {};
+  let active = 0;
+  let busy = 0;
+  let warn = 0;
+
+  Object.values(statuses).forEach((status) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'running' || s === 'generating' || s === 'starting' || s === 'waiting' || s === 'planned') busy++;
+    if (s === 'question' || s === 'failed' || s === 'error' || s === 'cancelled') warn++;
+    if (s === 'running' || s === 'generating' || s === 'question' || s === 'done' || s === 'failed') active++;
+  });
+
+  if (!active) active = state.sessions.length;
+  const st = state.stats || {};
+  busy = Math.max(busy, num(st.running_processes ?? st.running ?? st.processes ?? 0));
+
+  [['lampPower', true], ['lampLink', active > 0], ['lampBusy', busy > 0], ['lampWarn', warn > 0]]
+    .forEach(([id, on]) => {
+      const lamp = $(id);
+      if (lamp) lamp.classList.toggle('on', on);
+    });
+}
+
 function renderStats() {
   const st = state.stats || {};
   const sessionTokens = state.sessions.reduce((sum, s) => sum + num(s.token_usage), 0);
@@ -709,6 +736,7 @@ function renderStats() {
     '<span class="stat-chip">active <b>' + active + '</b></span>' +
     '<span class="stat-chip">running <b>' + running + '</b></span>' +
     '<span class="stat-chip">max <b>' + max + '</b></span>';
+  updateConsoleLamps();
 }
 
 function updateSessionActivity() {
@@ -731,6 +759,7 @@ function updateSessionActivity() {
       activity.remove();
     }
   });
+  updateConsoleLamps();
 }
 
 async function refreshStats() {
@@ -769,6 +798,7 @@ function renderSessionHeader() {
   if (!s) {
     titleEl.textContent = 'No session selected';
     metaEl.textContent = 'Select a session in the sidebar or create one with +.';
+    $('reasoningEffort').value = state.composerEffort;
     modeButtons.forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === state.composerMode);
       b.disabled = false;
@@ -785,7 +815,9 @@ function renderSessionHeader() {
   titleEl.textContent = s.title || 'Session';
   metaEl.textContent = statusLabel(s.status) + ' - ' + modeLabel(s.mode || 'normal') +
     ' - ' + fmtNum(s.token_usage) + ' tokens';
-  if (s.reasoning_effort) $('reasoningEffort').value = s.reasoning_effort;
+  const effort = String(s.reasoning_effort || state.composerEffort || 'medium').toLowerCase();
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
 
   modeButtons.forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === (s.mode || 'normal'));
@@ -926,74 +958,102 @@ function renderSessionHistory(events, chatHistory, liveText) {
 
   const status = String(state.session && state.session.status || '').toLowerCase();
   const active = ['starting', 'running', 'waiting'].includes(status);
-  if (Array.isArray(chatHistory) && (chatHistory.length || liveText || active)) {
-    state.renderingHistory = true;
-    let lastAssistant = '';
-    chatHistory.forEach((message) => {
+  const hist = Array.isArray(chatHistory) ? chatHistory : [];
+  const live = String(liveText || '');
+  const prompt = String(state.session && state.session.prompt || '');
+  const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
+  const historySize = hist.length;
+
+  state.renderingHistory = true;
+
+  if (historySize) {
+    hist.forEach((message) => {
       if (!message || typeof message !== 'object') return;
       const role = String(message.role || '');
       const text = chatContentText(message.content);
       if (!text) return;
+      // Hide miniagent's synthetic "finalize()" reminder prompts; they are not user messages.
+      if (role === 'user' && text.startsWith('<---SYTEM MESSAGE--->')) return;
       if (role === 'user') {
         addUser(text);
-        lastAssistant = '';
       } else if (role === 'assistant') {
         resetAgentBubble();
         addAgentText(text);
-        lastAssistant = text;
       }
     });
 
-    const prompt = String(state.session && state.session.prompt || '');
-    const historySize = chatHistory.length;
-    const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
-    const unarchivedTurn = prompt && historySize <= promptHistorySize;
-    if (unarchivedTurn) {
+    // The prompt was accepted before the disk snapshot grew: show it now.
+    if (prompt && historySize <= promptHistorySize) {
       addUser(prompt);
-      lastAssistant = '';
+      resetAgentBubble();
     }
 
-    if (!chatHistory.length && !unarchivedTurn && !liveText) setChatEmpty();
+    // chat.json may only contain a partial current turn saved at a tool start.
+    const currentTurn = hist.slice(historySize > promptHistorySize ? promptHistorySize : historySize);
+    let savedAssistant = '';
+    currentTurn.forEach((message) => {
+      if (!message || typeof message !== 'object' || message.role !== 'assistant') return;
+      const text = chatContentText(message.content);
+      if (text) savedAssistant = text;
+    });
 
-    if (unarchivedTurn || liveText) {
-      let start = -1;
-      for (let i = list.length - 1; i >= 0; i--) {
-        if (list[i] && list[i].type === 'user') { start = i; break; }
-      }
-      if (start < 0) {
-        for (let i = list.length - 1; i >= 0; i--) {
-          if (list[i] && list[i].type === 'done') { start = i; break; }
-        }
-      }
-      for (let i = start + 1; i < list.length; i++) {
-        const ev = list[i];
-        if (!ev || ev.type !== 'delta') continue;
-        const action = ev.action || ev.delta || ev;
-        if (action.reasoning != null) addReasoning(String(action.reasoning));
-        else if (action.tool_start) addToolStart(action.tool_start);
-        else if (action.tool_end) addToolEnd(action.tool_end);
-        else if (action.milestone != null) addMilestone(String(action.milestone));
-      }
-      if (liveText && !lastAssistant.endsWith(liveText)) {
+    if (live || !savedAssistant) {
+      renderCurrentTurnEvents(list, Boolean(live));
+    }
+
+    if (live) {
+      if (savedAssistant && live.startsWith(savedAssistant)) {
+        state.currentAgentText = live;
+        if (state.currentAgentBubble) state.currentAgentBubble.innerHTML = mdRender(live);
+      } else if (savedAssistant && savedAssistant.startsWith(live)) {
+        // The saved snapshot is already at least as complete as the live text.
+      } else if (savedAssistant !== live) {
         resetAgentBubble();
-        addAgentText(liveText);
+        addAgentText(live);
       }
     }
-
-    state.renderingHistory = false;
-    scrollChat();
-    return;
+  } else {
+    // No chat.json yet: render the rolling event window, without duplicating the prompt.
+    const hasUser = list.some((ev) => ev && ev.type === 'user' &&
+      String(ev.text || ev.prompt || ev.message || '') === prompt);
+    if (prompt && !hasUser) addUser(prompt);
+    list.forEach((ev) => applySessionEvent(ev));
   }
 
-  if (!list.length) {
-    setChatEmpty();
-    return;
-  }
-  state.renderingHistory = true;
-
-  list.forEach((ev) => applySessionEvent(ev));
+  if (!historySize && !prompt && !live && !list.length) setChatEmpty();
   state.renderingHistory = false;
   scrollChat();
+}
+
+function renderCurrentTurnEvents(list, skipText = false) {
+  if (!Array.isArray(list) || !list.length) return;
+
+  let start = -1;
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (list[i] && list[i].type === 'user') { start = i; break; }
+  }
+  if (start < 0) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i] && list[i].type === 'done') { start = i; break; }
+    }
+  }
+
+  for (let i = start + 1; i < list.length; i++) {
+    const ev = list[i];
+    if (!ev) continue;
+    if (ev.type === 'delta') {
+      const action = ev.action || ev.delta || ev;
+      if (action.reasoning != null) addReasoning(String(action.reasoning));
+      else if (action.tool_start) addToolStart(action.tool_start);
+      else if (action.tool_end) addToolEnd(action.tool_end);
+      else if (action.milestone != null) addMilestone(String(action.milestone));
+      else if (action.text != null && !skipText) addAgentText(String(action.text));
+    } else if (ev.type === 'done' && ev.report) {
+      addReport(ev.report);
+    } else if (ev.type === 'error') {
+      addError(ev.message || ev.error || 'Agent reported an error');
+    }
+  }
 }
 
 function chatContentText(content) {
@@ -1214,6 +1274,7 @@ function setSessionStatus(status) {
   state.stats.session_status[state.session.id] = mapped;
   renderSessionHeader();
   renderWorkspaceTree();
+  updateConsoleLamps();
 }
 
 function updateTokenUsage(value) {
@@ -1379,6 +1440,14 @@ function handleStreamEvent(name, raw) {
 
   if (name === 'status') {
     const status = data && (data.status || data.state || data.value);
+    if (data && data.reasoning_effort) {
+      const effort = String(data.reasoning_effort).toLowerCase();
+      if (['low', 'medium', 'high'].includes(effort) && state.session) {
+        state.session.reasoning_effort = effort;
+        state.composerEffort = effort;
+        $('reasoningEffort').value = effort;
+      }
+    }
     if (status !== 'connected') setSessionStatus(status);
     return;
   }
@@ -1424,6 +1493,43 @@ function handleStreamEvent(name, raw) {
 /* ── Chat actions ── */
 function currentMode() {
   return state.session ? (state.session.mode || state.composerMode) : state.composerMode;
+}
+
+async function setReasoningEffort(value) {
+  const effort = String(value || '').toLowerCase();
+  if (!['low', 'medium', 'high'].includes(effort)) return;
+
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
+
+  if (!state.session) {
+    toast('New sessions will use ' + effort + ' reasoning effort.', 'info');
+    return;
+  }
+
+  const previous = String(state.session.reasoning_effort || 'medium').toLowerCase();
+  const sessionId = state.session.id;
+  state.session.reasoning_effort = effort;
+  const listed = state.sessions.find((item) => String(item.id) === String(sessionId));
+  if (listed) listed.reasoning_effort = effort;
+
+  try {
+    const data = await NodeApi.post('/api/sessions/' + encodeURIComponent(sessionId) + '/effort', {
+      reasoning_effort: effort
+    });
+    if (data && data.reasoning_effort && state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = String(data.reasoning_effort).toLowerCase();
+    }
+    if (state.session.reasoning_effort === effort) toast('Reasoning effort set to ' + effort + '.', 'info');
+  } catch (e) {
+    if (state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = previous;
+      state.composerEffort = previous;
+      if (listed) listed.reasoning_effort = previous;
+      $('reasoningEffort').value = previous;
+      toast('Could not set reasoning effort: ' + e.message, 'error');
+    }
+  }
 }
 
 async function sendPrompt() {
@@ -2480,6 +2586,7 @@ function bindEvents() {
 
   $('btnStopSession').addEventListener('click', stopSession);
   $('btnSendPrompt').addEventListener('click', sendPrompt);
+  $('reasoningEffort').addEventListener('change', (e) => setReasoningEffort(e.target.value));
   $('taskForm').addEventListener('submit', submitTaskForm);
   $('taskView').addEventListener('click', (e) => {
     if (e.target.closest('#btnNewTask')) {

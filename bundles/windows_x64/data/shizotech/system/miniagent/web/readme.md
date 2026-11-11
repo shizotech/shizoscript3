@@ -6,16 +6,17 @@ HTML / CSS / JS, no build step and no CDN: the pages work without internet.
 ```
 web/
 ├── index.html, dashboard.js/.css   the shell: compact workspace tree + main pane
-├── chat/                           chat with the node's receptionist (POST /api/adminagent, /poll, /stop)
-├── tasks/                          the worker tasks (/api/tasks, /api/status, /api/events, POST/PUT/DELETE /api/task)
-├── architecture/                   the architecture graph (/api/architecture/..., ../architecture_spec.md)
+├── chat/                           legacy standalone chat page (retained on disk, denied at /chat)
+├── tasks/                          legacy worker-pool page (retained on disk, denied at /tasks)
+├── architecture/                   the architecture graph (served, embedded by the Architecture tab; /api/workspaces/<id>/architecture/..., ../architecture_spec.md)
 │   ├── graph.js                    SVG renderer, layout, editing, side panel
 │   └── style.css
 ├── components/
 │   ├── nodeapi.js                  fetch helper: the {ok, data} envelope, the API token (X-Api-Token)
 │   ├── icons.css                   the fa-* icon classes as plain glyphs (no Font Awesome download)
 │   ├── minimd.js                   small Markdown renderer + highlight.js stand-in for the chat
-│   ├── theme.css, ui.css, utils.js shared theme (green / black) and helpers
+│   ├── theme.css, ui.css, utils.js shared theme and helpers
+│   ├── industrial.css               animated old-console layer loaded after dashboard.css
 └── cow_lays_eggs.html              the secret egg
 ```
 
@@ -29,6 +30,13 @@ Notes for changes:
 * The session SSE URL is `/api/sessions/<id>/stream?token=<t>&since=<seq>`. EventSource cannot
   send headers, so the token is accepted as a query value; `since` stops the page from
   replaying the history it already rendered. The route sets `Content-Type: text/event-stream`.
+* Selecting a session loads the complete transcript from `chat.json` (via `GET /api/sessions/<id>`)
+  and the in-flight `live_text`, then starts the stream at the latest sequence. The bounded
+  `session.json.events` window is only a live/replay buffer, never the chat transcript.
+* The worker serializes and retries `chat.json` saves after every turn and at tool starts; a
+  transient save failure emits a warning instead of killing the session.
+* The dashboard hides miniagent's synthetic `<---SYTEM MESSAGE--->` finalize reminder prompts;
+  they are internal context, not user messages.
 * On restart the session manager loads the saved `session.json` files from each workspace's
   `.megamind/sessions/`; sessions that were running are marked stopped.
 * A workspace that already has a legacy `.agentspace/architecture.json` gets it copied into
@@ -55,7 +63,8 @@ Reasoning events are incremental chunks: the dashboard accumulates each contiguo
 its latest sentence. Tool cards show selected identifying parameters and completion/failure, not raw
 argument or result payloads. Normal-mode turns finish after one agent task; Loop mode retries until
 its goal is reported finished or failed. Per-session `low` / `medium` / `high` reasoning effort is
-persisted and applied to every worker turn; the
+persisted and applied to every worker turn; changing it in the composer persists immediately through
+`POST /api/sessions/<id>/effort`, and the selector is not reset by SSE status/token updates. The
 sidebar status indicator updates from the lightweight stats endpoint without rebuilding the tree. Workers
 initialize the workspace goal store and receive validated goal/task tools plus architecture inspection and
 pending-edit tools (including node and relationship edits); architecture jobs and source edits remain under
@@ -68,6 +77,18 @@ recurring Goal: use `create_recurring_goal`, never the one-off `create_workspace
 The hazard stripe is a compact sidebar footer. The workspace task tab and Global Tasks view poll every 15 seconds and skip unchanged
 render signatures. The task form is a persistent sibling of `taskContent`, so task polling only replaces task
 cards and leaves an open form and its typed values intact. On the first prompt, the dashboard displays the accepted
-user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/`
-worker-pool page polls only while visible; it reconciles changed cards by task ID and preserves unchanged card nodes
-and the task-creation form, so updates do not repaint the full dashboard.
+user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/` worker-pool page is a legacy page denied at `/tasks`; the dashboard's Tasks tab uses the workspace goal/task API instead.
+
+## Industrial console layer (2026-11-11)
+
+`components/industrial.css` is loaded after `dashboard.css` and adds the animated old-console layer:
+
+* the yellow/black hazard stripe slowly slides (`hazardSlide`) and has a moving light sweep (`hazardSweep`);
+* the topbar has a POWER / LINK / BUSY / WARN lamp bank; `dashboard.js` toggles the `on` class from live session status, while the LEDs blink (`lampBusyBlink`, `lampWarnFlash`);
+* status dots, active tabs and task cards pulse (`statusLampPulse`, `statusAmberBlink`, `statusRedFlash`, `tabLampPulse`);
+* a pointer-events-free CRT overlay adds scanlines, a vignette and a slow scan (`crtScan`);
+* panel edges get rivets/bevels; labels use a monospaced console font; the topbar and lamp bank flicker subtly;
+* `prefers-reduced-motion` disables the animations and calms the overlay.
+
+`web_ui_protect` denies the legacy standalone `/chat` and `/tasks` pages but serves `/architecture/`
+because the dashboard's Architecture tab embeds `architecture/index.html`.

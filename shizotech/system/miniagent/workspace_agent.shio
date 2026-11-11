@@ -2,16 +2,18 @@
 //  workspace_agent.shio — the subprocess session agent of issue #907
 //
 //  Runs with:
-//      --workspace <dir> --config-file <json> --session-id <id>
+//      --workspace <dir> --config-spec <name|path[#profile]> --session-id <id>
 //      --history-file <json> --reasoning-effort low|medium|high --role <role> --mode normal|goal
 //
 //  stdout: one JSON object per line
 //      {"type":"ready","session_id":"...","history_messages":0}
 //      {"type":"delta","action":{...}}
 //      {"type":"stats","token_usage":0}
+//      {"type":"file","name":"...","bytes":0,"caption":"...","data":"<base64>"}
+//      {"type":"notify","message":"..."}
 //      {"type":"done","ok":true|false,"status":"finished|failed|question","report":"...","token_usage":0}
 //      {"type":"error","message":"..."}
- //      {"type":"warning","message":"..."}
+//      {"type":"warning","message":"..."}
 //
 //  stdin: JSON lines
 //      {"type":"prompt","text":"...","reasoning_effort":"low|medium|high"}
@@ -21,14 +23,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #include "miniagent"
-#include "model_config"
+#include "model_config_cli"
 #include "goal_tools"
 #include "architecture"
 
 agent = None;
 session_id = "";
 workspace = "";
-config_file = "";
+config_spec = "";
 history_file = "";
 turn_result_file = "";
 role = "adaptive";
@@ -46,6 +48,81 @@ WS_AGENT_BACKOFF_MAX_MS = 30000;
 // ── protocol output ────────────────────────────────────────────────────────
 emit(obj) {
     std.print(obj.compact_string());
+}
+
+// The workspace agent's local mind. It keeps the goal scheduler of this
+// workspace, and turns the agent's send_file / notify_user calls into protocol
+// lines that the SessionManager forwards to the Node listeners.
+class WorkspaceAgentMind {
+    goals = None;
+
+    __init__(_scheduler) {
+        goals = _scheduler;
+    }
+
+    share_file(path, caption = "") {
+        path = std.string(path ?? "");
+
+        if(!path || !fileio.exists(path))
+            return [ok = false, error = "file not found: " + path];
+
+        data = fileio.read_file(path);
+        name = fileio.file_name(path);
+        bytes = data.size();
+        caption = std.string(caption ?? "");
+
+        emit([
+            type = "file",
+            name = name,
+            bytes = bytes,
+            caption = caption,
+            data = std.base64_encode(data),
+        ]);
+
+        return [ok = true, name = name, bytes = bytes];
+    }
+
+    notify_user(msg) {
+        msg = std.string(msg ?? "");
+        emit([type = "notify", message = msg]);
+        return [ok = true, message = msg];
+    }
+
+    // Compatibility for a receptionist role running inside a workspace agent.
+    get_overview() {
+        return [
+            tasks = [],
+            tasks_scheduled = [],
+            tasks_finished = [],
+            tasks_failed = [],
+        ];
+    }
+
+    inspect_task(taskid) {
+        return [
+            ok = false,
+            taskid = std.string(taskid ?? ""),
+            name = "",
+            state = "lost",
+            active = json.bool(false),
+            report = "",
+            error = "not found",
+            token_usage = 0,
+            last_update_ms = 0,
+        ];
+    }
+
+    add_task(name, goal, role = "adaptive") {
+        return "";
+    }
+
+    update_task(taskid, message) {
+        return false;
+    }
+
+    stop_task(taskid) {
+        return false;
+    }
 }
 
 token_usage() {
@@ -145,10 +222,12 @@ run_turn(prompt, effort) {
 
         save_chat_history();
 
-        emit([type = "stats", token_usage = token_usage()]);
-
-        if(stop_pending)
+        // A runtime stop wins over a model signal that arrived in the same turn.
+        if(stop_pending) {
+            status = "stopped";
+            report = "The task was stopped.";
             break;
+        }
 
         event = std.is_json(res) ? std.string(res.signal ?? "") : "";
 
@@ -172,18 +251,34 @@ run_turn(prompt, effort) {
         std.sleep(math.min(WS_AGENT_BACKOFF_MAX_MS, 500 * attempts));
     }
 
-    if(status) {
-        if(!save_turn_result(prompt, status, report))
-            std.error("[workspace_agent] could not persist turn result: ", turn_result_file);
-        emit([
-            type = "done",
-            ok = json.bool(status == "finished"),
-            status = status,
-            report = report,
-            token_usage = token_usage(),
-        ]);
-        terminal = true;
+    // A stop that arrived after the model signal still turns the turn into
+    // a runtime stopped result (the model's finished|failed|question stay the
+    // model signals; stopped is the runtime's).
+    if(stop_pending) {
+        status = "stopped";
+        report = "The task was stopped.";
     }
+
+    if(!status) {
+        status = "failed";
+        report = "The turn ended without a terminal result.";
+    }
+
+    // Exactly one stats line and one done line per turn.
+    emit([type = "stats", token_usage = token_usage()]);
+
+    if(!save_turn_result(prompt, status, report))
+        std.error("[workspace_agent] could not persist turn result: ", turn_result_file);
+
+    emit([
+        type = "done",
+        ok = json.bool(status == "finished"),
+        status = status,
+        report = report,
+        token_usage = token_usage(),
+    ]);
+
+    terminal = true;
 
     return [status = status, report = report];
 }
@@ -262,7 +357,7 @@ read_protocol() {
 
 // ── command line ─────────────────────────────────────────────────────────
 workspace = std.string(std.argvoption("--workspace") ?? "");
-config_file = std.string(std.argvoption("--config-file") ?? "");
+config_spec = std.string(std.argvoption("--config-spec") ?? "");
 history_file = std.string(std.argvoption("--history-file") ?? "");
 session_id = std.string(std.argvoption("--session-id") ?? "");
 reasoning_effort = std.string(std.argvoption("--reasoning-effort") ?? "medium").lowercase();
@@ -288,11 +383,6 @@ if(workspace) {
     }
 }
 
-if(!config_file) {
-    emit([type = "error", message = "Missing --config-file"]);
-    std.exitprocess(1);
-}
-
 if(!history_file) {
     emit([type = "error", message = "Missing --history-file"]);
     std.exitprocess(1);
@@ -300,9 +390,26 @@ if(!history_file) {
 turn_result_file = history_file + ".result.json";
 
 cfg = ModelConfig();
+loaded = false;
 
-if(!cfg.load(config_file, false)) {
-    emit([type = "error", message = "Cannot load config file: " + config_file]);
+// --config-spec is name|path[#profile]. An empty spec means the default config.
+legacy_config_file = std.string(std.argvoption("--config-file") ?? "");
+
+if(!config_spec && legacy_config_file) {
+    loaded = cfg.load(legacy_config_file, false);
+} else {
+    loaded = model_config_load_spec(
+        cfg,
+        config_spec,
+        MODEL_CONFIG_PACKAGE,
+        MODEL_CONFIG_DEFAULT_KEY,
+        false
+    );
+}
+
+if(!loaded) {
+    label = config_spec ? config_spec : (legacy_config_file ? legacy_config_file : "default");
+    emit([type = "error", message = "Cannot load config spec: " + label]);
     std.exitprocess(1);
 }
 
@@ -317,7 +424,8 @@ task_space = GoalSpace(workspace + "/.agentspace");
 if(!task_space.exists())
     task_space.init(__DIR__ + "/agentspace_template");
 task_scheduler = GoalScheduler(task_space, None);
-agent.env.mind = [goals = task_scheduler];
+mind = WorkspaceAgentMind(task_scheduler);
+agent.env.mind = mind;
 goal_tools_add(agent);
 
 architecture_board = ArchitectureBoard(None, workspace + "/.megamind/architecture", "adaptive", false);
@@ -496,6 +604,20 @@ for(1) {
         break;
 
     std.sleep(50);
+}
+
+// A stop while the agent is idle still has to produce one terminal done line;
+// if a turn already emitted its done (terminal), no second line is sent.
+if(stop_pending && !terminal) {
+    emit([type = "stats", token_usage = token_usage()]);
+    emit([
+        type = "done",
+        ok = json.bool(false),
+        status = "stopped",
+        report = "The task was stopped.",
+        token_usage = token_usage(),
+    ]);
+    terminal = true;
 }
 
 std.sleep(20);

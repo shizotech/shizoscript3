@@ -174,7 +174,7 @@ read_test_agent = miniagent(proto_cfg, "adaptive");
 read_test_agent.filesystem = fileio.container(proto_dir);
 read_test_result = read_test_agent.llm_api.tools.tool_callbacks["read_file"]([path = "read_file_selftest.txt"]);
 check(read_test_result.ok && read_test_result.content.contains("workspace file contents"), "read_file works in workspace without optional line-number argument");
-legacy_manager = SessionManager(store, proto_cfg);
+legacy_manager = SessionManager(store, config_path);
 legacy_id = "legacy-history-selftest";
 legacy_manager.sessions[legacy_id] = [
     id = legacy_id,
@@ -307,7 +307,7 @@ if(!cfg.load(config_path, false)) {
         attempts = 0,
     ], true, true);
 
-    manager = SessionManager(store, cfg);
+    manager = SessionManager(store, config_path);
     recovered = manager.get_session(recovery_id);
     check(recovered.status == "done" && recovered.report == "Completed before restart." && recovered.error == "", "restart recovers a durable worker completion instead of reporting an interruption");
     mres = manager.create_session(proto.workspace.id, "manager-test", "normal", "", "adaptive", "high");
@@ -333,6 +333,8 @@ if(!cfg.load(config_path, false)) {
             active_task_found = task.active && task.state == "running";
     }
     check(active_task_found, "task API marks a running worker as active");
+    missing_task = manager.inspect_task("missing-task");
+    check(std.is_json(missing_task) && !missing_task.ok && missing_task.state == "lost" && missing_task.error == "not found", "unknown task is canonical lost");
     manager.sessions[active_task_id].status = "done";
 
     sid = mres.ok ? mres.session.id : "";
@@ -361,13 +363,25 @@ if(!cfg.load(config_path, false)) {
     check(!second.ok, "max_sessions enforced");
     store.set_settings(3);
 
+    notify_count = 0;
+    manager.add_task_finished_listener([&notify_count](task) {
+        if(task.taskid == sid)
+            notify_count++;
+    });
+
     check(manager.stop_session(sid), "session manager stop");
 
     stopped = manager.get_session(sid);
     check(!std.is_none(stopped) && stopped.status == "stopped", "session stopped");
-    loaded_session = SessionManager(store, cfg).get_session(sid);
+    check(notify_count == 1, "stopped session reports exactly one terminal event");
+    loaded_session = SessionManager(store, config_path).get_session(sid);
     check(!std.is_none(loaded_session) && loaded_session.status == "stopped", "saved session loaded from .megamind");
     check(!std.is_none(loaded_session) && loaded_session.reasoning_effort == "high", "session reasoning effort survives manager reload");
+    effort_change = manager.set_reasoning_effort(sid, "low");
+    check(effort_change.ok && effort_change.session.reasoning_effort == "low", "session manager changes reasoning effort");
+    check(!manager.set_reasoning_effort(sid, "extreme").ok, "invalid reasoning effort change is refused");
+    reloaded_effort = SessionManager(store, config_path).get_session(sid);
+    check(!std.is_none(reloaded_effort) && reloaded_effort.reasoning_effort == "low", "changed reasoning effort survives manager reload");
     deleted_session_dir = manager.session_dir(sid);
     deleted_session = manager.delete_session(sid);
     check(deleted_session.ok && std.is_none(manager.get_session(sid)) && !fileio.exists(deleted_session_dir), "session deletion removes its stored conversation");
@@ -407,7 +421,11 @@ if(!cfg.load(config_path, false)) {
     manager.live_texts[auto_sid] = "";
     manager.live_text_seqs[auto_sid] = 0;
 
-    auto_ctx = [store = store, manager = manager, boards = [], schedulers = [], hosts = []];
+    auto_ctx = WorkspaceRegistry(config_path, "");
+    auto_ctx.store = store;
+    auto_ctx.manager = manager;
+    auto_ctx.workspaces = [];
+    auto_ctx.ensure(auto.workspace);
     auto_delete = workspaces_delete_workspace(auto_ctx, auto.workspace.id);
     check(auto_delete.ok, "workspace delete succeeds with sessions");
     check(auto_delete.sessions_removed.size() == 1 && auto_delete.sessions_removed[0] == auto_sid, "workspace delete removes its sessions");
@@ -484,7 +502,8 @@ check(node_api_authorized(req_query, "abc"), "query token accepted for SSE");
 check(!node_api_authorized(req_query, "wrong"), "wrong query token refused");
 
 fake = FakeServer();
-api = workspaces_api_register(fake, cfg, "", store);
+runtime = WorkspaceRegistry(config_path, "");
+api = workspaces_api_register(fake, cfg, "", runtime);
 
 check(!std.is_none(api.store) && !std.is_none(api.manager), "api register returns store and manager");
 check(fake.routes.size() >= 20, "workspace API routes registered");
@@ -504,6 +523,12 @@ for(route : fake.routes) {
         run_goal_route = true;
 }
 check(run_goal_route, "goal-engine run route is registered");
+    effort_route = false;
+    for(route : fake.routes) {
+        if(route.method == "POST" && route.path == "^/api/sessions/([0-9a-zA-Z_-]+)/effort$")
+            effort_route = true;
+    }
+    check(effort_route, "session effort route is registered");
 
 if(fileio.exists(test_root))
     fileio.remove(test_root);

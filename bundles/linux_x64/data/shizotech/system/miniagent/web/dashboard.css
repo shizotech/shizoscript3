@@ -216,6 +216,10 @@ textarea {
   background: var(--success);
 }
 
+.status-dot.question {
+  background: #f2c94c;
+}
+
 .status-dot.failed {
   background: var(--danger);
 }
@@ -1128,6 +1132,7 @@ textarea {
 .task-state.proposed { background: rgba(255, 180, 80, .14); color: #ffca7a; }
 .task-state.paused { background: rgba(134, 150, 160, .18); color: var(--text-secondary); }
 .task-state.done, .task-state.finished, .task-state.completed { background: rgba(0, 168, 132, .18); color: var(--success); }
+.task-state.question { background: rgba(242, 201, 76, .18); color: #ffca7a; }
 .task-state.failed, .task-state.cancelled { background: rgba(220, 53, 69, .18); color: #ff9a9a; }
 .task-state.stopped, .task-state.archived { background: rgba(134, 150, 160, .18); color: var(--text-secondary); }
 
@@ -1520,15 +1525,21 @@ body {
   background: #565047;
   content: '';
 }
-.session-row { position: relative; display: flex; align-items: center; min-width: 0; }
-.session-item {
+.session-row {
   position: relative;
-  flex: 1;
-  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 7px;
-  width: 100%;
+  gap: 3px;
+  min-width: 0;
+}
+.session-item {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-height: 28px;
   padding: 3px 6px;
   border: 1px solid transparent;
@@ -1538,15 +1549,40 @@ body {
   text-align: left;
   cursor: pointer;
   font-size: 11px;
+  overflow: hidden;
 }
 .session-item:hover { background: rgba(255, 255, 255, .035); color: #eee9dc; }
 .session-item.active { border-color: rgba(228, 189, 76, .25); background: rgba(228, 189, 76, .09); color: #f0d47a; }
 .session-delete { flex: 0 0 23px; opacity: 0; }
 .session-row:hover .session-delete, .session-row:focus-within .session-delete { opacity: 1; }
 .session-name {
-.session-activity { color: #c9d88b; font: 800 8px/1 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; white-space: nowrap; }
-.session-tokens { color: #8d8261; font-size: 9px; white-space: nowrap; }
-.session-item .status-dot { width: 6px; height: 6px; }
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-activity {
+  flex: 0 0 auto;
+  color: #c9d88b;
+  font: 800 8px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .08em;
+  white-space: nowrap;
+}
+.session-tokens {
+  flex: 0 0 auto;
+  padding: 1px 4px;
+  border: 1px solid rgba(228, 189, 76, .16);
+  border-radius: 3px;
+  background: rgba(228, 189, 76, .06);
+  color: #d4ae3f;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.session-item .status-dot { width: 6px; height: 6px; flex: 0 0 6px; }
 .ws-action[data-add-child] .fa-folder-plus { width: 10px; height: 7px; }
 .ws-action[data-add-child] .fa-folder-plus::after {
   position: absolute;
@@ -1660,4 +1696,70 @@ body {
   .composer-note { order: 1; flex: 1 1 100%; }
   .composer-actions #btnSendPrompt { order: 2; margin-left: auto; }
   .hazard-banner span { font-size: 8px; letter-spacing: .1em; }
+}
+
+/* ── Main-dashboard hazard stripe: visible even when the sidebar is collapsed ── */
+.main-hazard {
+  flex: 0 0 22px;
+  width: 100%;
+  border-top: 0;
+  border-bottom: 1px solid #4d4328;
+}
+
+/* ── Thin dark-yellow/black scrollbars ── */
+.task-view,
+.global-tasks-view,
+.sidebar-scroll,
+.chat-messages,
+.notification-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #d4ae3f #171819;
+}
+
+.task-view::-webkit-scrollbar,
+.global-tasks-view::-webkit-scrollbar,
+.sidebar-scroll::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar,
+.notification-panel::-webkit-scrollbar,
+.msg-body pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.task-view::-webkit-scrollbar-track,
+.global-tasks-view::-webkit-scrollbar-track,
+.sidebar-scroll::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track,
+.notification-panel::-webkit-scrollbar-track,
+.msg-body pre::-webkit-scrollbar-track {
+  background: #171819;
+}
+
+.task-view::-webkit-scrollbar-thumb,
+.global-tasks-view::-webkit-scrollbar-thumb,
+.sidebar-scroll::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb,
+.notification-panel::-webkit-scrollbar-thumb,
+.msg-body pre::-webkit-scrollbar-thumb {
+  background: #d4ae3f;
+  border: 2px solid #171819;
+  border-radius: 6px;
+}
+
+.task-view::-webkit-scrollbar-thumb:hover,
+.global-tasks-view::-webkit-scrollbar-thumb:hover,
+.sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.notification-panel::-webkit-scrollbar-thumb:hover,
+.msg-body pre::-webkit-scrollbar-thumb:hover {
+  background: #f0c84f;
+}
+
+/* ── Invalid task cards ── */
+.task-card.invalid {
+  border-color: rgba(220, 53, 69, .35);
+}
+.task-state.invalid {
+  background: rgba(220, 53, 69, .18);
+  color: #ff9a9a;
 }

@@ -1,31 +1,40 @@
 // ═════════════════════════════════════════════════════════════════════════════
-//  web_ui.shio — the web interface of a node: shz miniagent --web
+//  web_ui.shio — the web interface of a Node: shz miniagent --web
 //
-//      shz miniagent --web [--port 13337] [--api-token secret] [--agentspace dir]
-//                          [--architecture-role adaptive]
+//      shz miniagent --web [--port 13337] [--api-token secret]
 //      shz miniagent.node --web ...                   (the same)
 //
-//  One HTTP server on the node:
-//    /                       the dashboard (web/): chat with the receptionist,
-//                            the worker tasks, the architecture graph
-//    /api/...                the node JSON API (node_api.shio, node_api.md)
-//    /api/adminagent...      the chat protocol of the dashboard chat page
-//    /api/architecture...    the architecture board (architecture.shio)
+//  One HTTP server on the Node:
+//    /                       the dashboard (web/index.html): chat with the
+//                            receptionist and the workspace tasks
+//    /api/...                the Node JSON API (node_api.shio, node_api.md)
+//    /api/adminagent...      the chat protocol of the dashboard, run on the
+//                            Node's receptionist connector
+//    /api/workspaces...      WorkspaceRegistry routes (workspaces.shio)
 //
 //  Every page works offline: no CDN, everything is in web/.
 //  With --api-token the pages ask for the token once (kept in the browser).
 //
 //      #include "web_ui"
-//      opts = web_ui_parse(web_ui_args());       // [web, port, api_token, agentspace]
-//      ui = web_ui_start(host, cfg, opts);       // [server, board] | None
+//      opts = web_ui_parse(web_ui_args());       // [web, port, api_token]
+//      ui = web_ui_start(node, cfg, opts, registry);  // [server, board, runtime] | None
 // ═════════════════════════════════════════════════════════════════════════════
-
+ 
 #include "node_api"
-#include "architecture"
 #include "workspaces"
 
 WEB_UI_DEFAULT_PORT = 13337;
 WEB_UI_ROOT = __DIR__ + "/web";
+
+// The dashboard is web/index.html. The old chat and tasks pages are no longer
+// part of the web UI; deny them at the static root. The architecture editor is
+// still embedded by the dashboard's Architecture tab, so it must be served.
+web_ui_protect(req) {
+	p = std.string(req.path ?? "");
+	if(p == "/chat" || p.starts("/chat/") || p == "/tasks" || p.starts("/tasks/"))
+		return false;
+	return true;
+}
 
 // the command line as a list (index 0, the script, left out)
 web_ui_args() {
@@ -56,11 +65,8 @@ web_ui_has(args, flag) {
 	return false;
 }
 
-// -> [web, port, api_token, agentspace, architecture_role]
+// -> [web, port, api_token]
 //    web: --web (also --web=<port>); port: --port, else 13337
-//    agentspace: the architecture board root; --agentspace <dir> wins, else the
-//                global node architecture dir (std.user_path()/miniagent/node/.megamind/architecture)
-//    architecture_role: --architecture-role, the role of the graph's job tasks (adaptive)
 web_ui_parse(args) {
 	web = web_ui_has(args, "--web");
 	port = WEB_UI_DEFAULT_PORT;
@@ -75,25 +81,15 @@ web_ui_parse(args) {
 	if(p && std.int(p) > 0)
 		port = std.int(p);
 
-	space = web_ui_value(args, "--agentspace");
-	if(!space)
-		space = miniagent_node_architecture();
-
-	role = web_ui_value(args, "--architecture-role");
-	if(!role)
-		role = "adaptive";
-
 	return [
 		web = web,
 		port = port,
 		api_token = web_ui_value(args, "--api-token"),
-		agentspace = space,
-		architecture_role = role,
 	];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  /api/adminagent: the protocol of web/chat/script.js on the node's receptionist
+//  /api/adminagent: the chat protocol of the dashboard on the Node's receptionist
 // ─────────────────────────────────────────────────────────────────────────────
 
 // a receptionist action -> the delta of the chat page (None: not shown)
@@ -127,10 +123,10 @@ web_ui_chat_delta(action) {
 	return [agent = "planner", text = text + "\n\n"];
 }
 
-web_ui_chat_routes(server, host, api_token) {
+web_ui_chat_routes(server, node, api_token) {
 	sessions = [];		// client ip -> [token, queue, status]
 
-	server.route("POST", "^/api/adminagent$", [host, sessions, api_token](req, writer) {
+	server.route("POST", "^/api/adminagent$", [node, sessions, api_token](req, writer) {
 		if(!node_api_authorized(req, api_token))
 			return node_api_err("Unauthorized", 401);
 
@@ -146,7 +142,7 @@ web_ui_chat_routes(server, host, api_token) {
 
 		sessions[client] = [token = token, queue = [], status = "generating", started = std.millis()];
 
-		run = [host, sessions, client, token, prompt]() {
+		run = [node, sessions, client, token, prompt]() {
 			on_action = [sessions, client, token](action) {
 				if(!sessions.has(client) || sessions[client].token != token)
 					return;
@@ -156,7 +152,7 @@ web_ui_chat_routes(server, host, api_token) {
 			};
 			result = None;
 			try {
-				result = host.request(prompt, None, on_action);
+				result = node.request(prompt, None, on_action);
 			}
 			catch(e) {
 				result = [ok = false, error = std.string(e)];
@@ -212,7 +208,7 @@ web_ui_chat_routes(server, host, api_token) {
 		return [status_code = 200, headers = node_api_headers(), body = std.string(reply)];
 	});
 
-	server.route("POST", "^/api/adminagent/stop$", [host, sessions, api_token](req, writer) {
+	server.route("POST", "^/api/adminagent/stop$", [node, sessions, api_token](req, writer) {
 		if(!node_api_authorized(req, api_token))
 			return node_api_err("Unauthorized", 401);
 
@@ -220,7 +216,7 @@ web_ui_chat_routes(server, host, api_token) {
 		if(sessions.has(client)) {
 			sessions.erase(client);
 			try {
-				host.receptionist.stop();
+				node.receptionist.stop();
 			}
 			catch(e) {}
 		}
@@ -229,91 +225,39 @@ web_ui_chat_routes(server, host, api_token) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  /api/architecture: the board
+//  Workspace boards are served by workspaces_api_register; no node-level
+//  /api/architecture routes here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-web_ui_board_reply(res) {
-	if(std.is_json(res) && res.has("ok") && !res.ok)
-		return node_api_err(std.string(res.error ?? "failed"), 409);
-	return node_api_ok(res);
-}
-
-web_ui_architecture_routes(server, board, api_token) {
-	server.route("GET", "^/api/architecture$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		return node_api_ok(board.state());
-	});
-
-	server.route("POST", "^/api/architecture/analyze$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		return web_ui_board_reply(board.analyze());
-	});
-
-	server.route("POST", "^/api/architecture/edits$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		body = node_api_body(req);
-		if(std.is_none(body))
-			return node_api_err("Invalid request body");
-		return web_ui_board_reply(board.add_edit(body));
-	});
-
-	server.route("DELETE", "^/api/architecture/edits/([0-9a-zA-Z_-]+)$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		n = board.remove_edit(std.string(req.matches[0]));
-		if(!n)
-			return node_api_err("unknown edit", 404);
-		return node_api_ok([removed = n]);
-	});
-
-	server.route("POST", "^/api/architecture/discard$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		return node_api_ok([removed = board.discard_edits()]);
-	});
-
-	server.route("POST", "^/api/architecture/layout$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		body = node_api_body(req);
-		if(std.is_none(body) || !body.has("positions"))
-			return node_api_err("Missing 'positions'");
-		return node_api_ok([moved = board.set_layout(body.positions)]);
-	});
-
-	server.route("POST", "^/api/architecture/plan$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		body = node_api_body(req);
-		return web_ui_board_reply(board.review_plan(node_api_get(body, "feedback")));
-	});
-
-	server.route("POST", "^/api/architecture/apply$", [board, api_token](req, writer) {
-		if(!node_api_authorized(req, api_token))
-			return node_api_err("Unauthorized", 401);
-		return web_ui_board_reply(board.apply());
-	});
-}
-
-// -> [server, board], None when the port cannot be bound
-web_ui_start(host, cfg, opts) {
+// -> [server, board, runtime], None when the port cannot be bound
+//    registry: the WorkspaceRegistry to serve; defaults to node.registry.
+//    board: the Node workspace's board (compatibility for node.shio); no legacy
+//           node-level ArchitectureBoard is created here.
+web_ui_start(node, cfg, opts, registry = None) {
 	port = std.int(opts.port ?? WEB_UI_DEFAULT_PORT);
 	token = std.string(opts.api_token ?? "");
-	space = std.string(opts.agentspace ?? miniagent_node_architecture());
 
-	server = node_api_start(host, cfg, port, token, WEB_UI_ROOT);
+	if(std.is_none(registry)) {
+		try {
+			registry = node.registry;
+		} catch(e) {
+			registry = None;
+		}
+	}
+
+	server = node_api_start(node, cfg, port, token, WEB_UI_ROOT, web_ui_protect);
 	if(!server)
 		return None;
 
-	board = ArchitectureBoard(host, space, std.string(opts.architecture_role ?? "adaptive"));
+	web_ui_chat_routes(server, node, token);
 
-	web_ui_chat_routes(server, host, token);
-	web_ui_architecture_routes(server, board, token);
+	runtime = workspaces_api_register(server, cfg, token, registry);
 
-	workspaces = workspaces_api_register(server, cfg, token);
+	board = None;
+	try {
+		if(node && !std.is_none(node.node_workspace) && !std.is_none(node.node_workspace.board))
+			board = node.node_workspace.board;
+	} catch(e) {}
 
-	return [server = server, board = board, workspaces = workspaces];
+	return [server = server, board = board, runtime = runtime];
 }

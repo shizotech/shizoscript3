@@ -51,6 +51,9 @@ class FakeHost {
 	workers = 2;
 	idle = 100000;
 	refuse = false;
+	inspect_error = false;
+	inspect_none = false;
+	inspect_lost_json = false;
 
 	add_task(name, goal) {
 		if(refuse)
@@ -69,6 +72,12 @@ class FakeHost {
 	}
 
 	inspect_task(taskid) {
+		if(inspect_error)
+			std.runtime_error("inspect failed");
+		if(inspect_none)
+			return None;
+		if(inspect_lost_json)
+			return [ok = false, taskid = taskid, state = "lost", error = "remote request expired", active = false, last_update_ms = 0];
 		t = find(taskid);
 		if(!t)
 			return "Not found.";
@@ -140,6 +149,15 @@ has_event(sch, kind, goal) {
 			return true;
 	}
 	return false;
+}
+
+count_events(sch, kind, goal) {
+	n = 0;
+	for(e : sch.ledger.data.events) {
+		if(e.kind == kind && e.goal == goal)
+			n++;
+	}
+	return n;
 }
 
 notes_with(host, needle) {
@@ -376,6 +394,42 @@ sch.clock = [clk]() { return clk.t; };
 sch.tick();
 check("before the window: nothing activated", count_activations(sch, "gh-issues") == 0 && host.tasks.size() == 0, "");
 
+check("the scheduler is bound to one workspace", sch.root == ROOT && sch.workspace_id == ROOT, std.string([root = sch.root, workspace_id = sch.workspace_id]));
+
+pr = sch.poll_task("missing");
+check("poll_task: legacy 'Not found.' is lost", pr.ok == 1 && pr.taskid == "missing" && pr.state == "lost", std.string(pr));
+check("poll_task: result has the protocol fields", pr.has("ok") && pr.has("taskid") && pr.has("state") && pr.has("report") && pr.has("error") && pr.has("active") && pr.has("last_update_ms"), std.string(pr));
+
+host.inspect_error = true;
+pr = sch.poll_task("transient");
+check("poll_task: an inspect exception is unknown, not lost", pr.ok == 0 && pr.state == "unknown" && pr.error != "", std.string(pr));
+host.inspect_error = false;
+
+host.inspect_none = true;
+pr = sch.poll_task("transient");
+check("poll_task: None is unknown, not lost", pr.ok == 0 && pr.state == "unknown", std.string(pr));
+host.inspect_none = false;
+
+host.inspect_lost_json = true;
+pr = sch.poll_task("canonical");
+check("poll_task: canonical ok=false/state=lost is lost", pr.ok == 1 && pr.state == "lost", std.string(pr));
+host.inspect_lost_json = false;
+
+ua = [akey = "unknown-run", goal = "unknown-goal", state = "open", runs = []];
+ur = [n = 1, kind = "work", state = "running", taskid = "transient", settled = false, terminal_reported = false];
+ua.runs.push_back(ur);
+sch.ledger.data.activations["unknown-run"] = ua;
+host.inspect_error = true;
+sch.settle_runs();
+check("a transient unknown inspect result keeps the run open", ur.state == "running" && !gj(ur, "settled", false), std.string([state = ur.state, settled = gj(ur, "settled", false)]));
+host.inspect_error = false;
+sch.ledger.data.activations.remove("unknown-run");
+
+tevt = [taskid = "dup-task", state = "finished", report = "done", last_update_ms = std.millis()];
+sch.on_host_task_finished(tevt);
+sch.on_host_task_finished(tevt);
+check("on_host_task_finished stores one terminal event per taskid", sch.terminal_events.size() == 1, std.string(sch.terminal_events.size()));
+
 clk.t = at(ber, "2026-10-19", "05:00") + 20;
 sch.tick();
 check("window start: one activation", count_activations(sch, "gh-issues") == 1, "");
@@ -386,6 +440,9 @@ check("the start is announced", notes_with(host, "Goal gh-issues starts") == 1, 
 sch.tick();
 sch.tick();
 check("more ticks: still one activation, one task", count_activations(sch, "gh-issues") == 1 && host.tasks.size() == 1, "");
+
+sch.update();
+check("update() is a synchronous tick alias", count_activations(sch, "gh-issues") == 1 && host.tasks.size() == 1, "");
 
 // restart: a new process, the host lost its in-memory tasks
 clk.t = at(ber, "2026-10-19", "05:10");
@@ -412,7 +469,24 @@ check("history.md got an entry", goal_read(ROOT + "/goals/active/gh-issues/histo
 // One completed task = one message: the task_finished event carries the report,
 	// so the goal scheduler must not add a second [notify] for a plain finished run.
 	check("the finished notify does not repeat the report", notes_with(host2, "finished (report in the task message)") == 0 && notes_with(host2, "Fixed issue #12") == 0, std.string(host2.notes));
-check("the run records the definition revision", act.runs[act.runs.size() - 1].revision == act.revision && act.revision != "", "");
+	check("the run records the definition revision", act.runs[act.runs.size() - 1].revision == act.revision && act.revision != "", "");
+
+	frr = act.runs[act.runs.size() - 1];
+	check("a finished run is settled exactly once", gj(frr, "settled", false) && count_events(sch2, "run_finished", "gh-issues") == 1, std.string([settled = gj(frr, "settled", false), events = count_events(sch2, "run_finished", "gh-issues")]));
+	sch2.finish_run(act, frr, "finished", "again");
+	sch2.settle_runs();
+	check("repeated settlement adds no terminal event", count_events(sch2, "run_finished", "gh-issues") == 1, std.string(count_events(sch2, "run_finished", "gh-issues")));
+
+	sch2.notify_once("dedupe-probe", "one scheduler message");
+	sch2.notify_once("dedupe-probe", "one scheduler message");
+	check("notify_once dedupes scheduler notifications by key", notes_with(host2, "one scheduler message") == 1, std.string(host2.notes));
+
+	qa = [akey = "question-run", goal = "question-goal", state = "open", runs = []];
+	qr = [n = 1, kind = "work", state = "running", taskid = "question-task", settled = false, terminal_reported = false];
+	qa.runs.push_back(qr);
+	sch2.finish_run(qa, qr, "question", "need a decision");
+	sch2.finish_run(qa, qr, "question", "need a decision");
+	check("a question run settles and notifies once", qa.state == "blocked" && count_events(sch2, "run_question", "question-goal") == 1 && notes_with(host2, "needs you") == 1, std.string([state = qa.state, events = count_events(sch2, "run_question", "question-goal"), notes = notes_with(host2, "needs you")]));
 
 // ═════════════════════════════════════════════════════════════════════════════
 section("scheduler: failures and retries");
@@ -440,6 +514,9 @@ sch2.tick();
 clk.t += 10 * 60;
 sch2.tick();
 check("max_attempts ends the window as failed", host2.tasks.size() == 4 && notes_with(host2, "no attempts left") == 1, std.string(host2.tasks.size()));
+
+sch2.tick();
+check("max_attempts notification is reported once, even on a repeated tick", notes_with(host2, "no attempts left") == 1, std.string(host2.notes));
 
 // ═════════════════════════════════════════════════════════════════════════════
 section("scheduler: window end and stop policy");
@@ -921,6 +998,8 @@ clk.t = at(ber, "2026-10-29", "19:00") + 5;
 sch4.tick();
 check("a refused dispatch creates no task, only a dispatch_failed event", host4.tasks.size() == before && has_event(sch4, "dispatch_failed", "refused"), std.string(host4.tasks.size() - before));
 check("a refused dispatch notifies the owner with the reason", notes_with(host4, "could not start - the host refused the task") == 1, std.string(host4.notes));
+sch4.tick();
+check("a refused dispatch notification is reported once, even on a repeated tick", notes_with(host4, "could not start - the host refused the task") == 1, std.string(host4.notes));
 host4.refuse = false;
 clk.t += 6 * 60;
 sch4.tick();

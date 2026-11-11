@@ -1,6 +1,6 @@
 # Architecture graph (`architecture.shio`, `web/architecture/`)
 
-A high-level map of the codebase a node works on, shown as a node graph in the web
+A high-level map of the codebase a workspace works on, shown as a node graph in the web
 interface (`shz miniagent --web`). The owner designs on that map instead of writing long
 specs: edits in the graph are collected as **pending changes**, a worker can write a
 **plan** for them, and only **Apply** lets a worker change the code.
@@ -16,11 +16,11 @@ specs: edits in the graph are collected as **pending changes**, a worker can wri
                                               on "finished" they become the model
 ```
 
-Everything runs on the node's own task system: every job is one `Megamind.add_task`
-task (it shows in the Tasks page, the Telegram router and `/api/tasks` like any other
-task), its end arrives through `Megamind.add_task_finished_listener`.
+Everything runs on the workspace's task system: every job is one `Workspace.add_task`
+session task (it shows in the workspace Tasks page, the Telegram router and `/api/tasks`
+like any other task), its end arrives through `Workspace.add_task_finished_listener`.
 
-## Files (global node `.megamind/architecture/`, a workspace's `.megamind/architecture/`, or `--agentspace <dir>`)
+## Files (the node-level graph at `std.user_path()/miniagent/node/.megamind/architecture`, a project workspace's `.megamind/architecture/`, or `--agentspace <dir>`)
 
 | File | Written by | What |
 |---|---|---|
@@ -56,7 +56,7 @@ read is moved to `architecture.json.corrupt-<ms>` and the board starts empty.
   `calls data includes events network` (source uses / sends to target). Unknown kinds fall
   back to `module` / `calls`. An analysis may write `from` / `to` instead of
   `source` / `target` and leave out ids (made from the label).
-* `x` / `y`: the position on the page (`POST /api/architecture/layout`); nodes without
+* `x` / `y`: the position on the page (`POST /api/workspaces/<id>/architecture/layout`); nodes without
   one are placed by the page's layout and then stored.
 * An empty list is written as `{}` (ShizoScript json); readers treat it as `[]`.
 
@@ -84,8 +84,8 @@ added or dropped after a plan was written marks the plan `outdated`.
 | Review plan (+ feedback) | `Architecture-Plan`: write `architecture_plan.md`, change no code | `plan` = the file (or the report) | |
 | Apply | `Architecture-Apply`: implement the edits (with the plan) | the edits are committed into nodes / edges, the plan is cleared | the edits stay pending, `job.error` = the report |
 
-Every job is **one** task with the role `adaptive` (the default role of `Megamind.add_task`;
-`ArchitectureBoard(host, root, role)` / `--architecture-role` change it). That agent may
+Every job is **one** task with the role `adaptive` (the default role of `Workspace.add_task`;
+`ArchitectureBoard(Workspace, root, role)` / `--architecture-role` change it). That agent may
 delegate subtasks with `start_task` / `fork` / `file_task_batch`; how many generate at the
 same time is the existing `max_running_agents` of the model config (`agent_slots.shio`),
 there is no second limit.
@@ -115,20 +115,20 @@ A job prompt never carries the whole model or the whole change set:
 * Inside one agent, a conversation that fills up is compacted by `openai_compact.shio`
   (a handoff summary replaces the old messages), as for every miniagent.
 * The job records `split` (true / false) so the page and the logs show which way it ran. A job whose task the
-node does not know after a restart is marked `lost`.
+  workspace does not know after a restart is marked `lost`.
 
-## HTTP (`web_ui.shio`, with the node API token)
+## HTTP (workspace API, with the node API token)
 
 | Method | Path | Body |
 |---|---|---|
-| GET | `/api/architecture` | – (model with the edits applied, pending, plan, live job) |
-| POST | `/api/architecture/analyze` | – |
-| POST | `/api/architecture/edits` | one edit (table above) |
-| DELETE | `/api/architecture/edits/<id>` | – |
-| POST | `/api/architecture/discard` | – (all pending edits and the plan) |
-| POST | `/api/architecture/layout` | `{"positions": {"<id>": [x, y]}}` |
-| POST | `/api/architecture/plan` | `{"feedback": "…"}` (optional) |
-| POST | `/api/architecture/apply` | – |
+| GET | `/api/workspaces/<id>/architecture` | – (model with the edits applied, pending, plan, live job) |
+| POST | `/api/workspaces/<id>/architecture/analyze` | – |
+| POST | `/api/workspaces/<id>/architecture/edits` | one edit (table above) |
+| DELETE | `/api/workspaces/<id>/architecture/edits/<edit_id>` | – |
+| POST | `/api/workspaces/<id>/architecture/discard` | – (all pending edits and the plan) |
+| POST | `/api/workspaces/<id>/architecture/layout` | `{"positions": {"<id>": [x, y]}}` |
+| POST | `/api/workspaces/<id>/architecture/plan` | `{"feedback": "…"}` (optional) |
+| POST | `/api/workspaces/<id>/architecture/apply` | – |
 
 A refused action answers `409` with the reason (`{"ok": false, "error": "…"}`).
 

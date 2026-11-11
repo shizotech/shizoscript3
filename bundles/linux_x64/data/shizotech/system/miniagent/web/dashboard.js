@@ -59,6 +59,7 @@ const statusClass = (status) => {
   const s = String(status || '').toLowerCase();
   if (s === 'running' || s === 'starting' || s === 'waiting' || s === 'planned') return 'running';
   if (s === 'done' || s === 'finished' || s === 'completed') return 'done';
+  if (s === 'question') return 'question';
   if (s === 'failed' || s === 'error' || s === 'cancelled') return 'failed';
   if (s === 'stopped' || s === 'paused' || s === 'archived') return 'stopped';
   return 'idle';
@@ -78,7 +79,44 @@ const isActiveTask = (task) => {
 
 const isFinishedTask = (task) => {
   const status = String(task && (task.state || task.status) || '').toLowerCase();
-  return ['done', 'finished', 'completed', 'failed', 'stopped', 'cancelled'].includes(status);
+  return ['done', 'finished', 'completed', 'question', 'failed', 'stopped', 'cancelled'].includes(status);
+};
+
+const isNeedsInputTask = (task) => {
+  const status = String(task && (task.state || task.status) || '').toLowerCase();
+  return status === 'question';
+};
+
+const goalStatus = (goal) => String(goal && goal.status || '').toLowerCase();
+const isGoalRunOpen = (goal) => ['dispatching', 'running', 'checkpoint'].includes(String(goal && goal.active_run_state || '').toLowerCase());
+const isGoalNeedsInput = (goal) => String(goal && goal.active_run_state || '').toLowerCase() === 'question';
+const goalHasOpenWindow = (goal) => Boolean(String(goal && goal.active_window || '').trim());
+const isGoalInvalid = (goal) => Boolean(goal && goal.invalid_edit === true) ||
+  (goal && Array.isArray(goal.errors) && goal.errors.length > 0) ||
+  goalStatus(goal) === 'invalid' || goalStatus(goal) === '?';
+const taskIdOf = (item) => String(item && (item.taskid || item.id) || '');
+const formatGoalErrors = (goal) => {
+  const errors = goal && Array.isArray(goal.errors) ? goal.errors : [];
+  return errors.map((error) => {
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object') return error.message || error.error || error.reason || JSON.stringify(error);
+    return String(error);
+  }).join('; ');
+};
+const formatSchedule = (schedule) => {
+  if (!schedule) return '';
+  if (typeof schedule === 'string') return schedule;
+  if (typeof schedule !== 'object') return String(schedule);
+  const parts = [];
+  if (schedule.type) parts.push(String(schedule.type));
+  if (schedule.every) parts.push('every ' + String(schedule.every));
+  if (schedule.days) parts.push('days ' + (Array.isArray(schedule.days) ? schedule.days.join(', ') : String(schedule.days)));
+  if (schedule.date) parts.push('date ' + String(schedule.date));
+  if (schedule.window) parts.push('window ' + (Array.isArray(schedule.window) ? schedule.window.join('–') : String(schedule.window)));
+  if (schedule.start) parts.push('start ' + String(schedule.start));
+  if (schedule.end) parts.push('end ' + String(schedule.end));
+  if (schedule.duration) parts.push('duration ' + String(schedule.duration));
+  return parts.length ? parts.join(' · ') : JSON.stringify(schedule);
 };
 
 let markdownRenderer = null;
@@ -130,6 +168,7 @@ const state = {
   currentReasoningText: '',
   pendingUser: null,
   composerMode: 'normal',
+  composerEffort: 'medium',
   renderingHistory: false
 };
 
@@ -330,14 +369,13 @@ function renderWorkspaceTree() {
     addChild.innerHTML = '<i class="fa-solid fa-folder-plus ws-folder-icon"></i>';
     actions.appendChild(addChild);
 
-    const knownSessions = state.workspaceSessions[id] || [];
     const deleteWorkspace = document.createElement('button');
     deleteWorkspace.className = 'ws-action ws-action-danger';
     deleteWorkspace.dataset.deleteWorkspace = id;
-    deleteWorkspace.disabled = children.length > 0 || knownSessions.length > 0;
+    deleteWorkspace.disabled = children.length > 0;
     deleteWorkspace.title = children.length
       ? 'Delete sub-workspaces first'
-      : knownSessions.length ? 'Delete sessions first' : 'Remove ' + (w.name || id) + ' from Miniagent';
+      : 'Remove ' + (w.name || id) + ' from Miniagent (sessions removed, files kept)';
     deleteWorkspace.setAttribute('aria-label', deleteWorkspace.title);
     deleteWorkspace.innerHTML = '<i class="fa-solid fa-trash"></i>';
     actions.appendChild(deleteWorkspace);
@@ -366,7 +404,7 @@ function renderWorkspaceTree() {
           '<span class="status-dot ' + (generating ? 'generating' : statusClass(sessionStatus)) + '" aria-hidden="true"></span>' +
           '<span class="session-name">' + esc(s.title || 'Session') + '</span>' +
           (generating ? '<span class="session-activity">GENERATING</span>' : '') +
-          '<span class="session-tokens">' + fmtNum(s.token_usage) + ' tok</span>';
+          '<span class="session-tokens">' + fmtNum((state.stats.token_usage && Object.prototype.hasOwnProperty.call(state.stats.token_usage, s.id)) ? state.stats.token_usage[s.id] : s.token_usage) + ' tok</span>';
         sessionRow.appendChild(session);
 
         const deleteSession = document.createElement('button');
@@ -409,29 +447,31 @@ function openWorkspaceForm(parentId) {
 async function deleteWorkspace(id) {
   const workspace = state.byId[String(id)];
   if (!workspace || String(workspace.id) === 'root') return;
-  if (!window.confirm('Remove "' + (workspace.name || workspace.id) + '" from Miniagent? Its project files will remain on disk. Delete its sessions and sub-workspaces first.')) return;
+  if (!window.confirm('Remove "' + (workspace.name || workspace.id) + '" from Miniagent? Its sessions will be stopped and removed automatically; its project files remain on disk. Delete sub-workspaces first.')) return;
 
   try {
     await NodeApi.del('/api/workspaces/' + encodeURIComponent(workspace.id));
     const wasSelected = state.selectedWorkspace && String(state.selectedWorkspace.id) === String(workspace.id);
     state.expandedWorkspaces.delete(String(workspace.id));
+    delete state.workspaceSessions[String(workspace.id)];
     if (wasSelected) {
       state.selectedWorkspace = null;
       state.selectedSession = null;
       state.session = null;
+      state.sessions = [];
       state.taskData = null;
       state.architecture = null;
+      delete state.taskRenderSignatures[String(workspace.id)];
       localStorage.removeItem('miniagent_workspace_id');
       closeStream();
       setChatEmpty();
       renderSessionHeader();
     }
-    await loadWorkspaces();
-    if (!state.selectedWorkspace) {
-      renderHeader();
-      renderSessionHeader();
-    }
-    toast('Project removed from Miniagent. Files were kept.', 'success');
+    await loadWorkspaces(false);
+    try { await refreshStats(); } catch (e) { /* stats are optional */ }
+    renderHeader();
+    renderSessionHeader();
+    toast('Project removed from Miniagent. Sessions were deleted; files were kept.', 'success');
   } catch (e) {
     toast('Could not remove project: ' + e.message, 'error');
   }
@@ -461,18 +501,38 @@ async function createWorkspace() {
 }
 
 /* ── Workspace data ── */
-async function loadWorkspaces() {
+async function loadWorkspaces(autoSelect = true) {
   const data = await NodeApi.get('/api/workspaces');
   state.workspaces = flattenWorkspaces(data);
   state.byId = {};
   state.workspaces.forEach((w) => { state.byId[w.id] = w; });
   applySettings(data.settings);
-  state.stats = data.stats || state.stats;
+  state.stats = data.stats && typeof data.stats === 'object' ? data.stats : state.stats;
 
+  Object.keys(state.workspaceSessions).forEach((id) => {
+    if (!state.byId[id]) delete state.workspaceSessions[id];
+  });
+  state.expandedWorkspaces.forEach((id) => {
+    if (!state.byId[id]) state.expandedWorkspaces.delete(id);
+  });
+
+  if (state.selectedWorkspace) {
+    const selectedId = String(state.selectedWorkspace.id);
+    if (state.byId[selectedId]) {
+      state.selectedWorkspace = state.byId[selectedId];
+    } else {
+      state.selectedWorkspace = null;
+      state.selectedSession = null;
+      state.session = null;
+      state.sessions = [];
+    }
+  }
+
+  syncSessionTokens();
   renderWorkspaceTree();
   renderStats();
 
-  if (!state.selectedWorkspace) {
+  if (autoSelect && !state.selectedWorkspace) {
     const saved = localStorage.getItem('miniagent_workspace_id');
     const roots = rootWorkspaces();
     const id = saved && saved !== 'root' && state.byId[saved]
@@ -496,6 +556,7 @@ async function selectWorkspace(id) {
   state.selectedSession = null;
   state.session = null;
   state.sessions = [];
+  state.workspaceSessions[String(id)] = [];
   state.architecture = null;
   state.taskData = null;
   delete state.taskRenderSignatures[String(id)];
@@ -543,6 +604,7 @@ async function refreshWorkspace(id, generation = state.workspaceSelectionGenerat
   applySettings(data.settings);
   state.sessions = normalizeSessions(data.sessions);
   state.workspaceSessions[String(id)] = state.sessions;
+  syncSessionTokens();
 
   if (data.architecture) state.architecture = data.architecture;
   if (data.goals) state.taskData = { goals: arr(data.goals), sessions: arr(data.tasks), templates: [] };
@@ -595,6 +657,66 @@ function sumTokens(x) {
   return num(x);
 }
 
+function tokenMap() {
+  const map = state.stats && state.stats.token_usage;
+  return map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+}
+
+function syncSessionTokens() {
+  const map = tokenMap();
+  const apply = (list) => {
+    if (!Array.isArray(list)) return;
+    list.forEach((session) => {
+      if (!session || session.id == null) return;
+      if (Object.prototype.hasOwnProperty.call(map, session.id)) {
+        session.token_usage = num(map[session.id]);
+      }
+    });
+  };
+
+  Object.values(state.workspaceSessions).forEach(apply);
+  apply(state.sessions);
+  if (state.session && state.session.id != null && Object.prototype.hasOwnProperty.call(map, state.session.id)) {
+    state.session.token_usage = num(map[state.session.id]);
+  }
+}
+
+function updateSessionTokenLabels() {
+  const map = tokenMap();
+  document.querySelectorAll('.session-item').forEach((item) => {
+    const sessionId = item.dataset.sessionId;
+    if (!sessionId || !Object.prototype.hasOwnProperty.call(map, sessionId)) return;
+    const chip = item.querySelector('.session-tokens');
+    if (chip) chip.textContent = fmtNum(map[sessionId]) + ' tok';
+  });
+}
+
+function updateConsoleLamps() {
+  const statuses = state.stats && state.stats.session_status && typeof state.stats.session_status === 'object'
+    ? state.stats.session_status
+    : {};
+  let active = 0;
+  let busy = 0;
+  let warn = 0;
+
+  Object.values(statuses).forEach((status) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'running' || s === 'generating' || s === 'starting' || s === 'waiting' || s === 'planned') busy++;
+    if (s === 'question' || s === 'failed' || s === 'error' || s === 'cancelled') warn++;
+    if (s === 'running' || s === 'generating' || s === 'question' || s === 'done' || s === 'failed') active++;
+  });
+
+  if (!active) active = state.sessions.length;
+  const st = state.stats || {};
+  busy = Math.max(busy, num(st.running_processes ?? st.running ?? st.processes ?? 0));
+
+  [['lampPower', true], ['lampLink', active > 0], ['lampBusy', busy > 0], ['lampWarn', warn > 0]]
+    .forEach(([id, on]) => {
+      const lamp = $(id);
+      if (lamp) lamp.classList.toggle('on', on);
+    });
+}
+
 function renderStats() {
   const st = state.stats || {};
   const sessionTokens = state.sessions.reduce((sum, s) => sum + num(s.token_usage), 0);
@@ -614,6 +736,7 @@ function renderStats() {
     '<span class="stat-chip">active <b>' + active + '</b></span>' +
     '<span class="stat-chip">running <b>' + running + '</b></span>' +
     '<span class="stat-chip">max <b>' + max + '</b></span>';
+  updateConsoleLamps();
 }
 
 function updateSessionActivity() {
@@ -636,13 +759,17 @@ function updateSessionActivity() {
       activity.remove();
     }
   });
+  updateConsoleLamps();
 }
 
 async function refreshStats() {
   const data = await NodeApi.get('/api/stats');
-  state.stats = data || {};
+  state.stats = data && typeof data === 'object' ? data : {};
+  syncSessionTokens();
   renderStats();
   updateSessionActivity();
+  updateSessionTokenLabels();
+  renderSessionHeader();
 }
 
 /* ── Sessions ── */
@@ -671,6 +798,7 @@ function renderSessionHeader() {
   if (!s) {
     titleEl.textContent = 'No session selected';
     metaEl.textContent = 'Select a session in the sidebar or create one with +.';
+    $('reasoningEffort').value = state.composerEffort;
     modeButtons.forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === state.composerMode);
       b.disabled = false;
@@ -687,7 +815,9 @@ function renderSessionHeader() {
   titleEl.textContent = s.title || 'Session';
   metaEl.textContent = statusLabel(s.status) + ' - ' + modeLabel(s.mode || 'normal') +
     ' - ' + fmtNum(s.token_usage) + ' tokens';
-  if (s.reasoning_effort) $('reasoningEffort').value = s.reasoning_effort;
+  const effort = String(s.reasoning_effort || state.composerEffort || 'medium').toLowerCase();
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
 
   modeButtons.forEach((b) => {
     b.classList.toggle('active', b.dataset.mode === (s.mode || 'normal'));
@@ -700,6 +830,8 @@ function renderSessionHeader() {
 
   if (isRunningStatus(s.status)) {
     $('composerHint').textContent = 'Running - sending a new prompt interrupts the current turn.';
+  } else if (String(s.status || '').toLowerCase() === 'question') {
+    $('composerHint').textContent = 'The agent needs input - send a prompt to continue.';
   } else if (s.mode === 'goal') {
     $('composerHint').textContent = 'Loop mode continues the work until it is finished or fails.';
   } else {
@@ -738,6 +870,7 @@ async function loadWorkspaceBranchSessions(id, generation) {
     if (result.error) failures.push(result);
     else state.workspaceSessions[result.id] = result.sessions;
   });
+  syncSessionTokens();
   renderWorkspaceTree();
 
   if (failures.length) {
@@ -784,6 +917,7 @@ async function selectSession(id) {
     return;
   }
 
+  syncSessionTokens();
   renderSessionHeader();
   renderWorkspaceTree();
   renderSessionHistory(state.session.events, state.session.chat_history, state.session.live_text);
@@ -824,74 +958,102 @@ function renderSessionHistory(events, chatHistory, liveText) {
 
   const status = String(state.session && state.session.status || '').toLowerCase();
   const active = ['starting', 'running', 'waiting'].includes(status);
-  if (Array.isArray(chatHistory) && (chatHistory.length || liveText || active)) {
-    state.renderingHistory = true;
-    let lastAssistant = '';
-    chatHistory.forEach((message) => {
+  const hist = Array.isArray(chatHistory) ? chatHistory : [];
+  const live = String(liveText || '');
+  const prompt = String(state.session && state.session.prompt || '');
+  const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
+  const historySize = hist.length;
+
+  state.renderingHistory = true;
+
+  if (historySize) {
+    hist.forEach((message) => {
       if (!message || typeof message !== 'object') return;
       const role = String(message.role || '');
       const text = chatContentText(message.content);
       if (!text) return;
+      // Hide miniagent's synthetic "finalize()" reminder prompts; they are not user messages.
+      if (role === 'user' && text.startsWith('<---SYTEM MESSAGE--->')) return;
       if (role === 'user') {
         addUser(text);
-        lastAssistant = '';
       } else if (role === 'assistant') {
         resetAgentBubble();
         addAgentText(text);
-        lastAssistant = text;
       }
     });
 
-    const prompt = String(state.session && state.session.prompt || '');
-    const historySize = chatHistory.length;
-    const promptHistorySize = num(state.session && state.session.chat_history_size_at_prompt);
-    const unarchivedTurn = prompt && historySize <= promptHistorySize;
-    if (unarchivedTurn) {
+    // The prompt was accepted before the disk snapshot grew: show it now.
+    if (prompt && historySize <= promptHistorySize) {
       addUser(prompt);
-      lastAssistant = '';
+      resetAgentBubble();
     }
 
-    if (!chatHistory.length && !unarchivedTurn && !liveText) setChatEmpty();
+    // chat.json may only contain a partial current turn saved at a tool start.
+    const currentTurn = hist.slice(historySize > promptHistorySize ? promptHistorySize : historySize);
+    let savedAssistant = '';
+    currentTurn.forEach((message) => {
+      if (!message || typeof message !== 'object' || message.role !== 'assistant') return;
+      const text = chatContentText(message.content);
+      if (text) savedAssistant = text;
+    });
 
-    if (unarchivedTurn || liveText) {
-      let start = -1;
-      for (let i = list.length - 1; i >= 0; i--) {
-        if (list[i] && list[i].type === 'user') { start = i; break; }
-      }
-      if (start < 0) {
-        for (let i = list.length - 1; i >= 0; i--) {
-          if (list[i] && list[i].type === 'done') { start = i; break; }
-        }
-      }
-      for (let i = start + 1; i < list.length; i++) {
-        const ev = list[i];
-        if (!ev || ev.type !== 'delta') continue;
-        const action = ev.action || ev.delta || ev;
-        if (action.reasoning != null) addReasoning(String(action.reasoning));
-        else if (action.tool_start) addToolStart(action.tool_start);
-        else if (action.tool_end) addToolEnd(action.tool_end);
-        else if (action.milestone != null) addMilestone(String(action.milestone));
-      }
-      if (liveText && !lastAssistant.endsWith(liveText)) {
+    if (live || !savedAssistant) {
+      renderCurrentTurnEvents(list, Boolean(live));
+    }
+
+    if (live) {
+      if (savedAssistant && live.startsWith(savedAssistant)) {
+        state.currentAgentText = live;
+        if (state.currentAgentBubble) state.currentAgentBubble.innerHTML = mdRender(live);
+      } else if (savedAssistant && savedAssistant.startsWith(live)) {
+        // The saved snapshot is already at least as complete as the live text.
+      } else if (savedAssistant !== live) {
         resetAgentBubble();
-        addAgentText(liveText);
+        addAgentText(live);
       }
     }
-
-    state.renderingHistory = false;
-    scrollChat();
-    return;
+  } else {
+    // No chat.json yet: render the rolling event window, without duplicating the prompt.
+    const hasUser = list.some((ev) => ev && ev.type === 'user' &&
+      String(ev.text || ev.prompt || ev.message || '') === prompt);
+    if (prompt && !hasUser) addUser(prompt);
+    list.forEach((ev) => applySessionEvent(ev));
   }
 
-  if (!list.length) {
-    setChatEmpty();
-    return;
-  }
-  state.renderingHistory = true;
-
-  list.forEach((ev) => applySessionEvent(ev));
+  if (!historySize && !prompt && !live && !list.length) setChatEmpty();
   state.renderingHistory = false;
   scrollChat();
+}
+
+function renderCurrentTurnEvents(list, skipText = false) {
+  if (!Array.isArray(list) || !list.length) return;
+
+  let start = -1;
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (list[i] && list[i].type === 'user') { start = i; break; }
+  }
+  if (start < 0) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      if (list[i] && list[i].type === 'done') { start = i; break; }
+    }
+  }
+
+  for (let i = start + 1; i < list.length; i++) {
+    const ev = list[i];
+    if (!ev) continue;
+    if (ev.type === 'delta') {
+      const action = ev.action || ev.delta || ev;
+      if (action.reasoning != null) addReasoning(String(action.reasoning));
+      else if (action.tool_start) addToolStart(action.tool_start);
+      else if (action.tool_end) addToolEnd(action.tool_end);
+      else if (action.milestone != null) addMilestone(String(action.milestone));
+      else if (action.text != null && !skipText) addAgentText(String(action.text));
+    } else if (ev.type === 'done' && ev.report) {
+      addReport(ev.report);
+    } else if (ev.type === 'error') {
+      addError(ev.message || ev.error || 'Agent reported an error');
+    }
+  }
 }
 
 function chatContentText(content) {
@@ -1112,15 +1274,22 @@ function setSessionStatus(status) {
   state.stats.session_status[state.session.id] = mapped;
   renderSessionHeader();
   renderWorkspaceTree();
+  updateConsoleLamps();
 }
 
 function updateTokenUsage(value) {
   const n = num(value);
+  const sessionId = state.session && state.session.id;
   if (state.session) state.session.token_usage = n;
-  const s = state.sessions.find((x) => x.id === state.session.id);
+  const s = sessionId ? state.sessions.find((x) => x.id === sessionId) : null;
   if (s) s.token_usage = n;
+  if (!state.stats || typeof state.stats !== 'object') state.stats = {};
+  if (!state.stats.token_usage || typeof state.stats.token_usage !== 'object' || Array.isArray(state.stats.token_usage)) {
+    state.stats.token_usage = {};
+  }
+  if (sessionId) state.stats.token_usage[sessionId] = n;
   renderSessionHeader();
-  renderWorkspaceTree();
+  updateSessionTokenLabels();
   renderStats();
 }
 
@@ -1271,6 +1440,14 @@ function handleStreamEvent(name, raw) {
 
   if (name === 'status') {
     const status = data && (data.status || data.state || data.value);
+    if (data && data.reasoning_effort) {
+      const effort = String(data.reasoning_effort).toLowerCase();
+      if (['low', 'medium', 'high'].includes(effort) && state.session) {
+        state.session.reasoning_effort = effort;
+        state.composerEffort = effort;
+        $('reasoningEffort').value = effort;
+      }
+    }
     if (status !== 'connected') setSessionStatus(status);
     return;
   }
@@ -1287,7 +1464,11 @@ function handleStreamEvent(name, raw) {
     if (data && data.report) addReport(data.report);
     if (data && data.token_usage != null) updateTokenUsage(data.token_usage);
     closeStream();
-    if (!state.renderingHistory) toast(status === 'failed' ? 'Session failed.' : 'Session finished.', status === 'failed' ? 'error' : 'success');
+    if (!state.renderingHistory) {
+      if (status === 'failed') toast('Session failed.', 'error');
+      else if (status === 'question') toast('Agent needs input.', 'warn');
+      else toast('Session finished.', 'success');
+    }
     return;
   }
 
@@ -1312,6 +1493,43 @@ function handleStreamEvent(name, raw) {
 /* ── Chat actions ── */
 function currentMode() {
   return state.session ? (state.session.mode || state.composerMode) : state.composerMode;
+}
+
+async function setReasoningEffort(value) {
+  const effort = String(value || '').toLowerCase();
+  if (!['low', 'medium', 'high'].includes(effort)) return;
+
+  state.composerEffort = effort;
+  $('reasoningEffort').value = effort;
+
+  if (!state.session) {
+    toast('New sessions will use ' + effort + ' reasoning effort.', 'info');
+    return;
+  }
+
+  const previous = String(state.session.reasoning_effort || 'medium').toLowerCase();
+  const sessionId = state.session.id;
+  state.session.reasoning_effort = effort;
+  const listed = state.sessions.find((item) => String(item.id) === String(sessionId));
+  if (listed) listed.reasoning_effort = effort;
+
+  try {
+    const data = await NodeApi.post('/api/sessions/' + encodeURIComponent(sessionId) + '/effort', {
+      reasoning_effort: effort
+    });
+    if (data && data.reasoning_effort && state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = String(data.reasoning_effort).toLowerCase();
+    }
+    if (state.session.reasoning_effort === effort) toast('Reasoning effort set to ' + effort + '.', 'info');
+  } catch (e) {
+    if (state.session.reasoning_effort === effort) {
+      state.session.reasoning_effort = previous;
+      state.composerEffort = previous;
+      if (listed) listed.reasoning_effort = previous;
+      $('reasoningEffort').value = previous;
+      toast('Could not set reasoning effort: ' + e.message, 'error');
+    }
+  }
 }
 
 async function sendPrompt() {
@@ -1445,11 +1663,11 @@ async function newSession(workspaceId) {
   renderSessionHeader();
   renderWorkspaceTree();
 
-  if (!state.selectedWorkspace || String(state.selectedWorkspace.id) !== String(workspaceId)) {
-    await selectWorkspace(workspaceId);
-  }
-
   try {
+    if (!state.selectedWorkspace || String(state.selectedWorkspace.id) !== String(workspaceId)) {
+      await selectWorkspace(workspaceId);
+    }
+
     const data = await NodeApi.post('/api/workspaces/' + encodeURIComponent(workspaceId) + '/sessions', {
       mode: state.composerMode,
       reasoning_effort: $('reasoningEffort').value
@@ -1728,9 +1946,9 @@ async function architectureAction(action) {
   try {
     await NodeApi.post('/api/workspaces/' + encodeURIComponent(ws.id) + '/architecture/' + action);
     toast('Architecture ' + action + ' started.', 'info');
-    await loadArchitecture();
+    loadArchitecture(true);
     setTimeout(() => {
-      loadArchitecture().catch(() => {});
+      loadArchitecture(true);
       refreshWorkspace(ws.id).catch(() => {});
     }, 1200);
   } catch (e) {
@@ -1747,11 +1965,12 @@ function taskStateClass(raw) {
 function taskRenderSignature(data) {
   const goals = arr(data && data.goals).map((g) => [
     g.id, g.title, g.status, g.active_run_state, g.active_taskid,
-    g.schedule, g.active_window, g.next_window, g.last_outcome
+    g.active_window, g.next_window, g.last_outcome,
+    g.errors, g.invalid_edit, g.schedule, g.revision
   ]);
   const sessions = arr(data && data.sessions).map((s) => [
     s.taskid, s.id, s.name, s.title, s.state, s.status, s.active,
-    s.report, s.error
+    s.report, s.error, s.token_usage, s.last_update_ms
   ]);
   const templates = arr(data && data.templates).map((t) => t && (t.name || t));
   return JSON.stringify([goals, sessions, templates]);
@@ -1759,24 +1978,30 @@ function taskRenderSignature(data) {
 
 function goalCard(g, workspaceId) {
   if (!g || typeof g !== 'object') return null;
-  const st = String(g.status || 'planned').toLowerCase();
-  const runState = String(g.active_run_state || '').toLowerCase();
-  const running = ['dispatching', 'running', 'checkpoint'].includes(runState);
-  const displayState = running ? (runState === 'checkpoint' ? 'Checkpoint' : 'Running') : st;
+  const st = goalStatus(g);
+  const running = isGoalRunOpen(g);
+  const needsInput = isGoalNeedsInput(g);
+  const inWindow = goalHasOpenWindow(g);
+  const invalid = isGoalInvalid(g);
+  const displayState = invalid ? 'Invalid'
+    : needsInput ? 'Needs input'
+    : running ? (String(g.active_run_state || '').toLowerCase() === 'checkpoint' ? 'Checkpoint' : 'Running')
+    : (inWindow && (st === 'active' || st === 'paused') ? 'Window open' : statusLabel(st || 'planned'));
+  const stateClass = taskStateClass(invalid ? 'invalid' : needsInput ? 'question' : running ? 'running' : (inWindow ? 'active' : st));
   const card = document.createElement('div');
-  card.className = 'task-card';
+  card.className = 'task-card' + (invalid ? ' invalid' : '');
 
   const top = document.createElement('div');
   top.className = 'task-top';
   top.innerHTML =
     '<div class="task-name">' + esc(g.title || g.id || 'Task') + '</div>' +
-    '<span class="task-state ' + esc(taskStateClass(running ? 'running' : st)) + '">' + esc(displayState) + '</span>';
+    '<span class="task-state ' + esc(stateClass) + '">' + esc(displayState) + '</span>';
   card.appendChild(top);
 
   if (g.schedule) {
     const p = document.createElement('div');
     p.className = 'task-goal';
-    p.textContent = 'Schedule: ' + String(g.schedule);
+    p.textContent = 'Schedule: ' + formatSchedule(g.schedule);
     card.appendChild(p);
   }
   if (g.next_window) {
@@ -1803,28 +2028,46 @@ function goalCard(g, workspaceId) {
     p.textContent = 'Last: ' + String(g.last_outcome);
     card.appendChild(p);
   }
+  if (invalid) {
+    const errorText = formatGoalErrors(g);
+    if (errorText) {
+      const p = document.createElement('div');
+      p.className = 'task-report';
+      p.textContent = 'Invalid: ' + errorText;
+      card.appendChild(p);
+    }
+  }
 
   const actions = document.createElement('div');
   actions.className = 'task-actions';
 
-  if (st === 'proposed') {
+  if (!invalid && st === 'proposed') {
     const btn = document.createElement('button');
     btn.className = 'btn btn-small';
     btn.textContent = 'Activate';
     btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'active'));
     actions.appendChild(btn);
-  } else if (st === 'active') {
+  } else if (!invalid && st === 'active') {
     const btn = document.createElement('button');
     btn.className = 'btn btn-small btn-ghost';
     btn.textContent = 'Pause';
     btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'paused'));
     actions.appendChild(btn);
-  } else if (st === 'paused') {
+  } else if (!invalid && st === 'paused') {
     const btn = document.createElement('button');
     btn.className = 'btn btn-small';
     btn.textContent = 'Resume';
     btn.addEventListener('click', () => setGoalStatus(workspaceId, g.id, 'active'));
     actions.appendChild(btn);
+  }
+
+  if (g.id != null) {
+    const del = document.createElement('button');
+    del.className = 'btn btn-small btn-danger';
+    del.textContent = 'Delete';
+    del.title = 'Delete this goal (stops open runs, keeps project files)';
+    del.addEventListener('click', () => deleteGoal(workspaceId, g.id));
+    actions.appendChild(del);
   }
 
   if (actions.childElementCount) card.appendChild(actions);
@@ -1896,6 +2139,10 @@ async function submitTaskForm(e) {
   const form = $('taskForm');
   const workspaceId = form.dataset.workspaceId;
   const goal = $('taskGoal').value.trim();
+  if (!workspaceId) {
+    toast('Select a workspace first.', 'warn');
+    return;
+  }
   if (!goal) {
     toast('Describe what the task should do.', 'warn');
     return;
@@ -1914,8 +2161,8 @@ async function submitTaskForm(e) {
     form.classList.add('hidden');
     $('taskTitle').value = '';
     $('taskGoal').value = '';
-    await loadTasks(workspaceId);
-    await refreshWorkspace(workspaceId);
+    state.taskRenderSignatures[String(workspaceId)] = '';
+    await reloadTaskView(workspaceId);
     toast('Task queued by the goal engine.', 'success');
   } catch (e) {
     toast('Could not create or queue task: ' + e.message, 'error');
@@ -1933,28 +2180,84 @@ function renderTasks(data, workspaceName, workspaceId) {
 
   $('taskHeadline').innerHTML =
     '<div class="task-headline"><div><h2>Tasks - ' + esc(workspaceName || 'workspace') + '</h2>' +
-      '<div class="form-hint">Active tasks, proposed tasks and the goal templates of this workspace.</div></div>' +
+      '<div class="form-hint">Running, scheduled, proposed, needs input, finished/archived and invalid goals of this workspace.</div></div>' +
     '<button id="btnNewTask" class="btn btn-small">+ New task</button></div>';
 
-  const isGoalRunOpen = (g) => ['dispatching', 'running', 'checkpoint'].includes(String(g.active_run_state || '').toLowerCase());
-  const activeGoals = goals.filter((g) => ['active', 'paused'].includes(String(g.status || '').toLowerCase()) || isGoalRunOpen(g));
-  const activeSessions = sessions.filter(isActiveTask);
-  const activeCards = activeGoals.map((g) => goalCard(g, workspaceId))
+  const runningGoals = [];
+  const scheduledGoals = [];
+  const proposedGoals = [];
+  const finishedGoals = [];
+  const invalidGoals = [];
+  const needsInputGoals = [];
+
+  goals.forEach((g) => {
+    if (!g || typeof g !== 'object') return;
+    const st = goalStatus(g);
+    if (isGoalInvalid(g)) invalidGoals.push(g);
+    else if (isGoalNeedsInput(g)) needsInputGoals.push(g);
+    else if (isGoalRunOpen(g)) runningGoals.push(g);
+    else if ((st === 'active' || st === 'paused') && goalHasOpenWindow(g)) runningGoals.push(g);
+    else if (st === 'proposed') proposedGoals.push(g);
+    else if (st === 'active' || st === 'paused') scheduledGoals.push(g);
+    else if (['completed', 'cancelled', 'archived'].includes(st)) finishedGoals.push(g);
+    else invalidGoals.push(g);
+  });
+
+  const runningTaskIds = new Set(runningGoals.map((g) => String(g.active_taskid || '')).filter(Boolean));
+  const activeSessions = sessions.filter(isActiveTask).filter((s) => !runningTaskIds.has(taskIdOf(s)));
+  const runningCards = runningGoals.map((g) => goalCard(g, workspaceId))
     .concat(activeSessions.map((s) => sessionCard(s, workspaceId)));
 
   host.appendChild(taskSection(
-    'Active tasks',
-    activeCards.length ? activeCards.length + ' active' : '',
-    activeCards,
-    'No active tasks.'
+    'Running now',
+    runningCards.length ? runningCards.length + ' item(s)' : '',
+    runningCards,
+    'Nothing is running right now.'
   ));
 
-  const proposed = goals.filter((g) => String(g.status || '').toLowerCase() === 'proposed');
+  host.appendChild(taskSection(
+    'Scheduled but inactive',
+    scheduledGoals.length ? scheduledGoals.length + ' goal(s)' : '',
+    scheduledGoals.map((g) => goalCard(g, workspaceId)),
+    'No inactive scheduled goals.'
+  ));
+
   host.appendChild(taskSection(
     'Proposed tasks',
-    proposed.length ? proposed.length + ' waiting for activation' : '',
-    proposed.map((g) => goalCard(g, workspaceId)),
+    proposedGoals.length ? proposedGoals.length + ' waiting for activation' : '',
+    proposedGoals.map((g) => goalCard(g, workspaceId)),
     'No proposed tasks. The agent can create one from chat.'
+  ));
+
+  const needsInputTaskIds = new Set(needsInputGoals.map((g) => String(g.active_taskid || '')).filter(Boolean));
+  const needsInputSessions = sessions.filter(isNeedsInputTask)
+    .filter((s) => !needsInputTaskIds.has(taskIdOf(s)));
+  const needsInputCards = needsInputGoals.map((g) => goalCard(g, workspaceId))
+    .concat(needsInputSessions.map((s) => sessionCard(s, workspaceId)));
+
+  host.appendChild(taskSection(
+    'Needs input',
+    needsInputCards.length ? needsInputCards.length + ' item(s)' : '',
+    needsInputCards,
+    'No session or goal is waiting for input.'
+  ));
+
+  const finishedSessions = sessions.filter((s) => isFinishedTask(s) && !isNeedsInputTask(s));
+  const finishedCards = finishedGoals.map((g) => goalCard(g, workspaceId))
+    .concat(finishedSessions.map((s) => sessionCard(s, workspaceId)));
+
+  host.appendChild(taskSection(
+    'Finished / archived',
+    finishedCards.length ? finishedCards.length + ' item(s)' : '',
+    finishedCards,
+    'Nothing finished yet.'
+  ));
+
+  host.appendChild(taskSection(
+    'Invalid goals',
+    invalidGoals.length ? invalidGoals.length + ' invalid' : '',
+    invalidGoals.map((g) => goalCard(g, workspaceId)),
+    'No invalid goals.'
   ));
 
   if (templates.length) {
@@ -1962,7 +2265,7 @@ function renderTasks(data, workspaceName, workspaceId) {
     wrap.className = 'task-section';
     const headT = document.createElement('div');
     headT.className = 'task-section-head';
-    headT.innerHTML = '<h3>Task templates</h3><span>Existing goal templates in .megamind/tasks/templates</span>';
+    headT.innerHTML = '<h3>Task templates</h3><span>Existing goal templates in .agentspace/templates</span>';
     wrap.appendChild(headT);
     const chips = document.createElement('div');
     chips.className = 'template-chips';
@@ -1975,18 +2278,6 @@ function renderTasks(data, workspaceName, workspaceId) {
     wrap.appendChild(chips);
     host.appendChild(wrap);
   }
-
-  const finishedSessions = sessions.filter(isFinishedTask);
-  const otherGoals = goals.filter((g) => ['completed', 'cancelled', 'archived'].includes(String(g.status || '').toLowerCase()) && !isGoalRunOpen(g));
-  const finishedCards = otherGoals.map((g) => goalCard(g, workspaceId))
-    .concat(finishedSessions.map((s) => sessionCard(s, workspaceId)));
-
-  host.appendChild(taskSection(
-    'Finished / archived',
-    finishedCards.length ? finishedCards.length + ' item(s)' : '',
-    finishedCards,
-    'Nothing finished yet.'
-  ));
 }
 
 async function loadTasks(workspaceId = state.selectedWorkspace && state.selectedWorkspace.id, generation = state.workspaceSelectionGeneration) {
@@ -2010,14 +2301,48 @@ async function loadTasks(workspaceId = state.selectedWorkspace && state.selected
   }
 }
 
+async function reloadTaskView(workspaceId) {
+  const id = String(workspaceId || '');
+  if (!id) return;
+
+  if (state.view === 'globalTasks') {
+    state.globalTaskRenderSignature = '';
+    await showGlobalTasks(true);
+    return;
+  }
+
+  if (state.selectedWorkspace && String(state.selectedWorkspace.id) === id) {
+    state.taskRenderSignatures[id] = '';
+    await loadTasks(id);
+    await refreshWorkspace(id).catch(() => {});
+  }
+}
+
 async function setGoalStatus(workspaceId, goalId, status) {
   try {
     await NodeApi.post('/api/workspaces/' + encodeURIComponent(workspaceId) + '/goals/' + encodeURIComponent(goalId) + '/status', { status });
     toast('Goal ' + status + '.', 'success');
-    await loadTasks();
-    await refreshWorkspace(workspaceId).catch(() => {});
+    await reloadTaskView(workspaceId);
   } catch (e) {
     toast('Goal update failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteGoal(workspaceId, goalId) {
+  if (!workspaceId || goalId == null) return;
+  if (!window.confirm('Delete goal "' + goalId + '"? Open runs are stopped and the goal definition is removed. Project files stay on disk.')) return;
+
+  try {
+    const result = await NodeApi.del('/api/workspaces/' + encodeURIComponent(workspaceId) + '/goals/' + encodeURIComponent(goalId));
+    if (result && result.removed != null && String(result.removed) !== String(goalId)) {
+      throw new Error('The server removed a different goal.');
+    }
+    state.taskRenderSignatures[String(workspaceId)] = '';
+    state.globalTaskRenderSignature = '';
+    await reloadTaskView(workspaceId);
+    toast('Goal removed.', 'success');
+  } catch (e) {
+    toast('Could not delete goal: ' + e.message, 'error');
   }
 }
 
@@ -2025,8 +2350,7 @@ async function stopTask(workspaceId, taskid) {
   try {
     await NodeApi.del('/api/workspaces/' + encodeURIComponent(workspaceId) + '/tasks/' + encodeURIComponent(taskid));
     toast('Task stopped.', 'warn');
-    await loadTasks();
-    await refreshWorkspace(workspaceId).catch(() => {});
+    await reloadTaskView(workspaceId);
   } catch (e) {
     toast('Could not stop task: ' + e.message, 'error');
   }
@@ -2086,15 +2410,15 @@ async function showGlobalTasks(refreshOnly = false) {
   results.forEach(({ ws, data, error }) => {
     const goals = arr(data && data.goals);
     const sessions = arr(data && data.sessions);
-    const isGoalRunOpen = (g) => ['dispatching', 'running', 'checkpoint'].includes(String(g.active_run_state || '').toLowerCase());
-    const activeGoals = goals.filter((g) => ['active', 'paused'].includes(String(g.status || '').toLowerCase()) || isGoalRunOpen(g));
-    const activeSessions = sessions.filter(isActiveTask);
-    const proposed = goals.filter((g) => String(g.status || '').toLowerCase() === 'proposed');
-    const cards = activeGoals.map((g) => goalCard(g, ws.id))
-      .concat(activeSessions.map((s) => sessionCard(s, ws.id)));
+    const goalTaskIds = new Set(goals.map((g) => String(g.active_taskid || '')).filter(Boolean));
+    const sessionCards = sessions
+      .filter((s) => isActiveTask(s) || isFinishedTask(s))
+      .filter((s) => !goalTaskIds.has(taskIdOf(s)))
+      .map((s) => sessionCard(s, ws.id));
+    const cards = goals.map((g) => goalCard(g, ws.id)).filter(Boolean).concat(sessionCards);
 
-    if (!cards.length && !proposed.length && !error) return;
-    total += cards.length + proposed.length;
+    if (!cards.length && !error) return;
+    total += cards.length;
 
     const group = document.createElement('div');
     group.className = 'global-group';
@@ -2107,12 +2431,6 @@ async function showGlobalTasks(refreshOnly = false) {
       grid.className = 'task-grid';
       cards.forEach((c) => { if (c) grid.appendChild(c); });
       group.appendChild(grid);
-    }
-    if (proposed.length) {
-      group.innerHTML += '<div class="form-hint">' + proposed.length + ' proposed task(s).</div>';
-    }
-    if (!cards.length && !proposed.length && !error) {
-      group.innerHTML += '<div class="form-hint">No active tasks.</div>';
     }
     groups.appendChild(group);
   });
@@ -2268,6 +2586,7 @@ function bindEvents() {
 
   $('btnStopSession').addEventListener('click', stopSession);
   $('btnSendPrompt').addEventListener('click', sendPrompt);
+  $('reasoningEffort').addEventListener('change', (e) => setReasoningEffort(e.target.value));
   $('taskForm').addEventListener('submit', submitTaskForm);
   $('taskView').addEventListener('click', (e) => {
     if (e.target.closest('#btnNewTask')) {

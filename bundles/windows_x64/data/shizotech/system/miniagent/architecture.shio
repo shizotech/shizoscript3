@@ -923,7 +923,7 @@ arch_analyze_goal(out_path) {
 		"4. Write the JSON (only JSON, no comments) to `" + out_path + "` in exactly this format:\n\n" +
 		arch_format_help() + "\n" +
 		"Ids: lowercase, letters digits and dashes, unique. Every edge must name existing node ids. Purposes are one line each.\n" +
-		"5. Do not change any other file. Then signal finished with a two-line summary.\n";
+		"5. Do not change any other file. Then finalize(signal='finished', result='two-line summary').\n";
 }
 
 // files: [model, changes, plan, previous] (previous: the last plan, for a revision)
@@ -941,7 +941,7 @@ arch_plan_goal(model, files, feedback = "") {
 		"# What to do\n" +
 		"1. Read the code the changes touch.\n" +
 		"2. Write the plan as Markdown to `" + files.plan + "`: for each change (by its number) what will be done, in which files, the order, risks and open questions. Short and concrete; the owner reads it before pressing Apply. A split change set: one section per group, so Apply can hand each section to one subtask.\n" +
-		"3. Do not change any other file. Signal finished with a one-paragraph summary of the plan.\n";
+		"3. Do not change any other file. Finalize(signal='finished', result='one-paragraph summary of the plan').\n";
 	return text;
 }
 
@@ -956,7 +956,7 @@ arch_apply_goal(model, edits, files) {
 	text += arch_split_rules(model, edits, files, "implement") +
 		"# What to do\n" +
 		"Implement every change in the code (new modules / files, changed responsibilities, new or removed connections), keep the build and the tests working, and follow the conventions of the repository.\n" +
-		"Do not edit " + files.model + ": the graph is updated when you signal finished. Signal failed (with the reason) if a change cannot be done; signal question if the owner has to decide something.\n";
+		"Do not edit " + files.model + ": the graph is updated when you finalize(signal='finished', result=...). finalize(signal='failed', result=...) if a change cannot be done; finalize(signal='question', result=...) if the owner has to decide something.\n";
 	return text;
 }
 

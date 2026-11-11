@@ -1,5 +1,5 @@
 // ═════════════════════════════════════════════════════════════════════════════
-//  router_api.shio — the Router class (Megamind-style, subclassable)
+//  router_api.shio — the Router class (subclassable)
 //
 //  Binding contract:  router_api.md      Wire format:  shizonet_ai.shio
 //  Demo CLI host:     router.shio        (include THIS file, not router.shio)
@@ -21,7 +21,7 @@
 //      r.route_task("summarize this repo");               // agent turn + the routed task
 //      r.delegate("Box", "train the model");              // explicit node, no model
 //
-//  Subclassing works exactly like Megamind:
+//  Subclassing works exactly like the other miniagent classes:
 //
 //      class TelegramRouter : Router {
 //          __init__(cfg) {
@@ -31,7 +31,7 @@
 //      }
 //
 //  The router miniagent (the LLM turn layer, see roles/router/) reaches the live
-//  router through  agt.env.router  — mirroring  agt.env.mind  in megamind.shio.
+//  router through  agt.env.router  — mirroring  agt.env.mind  in node.shio.
 //
 //  Threading rule (router_api.md): every device.get() runs in one of the Router's
 //  own threads (agent thread / poller thread) or in the host's main thread. Never
@@ -62,6 +62,15 @@ ROUTER_TASK_LOST_GRACE_MS = 120000;
 // this long gets ONE task_stalled event. Deliberately far above any test runtime —
 // opts.stall_ms overrides it, 0 turns the watchdog off.
 ROUTER_TASK_STALL_MS = 900000;
+
+// The miniagent turn's final task_result. This is the same helper node.shio
+// uses, kept local here so router_api.shio compiles on its own.
+router_agent_task_result(agt) {
+	if(agt && std.is_json(agt.task_result))
+		return agt.task_result;
+
+	return None;
+}
 
 // remote task states (router_api.md): queued | generating | finished | failed | question | stopped | lost
 router_is_open_state(state) {
@@ -97,7 +106,7 @@ router_map_request_status(status) {
 	return "generating";
 }
 
-// Megamind worker task states: planned | research | implement | finished | failed | question
+// Workspace task states: planned | research | implement | finished | failed | question
 router_map_task_state(state) {
 	if(state == "planned") {
 		return "queued";
@@ -140,10 +149,13 @@ router_first_line(text, max_len = 90) {
 	return line;
 }
 
-// miniagent result json -> plain report text ([ok, reports=[[report=...]], ...])
+// miniagent task_result / legacy result json -> plain report text
 router_report_text(result) {
 	if(!std.is_json(result)) {
 		return std.string(result);
+	}
+	if(result.has("result")) {
+		return std.string(result.result);
 	}
 	if(result.has("reports") && result.reports.size()) {
 		out = "";
@@ -195,7 +207,7 @@ class Router {
 	remote_tasks = [];			// mirrored remote task records
 	_task_seq = 0;				// number of the last record added to remote_tasks (rec.seq)
 	events = [];				// newest last, capped at AI_MAX_KEPT
-	request_queue = [];			// router-agent turns, Megamind.request style
+	request_queue = [];		// router-agent turns, Node.request style
 	turn_attachments = [];		// files of the current turn ([name, content]): appended
 								// verbatim to the goal this turn delegates, so a node
 								// gets an .md plan without the model copying it
@@ -329,7 +341,7 @@ class Router {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	//  Router-agent turns (queued, blocking) — same contract as Megamind.request
+	//  Router-agent turns (queued, blocking) — same contract as Node.request
 	// ─────────────────────────────────────────────────────────────────────────
 	request(prompt, on_finish_cb = None, on_action_cb = None) {
 		new_request = [
@@ -508,7 +520,7 @@ class Router {
 		return nodes();
 	}
 
-	// live Megamind.get_overview() of one node
+	// live Node.get_overview() of one node
 	node_overview(node_name) {
 		rec = _find_node(node_name);
 
@@ -537,8 +549,8 @@ class Router {
 
 	// Explicit node, no model involved: the goal goes as an ai_request to that
 	// node's RECEPTIONIST. Programmatic / management path. -> [ok, taskid, node]
-	delegate(node_name, prompt) {
-		return _delegate(node_name, _with_attachments(prompt), router_first_line(prompt));
+	delegate(node_name, prompt, workspace = "") {
+		return _delegate(node_name, _with_attachments(prompt), router_first_line(prompt), workspace);
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -551,7 +563,7 @@ class Router {
 	//  which worker gets a task. There is NO keyword/capability scoring in this
 	//  class: nothing here guesses at a node.
 	//
-	//  Blocks until the turn is done (Megamind.request semantics).
+	//  Blocks until the turn is done (Node.request semantics).
 	//  -> [ok, routed, taskid, node, name, answer, error]
 	//
 	//  ok is about the TURN, routed is about the DELEGATION: an arbitrary question
@@ -559,9 +571,9 @@ class Router {
 	//  That is ok = true, routed = false — not an error. ok = false only when the
 	//  agent turn itself failed (it returned nothing / reported an error).
 	// ─────────────────────────────────────────────────────────────────────────
-	route_task(prompt, node_name = None) {
+	route_task(prompt, node_name = None, workspace = "") {
 		if(node_name) {
-			return delegate(std.string(node_name), prompt);
+			return delegate(std.string(node_name), prompt, workspace);
 		}
 
 		// the records this turn adds: by number, not by time (#513: the task of the
@@ -604,8 +616,8 @@ class Router {
 
 	// Role entry point (the router agent's start_task tool). Real user work goes to
 	// the node's RECEPTIONIST over ai_request: the remote receptionist is the one
-	// that decides how to execute it, exactly like a local Megamind receptionist.
-	// mode = "worker" bypasses it and drives the remote worker pool directly
+	// that decides how to execute it, exactly like a local Node receptionist.
+	// mode = "worker" bypasses it and drives the remote Workspace directly
 	// (ai_task_add) — CLI / management use.
 	//
 	// The target node is the AGENT's decision (it picks it from get_nodes() and
@@ -637,11 +649,11 @@ class Router {
 	// add_task keeps its contract (taskid | None); the wrapper only adds the
 	// exception path: a raise inside the routing must land in last_route_error too,
 	// otherwise the agent gets a bare "it refused" and the reason dies in the log.
-	add_task(name, goal, node_name = None, mode = "receptionist") {
+	add_task(name, goal, node_name = None, mode = "receptionist", workspace = "") {
 		last_route_error = "";
 
 		try {
-			return _add_task(name, goal, node_name, mode);
+			return _add_task(name, goal, node_name, mode, workspace);
 		}
 		catch(e) {
 			last_route_error = "add_task raised: " + std.string(e);
@@ -650,8 +662,9 @@ class Router {
 		}
 	}
 
-	_add_task(name, goal, node_name, mode) {
+	_add_task(name, goal, node_name, mode, workspace = "") {
 		target = std.string(node_name ?? "").strip();
+		workspace = std.string(workspace ?? "").strip();
 
 		if(!target) {
 			last_route_error = "no target node given for task '" + std.string(name) + "': the router agent must pick a node from get_nodes()";
@@ -672,11 +685,12 @@ class Router {
 			return None;
 		}
 
-		// One goal, one task: the same goal on the same node while it is still open
-		// IS the same task. The agent must not delegate one goal twice, and a
-		// transport that delivers one message twice must not create two tasks.
-		// Idempotence, not guessing: the goal text and the node must match exactly.
-		dup = _find_open_duplicate(rec.name, goal);
+		// One goal, one task: the same goal on the same node and workspace while
+		// it is still open IS the same task. The agent must not delegate one goal
+		// twice, and a transport that delivers one message twice must not create
+		// two tasks. Idempotence, not guessing: the goal text, node and workspace
+		// must match exactly.
+		dup = _find_open_duplicate(rec.name, goal, workspace);
 
 		if(dup) {
 			_note_action("add_task_duplicate", [taskid = dup.taskid, node = rec.name, task_name = name]);
@@ -684,7 +698,7 @@ class Router {
 		}
 
 		if(mode != "worker") {
-			res = _delegate(rec.name, _with_attachments(goal), name);
+			res = _delegate(rec.name, _with_attachments(goal), name, workspace);
 
 			if(!res.ok) {
 				last_route_error = "node '" + std.string(rec.name) + "' refused the task: " + std.string(res.error ?? "delegation failed");
@@ -695,14 +709,18 @@ class Router {
 			return res.taskid;
 		}
 
-		reply = _node_get(rec, AI_CMD_TASK_ADD, [name = name, goal = _with_attachments(goal)], AI_TIMEOUT_CONTROL);
+		payload = [name = name, goal = _with_attachments(goal)];
+		if(workspace)
+			payload.workspace = workspace;
+
+		reply = _node_get(rec, AI_CMD_TASK_ADD, payload, AI_TIMEOUT_CONTROL);
 
 		if(!std.is_json(reply) || !reply.ok) {
 			err = "node did not answer";
 			if(std.is_json(reply)) {
 				err = std.string(reply.error ?? err);
 			}
-			last_route_error = "node '" + std.string(rec.name) + "' refused the worker task: " + err;
+			last_route_error = "node '" + std.string(rec.name) + "' refused the workspace task: " + err;
 			std.error("[router] add_task failed on ", rec.name, ": ", err);
 			return None;
 		}
@@ -713,6 +731,7 @@ class Router {
 			taskid = taskid,
 			node = rec.name,
 			nodeid = rec.mac,
+			workspace = workspace,
 			remote_request_id = "",
 			remote_taskid = std.string(reply.taskid ?? ""),
 			name = std.string(reply.name ?? name),
@@ -729,7 +748,7 @@ class Router {
 	// Follow-up on a mirrored task. Two wire channels (router_api.md):
 	//   ai_request-backed (delegated user work)  -> ai_request_update: the message
 	//     reaches the remote RECEPTIONIST turn that owns request_id.
-	//   ai_task_add-backed (direct worker pool)  -> ai_task_update: the remote task.
+	//   ai_task_add-backed (direct Workspace)   -> ai_task_update: the remote task.
 	// The user message is recorded in the local mirror in every case, so the owner
 	// always sees what it sent, even when the node rejected it.
 	// -> true when the node accepted the update, false otherwise.
@@ -1455,7 +1474,9 @@ class Router {
 		return reply;
 	}
 
-	_delegate(node_name, prompt, task_name) {
+	_delegate(node_name, prompt, task_name, workspace = "") {
+		workspace = std.string(workspace ?? "").strip();
+
 		rec = _find_node(node_name);
 
 		if(!rec) {
@@ -1465,7 +1486,11 @@ class Router {
 			return [ok = false, routed = false, error = "node offline: " + rec.name, taskid = None, answer = ""];
 		}
 
-		reply = _node_get(rec, AI_CMD_REQUEST, [prompt = prompt], AI_TIMEOUT_CONTROL);
+		payload = [prompt = prompt];
+		if(workspace)
+			payload.workspace = workspace;
+
+		reply = _node_get(rec, AI_CMD_REQUEST, payload, AI_TIMEOUT_CONTROL);
 
 		taskid = std.random_hash(16);
 
@@ -1480,6 +1505,7 @@ class Router {
 			taskid = taskid,
 			node = rec.name,
 			nodeid = rec.mac,
+			workspace = workspace,
 			remote_request_id = std.string(reply.request_id ?? ""),
 			remote_taskid = "",
 			name = task_name,
@@ -1508,6 +1534,9 @@ class Router {
 		}
 		if(!rec.has("user_updates")) {
 			rec.user_updates = [];
+		}
+		if(!rec.has("workspace")) {
+			rec.workspace = "";
 		}
 
 		cs = std.critical_section_named(_lock);
@@ -1544,11 +1573,14 @@ class Router {
 		return rec.taskid;
 	}
 
-	// The mirror record of an OPEN task on `node_name` with exactly this goal.
-	// add_task uses it for idempotence (one goal, one task).
-	_find_open_duplicate(node_name, goal) {
+	// The mirror record of an OPEN task on `node_name`, in `workspace`, with
+	// exactly this goal. add_task uses it for idempotence (one goal, one task).
+	_find_open_duplicate(node_name, goal, workspace = "") {
 		want_goal = std.string(goal ?? "").strip();
 		want_node = std.string(node_name ?? "").lowercase();
+		want_workspace = std.string(workspace ?? "").strip();
+		if(want_workspace == "node")
+			want_workspace = "";
 		match = None;
 
 		if(!want_goal) {
@@ -1561,6 +1593,14 @@ class Router {
 			if(std.string(t.node).lowercase() != want_node) {
 				continue;
 			}
+
+			t_workspace = std.string(t.workspace ?? "").strip();
+			if(t_workspace == "node")
+				t_workspace = "";
+			if(t_workspace != want_workspace) {
+				continue;
+			}
+
 			if(!router_is_open_state(std.string(t.state ?? ""))) {
 				continue;
 			}
@@ -1576,7 +1616,7 @@ class Router {
 	}
 
 	// True while the router is still waiting for a delegated ai_request on that
-	// node. The node runs such a request in its own receptionist, and the worker
+	// node. The node runs such a request in its own receptionist, and the workspace
 	// task it finishes is that request - not extra work.
 	_node_has_open_request(node_name) {
 		want_node = std.string(node_name ?? "").lowercase();
@@ -1631,6 +1671,9 @@ class Router {
 		cs = std.critical_section_named(_lock);
 		if(!rec.has("user_updates")) {
 			rec.user_updates = [];
+		}
+		if(!rec.has("workspace")) {
+			rec.workspace = "";
 		}
 		rec.user_updates.push_back([message = std.string(message), time = std.millis()]);
 		rec.updated = std.millis();
@@ -1851,7 +1894,7 @@ class Router {
 
 	// Returns true when the event should be emitted to the owner. The mirror is
 	// updated in every case; false means the event was consumed/dropped (for
-	// example the node's internal worker task of an already-open delegated
+	// example the node's internal workspace task of an already-open delegated
 	// request, which is the request itself and not a second completion).
 	_mirror_event(ev) {
 		if(ev.kind == "node_state") {
@@ -1882,7 +1925,7 @@ class Router {
 			// mirror.
 			//
 			// One exception: a delegated ai_request is executed by the node's own
-			// receptionist, and the worker task it finishes is unknown to the
+			// receptionist, and the workspace task it finishes is unknown to the
 			// router. That task IS the open request - adopting it would show the
 			// user two tasks for one goal and notify twice. The request record is
 			// settled by ai_request_poll (state + report), so the push is dropped.
@@ -1960,9 +2003,9 @@ class Router {
 
 	// ── threads ───────────────────────────────────────────────────────────────
 
-	// Normalize the result of one agent turn (see agent_thread): the reports the
-	// role's finish(report) tool left in agent.env.reports win over the
-	// "Agent returned nothing" shape miniagent produces for a stopped turn.
+	// Normalize the result of one agent turn: the role's finish(report) /
+	// finalize() result is in agent.task_result; the legacy owner-facing shape
+	// ([ok, reports=[[report=...]], error]) is kept for the Router surface.
 	_turn_result(res) {
 		out = res;
 
@@ -1970,15 +2013,28 @@ class Router {
 			out = [ok = false, error = "The router agent turn returned nothing.", reports = []];
 		}
 
-		reps = [];
+		if(!std.is_json(out.reports))
+			out.reports = [];
 
-		if(agent && std.is_json(agent.env) && agent.env.has("reports") && std.is_json(agent.env.reports)) {
-			reps = agent.env.reports.copy();
+		tr = router_agent_task_result(agent);
+
+		text = "";
+		if(tr && tr.has("result"))
+			text = std.string(tr.result ?? "");
+		else if(std.is_json(out) && out.has("result"))
+			text = std.string(out.result ?? "");
+
+		if(text) {
+			out.ok = !(tr && std.string(tr.signal ?? "") == "failed");
+			out.reports = [[report = text]];
+			out.error = out.ok ? "" : text;
+			return out;
 		}
 
-		if(reps.size()) {
+		// Legacy stub hosts may still leave a report in env.reports.
+		if(agent && std.is_json(agent.env) && agent.env.has("reports") && std.is_json(agent.env.reports) && agent.env.reports.size()) {
 			out.ok = true;
-			out.reports = reps;
+			out.reports = agent.env.reports.copy();
 			out.error = "";
 		}
 
@@ -2006,11 +2062,8 @@ class Router {
 			}
 			_turn_active = false;
 
-			// The role's finish(report) tool puts the agent's answer into
-			// agent.env.reports; miniagent only returns them when env.use_finalize
-			// is set, so a turn that ended with finish() would come back as
-			// "Agent returned nothing (maybe crashed)" although everything worked.
-			// Fold them in: the report IS the answer, and the turn is a success.
+			// The role's finish(report) / finalize() result is in agent.task_result;
+			// normalize it into the owner-facing answer shape.
 			// (guarded: request() waits for req.finished, this thread must live)
 			try {
 				result = _turn_result(result);
@@ -2244,6 +2297,9 @@ class Router {
 		}
 		if(task.has("name") && task.name) {
 			rec.name = std.string(task.name);
+		}
+		if(task.has("workspace_id") && task.workspace_id) {
+			rec.workspace = std.string(task.workspace_id);
 		}
 		// C2: a task record off the node is new data — restart the stall clock.
 		rec.last_progress = std.millis();

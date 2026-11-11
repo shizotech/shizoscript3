@@ -103,6 +103,21 @@ goal_mkdir(path) {
 	return fileio.exists(path);
 }
 
+// The workspace id reported by a scheduler: the basename of the tree, or the
+// directory above a .agentspace folder.
+goal_workspace_id(root) {
+	r = std.string(root ?? "");
+	if(!r)
+		return "";
+	id = fileio.file_name(r);
+	if(id == ".agentspace") {
+		parent = fileio.file_dir(r);
+		if(parent)
+			id = fileio.file_name(parent);
+	}
+	return id;
+}
+
 // write tmp + rename: a reader never sees a half written file
 goal_write_atomic(path, text) {
 	dir = fileio.file_dir(path);
@@ -1329,6 +1344,8 @@ class GoalScheduler {
 	space = None;
 	ledger = None;
 	host = None;
+	workspace_id = "";
+	root = "";
 	prefs = [];
 	defs = [];				// id -> applied (valid) definition
 	running = false;
@@ -1336,21 +1353,30 @@ class GoalScheduler {
 	thread = None;
 	notify_enabled = true;
 	last_scan = 0;
-	inbox = [];				// task_finished pushes from the host
+	terminal_events = [];		// taskid -> terminal event, stored once
+	terminal_seen = [];		// taskids already accepted, so a duplicate listener event is ignored
+	notified = [];			// notification key -> already reported
 	clock = None;			// test hook: a function returning epoch seconds
 	last_overview = "";		// the last state/overview.md written
 
 	__init__(_space, _host = None, opts = None) {
 		space = std.is_string(_space) ? GoalSpace(_space) : _space;
+		if(!space)
+			space = GoalSpace("");
 		host = _host;
+		root = space.root;
+		workspace_id = goal_workspace_id(root);
 		goal_mkdir(space.runtime_dir());
 		ledger = GoalLedger(space.runtime_dir() + "/ledger.json");
 		ledger.now_fn = [this]() { return this.clock_now(); };
 		defs = std.json();
-		inbox = [];
-		inbox.clear();
+		terminal_events = std.json();
+		terminal_seen = std.json();
+		notified = std.json();
 
 		if(gj_is_map(opts)) {
+			if(opts.has("workspace_id"))
+				workspace_id = gj_str(opts, "workspace_id", workspace_id);
 			if(gj(opts, "tick_ms"))
 				tick_ms = std.int(opts.tick_ms);
 			if(opts.has("notify"))
@@ -1441,13 +1467,32 @@ class GoalScheduler {
 		catch(e) {}
 	}
 
+	// At most one notification for an event key. Terminal run events are
+	// settled once, and repeated ticks must not double-report them.
+	notify_once(key, msg) {
+		k = std.string(key ?? "");
+		if(k && gj(notified, k, false))
+			return;
+		if(k)
+			notified[k] = true;
+		notify(msg);
+	}
+
 	on_host_task_finished(task) {
 		cs = std.critical_section_named(GOAL_LOCK);
-		inbox.push_back([
-			taskid = gj_str(task, "taskid", ""),
-			state = gj_str(task, "state", ""),
-			report = gj_str(task, "report", ""),
-		]);
+		tid = gj_str(task, "taskid", "");
+		st = gj_str(task, "state", "");
+		terminal = st == "finished" || st == "failed" || st == "question" || st == "stopped" || st == "lost";
+		if(tid && terminal && !gj(terminal_seen, tid, false)) {
+			terminal_seen[tid] = true;
+			terminal_events[tid] = [
+				taskid = tid,
+				state = st,
+				report = gj_str(task, "report", ""),
+				error = gj_str(task, "error", ""),
+				last_update_ms = std.int(gj(task, "last_update_ms", 0)),
+			];
+		}
 		cs.release();
 	}
 
@@ -1508,7 +1553,7 @@ class GoalScheduler {
 				g.errors = r.errors;
 				msg = "goal " + f.id + ": the edit is invalid, the last valid revision stays active:\n- " + gfm_join(r.errors, "\n- ");
 				ledger.event("definition_invalid", f.id, msg, [revision = r.revision, errors = r.errors]);
-				notify(msg);
+				notify_once("invalid:" + f.id + ":" + r.revision, msg);
 			}
 
 			// a folder move is still a status change, even with a broken file
@@ -1559,27 +1604,78 @@ class GoalScheduler {
 
 	// ── 2. runs ─────────────────────────────────────────────────────────────
 
-	// the latest record of a host task -> [state, report] (state "" = unknown)
+	// The latest record of a host task:
+	// [ok, taskid, state, report, error, active, last_update_ms]
+	// "lost" only when the host definitively says not found; exceptions / None /
+	// other transient results are "unknown" and keep the run open.
 	poll_task(taskid) {
-		if(!host || !taskid)
-			return [state = "", report = ""];
+		tid = std.string(taskid ?? "");
+		out = [ok = 0, taskid = tid, state = "unknown", report = "", error = "", active = 0, last_update_ms = 0];
+		if(!host || !tid)
+			return out;
 
 		rec = None;
 		try {
-			rec = host.inspect_task(taskid);
+			rec = host.inspect_task(tid);
 		}
-		catch(e) {}
+		catch(e) {
+			out.error = std.string(e);
+			return out;
+		}
 
-		if(!gj_is_map(rec))
-			return [state = "lost", report = "", last_update_ms = 0];
+		if(std.is_none(rec)) {
+			out.error = "inspect returned None";
+			return out;
+		}
 
-		return [state = gj_str(rec, "state", ""), report = gj_str(rec, "report", ""), last_update_ms = std.int(gj(rec, "last_update_ms", 0))];
+		if(std.is_string(rec)) {
+			if(rec == "Not found.") {
+				out.ok = 1;
+				out.state = "lost";
+				out.error = rec;
+				return out;
+			}
+			out.error = rec;
+			return out;
+		}
+
+		if(!gj_is_map(rec)) {
+			out.error = "inspect returned a non-map value";
+			return out;
+		}
+
+		out.ok = 1;
+		host_ok = gj(rec, "ok", true) ? true : false;
+		st = gj_str(rec, "state", "");
+		out.report = gj_str(rec, "report", "");
+		out.error = gj_str(rec, "error", "");
+		out.last_update_ms = std.int(gj(rec, "last_update_ms", 0));
+
+		if(host_ok && st)
+			out.state = st;
+		else if(!host_ok && st == "lost")
+			out.state = "lost";
+		else {
+			out.state = "unknown";
+			if(!out.error)
+				out.error = "inspect returned no usable state";
+		}
+
+		act = gj(rec, "active", None);
+		if(std.is_none(act)) {
+			s = out.state;
+			out.active = (s == "running" || s == "research" || s == "implement" || s == "starting" || s == "waiting" || s == "dispatching") ? 1 : 0;
+		}
+		else {
+			out.active = act ? 1 : 0;
+		}
+		return out;
 	}
 
 	settle_runs() {
 		cs = std.critical_section_named(GOAL_LOCK);
-		pushed = inbox.copy();
-		inbox.clear();
+		pushed = terminal_events.copy();
+		terminal_events.clear();
 		cs.release();
 
 		for(akey, a : ledger.data.activations) {
@@ -1589,24 +1685,28 @@ class GoalScheduler {
 			for(r : a.runs) {
 				if(!goal_run_open(r))
 					continue;
+				if(gj(r, "settled", false) || gj(r, "terminal_reported", false))
+					continue;
 
 				st = "";
 				report = "";
-
-				for(p : pushed) {
-					if(p.taskid && p.taskid == gj_str(r, "taskid", "")) {
-						st = p.state;
-						report = p.report;
-					}
-				}
-
 				last_ms = 0;
+				tid = gj_str(r, "taskid", "");
 
-				if(!st) {
-					pr = poll_task(gj_str(r, "taskid", ""));
-					st = pr.state;
-					report = pr.report;
-					last_ms = pr.last_update_ms;
+				if(tid && pushed.has(tid)) {
+					ev = pushed[tid];
+					st = gj_str(ev, "state", "");
+					report = gj_str(ev, "report", "");
+					last_ms = std.int(gj(ev, "last_update_ms", 0));
+				}
+				else if(tid) {
+					pr = poll_task(tid);
+					st = gj_str(pr, "state", "");
+					report = gj_str(pr, "report", "");
+					last_ms = std.int(gj(pr, "last_update_ms", 0));
+				}
+				else {
+					st = "unknown";
 				}
 
 				if(st == "finished" || st == "failed" || st == "question" || st == "stopped" || st == "lost") {
@@ -1640,11 +1740,16 @@ class GoalScheduler {
 			try { host.stop_task(taskid); } catch(e) {}
 		}
 		ledger.event("run_stalled", a.goal, "run " + gj(r, "n", 0) + " made no progress for " + (idle / 60) + " min, stopped (stall_timeout)", [akey = a.akey, taskid = taskid]);
-		notify("Goal " + a.goal + ": run " + gj(r, "n", 0) + " was stuck for " + (idle / 60) + " min and was stopped; it is retried while attempts are left.");
+		notify_once("run:" + a.akey + ":" + std.string(gj(r, "n", 0)) + ":stalled", "Goal " + a.goal + ": run " + gj(r, "n", 0) + " was stuck for " + (idle / 60) + " min and was stopped; it is retried while attempts are left.");
 	}
 
 	finish_run(a, r, state, report) {
+		if(gj(r, "settled", false) || gj(r, "terminal_reported", false))
+			return false;
+
 		t_now = clock_now();
+		r.settled = true;
+		r.terminal_reported = true;
 		r.state = state;
 		r.ended = t_now;
 		r.report = goal_clip(report, GOAL_REPORT_CHARS);
@@ -1668,7 +1773,7 @@ class GoalScheduler {
 			a.ended = t_now;
 			//Not the report again (owner report, double [done] / [notify]): the task's own question event
 			//(task_finished / task_state -> question) carries it to the same chat, notify says what it means
-			notify("Goal " + a.goal + " needs you: its task asked a question (see the task message).");
+			notify_once("run:" + a.akey + ":" + std.string(gj(r, "n", 0)) + ":question", "Goal " + a.goal + " needs you: its task asked a question (see the task message).");
 			return;
 		}
 
@@ -1705,7 +1810,7 @@ class GoalScheduler {
 			a.verify_pending = false;
 			a.successes = 0;
 			a.last_report = "VERIFICATION FAILED - fix these gaps:\n" + r.report;
-			notify("Goal " + a.goal + ": verification failed, the next run gets the gaps (see the task message).");
+			notify_once("run:" + a.akey + ":" + std.string(gj(r, "n", 0)) + ":verify_failed", "Goal " + a.goal + ": verification failed, the next run gets the gaps (see the task message).");
 		}
 
 		max_attempts = gj(a.policy, "max_attempts", 3);
@@ -1718,7 +1823,7 @@ class GoalScheduler {
 
 		a.state = "failed";
 		a.ended = t_now;
-		notify("Goal " + a.goal + ": " + label + " " + state + " - no attempts left for this window (report in the task message).");
+		notify_once("run:" + a.akey + ":" + std.string(gj(r, "n", 0)) + ":failed", "Goal " + a.goal + ": " + label + " " + state + " - no attempts left for this window (report in the task message).");
 	}
 
 	// ── 3. window end ───────────────────────────────────────────────────────
@@ -1737,7 +1842,7 @@ class GoalScheduler {
 				r.checkpoint_at = t_now;
 				if(host && taskid) {
 					try {
-						host.update_task(taskid, "The work window of this goal ends now (" + why + "). Save your progress: commit or stash work in progress on a branch, update the plan / notes, then signal finished with what is done and what is left. Do not start anything new.");
+						host.update_task(taskid, "The work window of this goal ends now (" + why + "). Save your progress: commit or stash work in progress on a branch, update the plan / notes, then finalize(signal='finished', result='what is done and what is left'). Do not start anything new.");
 					}
 					catch(e) {}
 				}
@@ -1862,7 +1967,7 @@ class GoalScheduler {
 		a.ended = clock_now();
 		msg = "Goal " + def.id + ": window " + goal_window_text(def, w) + " was " + (why == "skip" ? "skipped (started late, misfire: skip)" : "missed (the scheduler was not running)");
 		ledger.event("window_" + a.state, def.id, msg, [akey = w.akey]);
-		notify(msg);
+		notify_once("window:" + w.akey + ":" + a.state, msg);
 		return a;
 	}
 
@@ -1902,7 +2007,7 @@ class GoalScheduler {
 					zone = gt_zone(def.schedule.timezone);
 					note = late > GOAL_START_GRACE + tick_ms / 1000 && w.start >= since ? " (late start)" : "";
 					ledger.event("window_activated", id, "window " + goal_window_text(def, w) + " activated" + note, [akey = w.akey]);
-					notify("Goal " + id + " starts" + (a.state == "dry_run" ? " (DRY RUN)" : "") + ": " + def.title + "\nWindow " + goal_window_text(def, w) + note);
+					notify_once("window:" + w.akey, "Goal " + id + " starts" + (a.state == "dry_run" ? " (DRY RUN)" : "") + ": " + def.title + "\nWindow " + goal_window_text(def, w) + note);
 					continue;
 				}
 
@@ -1924,7 +2029,7 @@ class GoalScheduler {
 				a = new_activation(def, cw, "catch_up");
 				a.missed_window = [start = missed_latest.start, end = missed_latest.end];
 				ledger.event("window_catch_up", id, "missed window " + goal_window_text(def, missed_latest) + " runs now (misfire: catch_up)", [akey = cw.akey]);
-				notify("Goal " + id + ": catching up a missed window now.");
+				notify_once("catchup:" + cw.akey, "Goal " + id + ": catching up a missed window now.");
 			}
 		}
 	}
@@ -2142,6 +2247,8 @@ class GoalScheduler {
 		}
 
 		if(!taskid) {
+			r.settled = true;
+			r.terminal_reported = true;
 			r.state = "failed";
 			r.ended = t_now;
 			r.report = "the host refused the task";
@@ -2150,7 +2257,7 @@ class GoalScheduler {
 			ledger.event("dispatch_failed", def.id, "the host did not accept the run", [akey = a.akey]);
 			// the owner must hear about a refused dispatch now, not only when the
 			// window runs out of attempts
-			notify("Goal " + def.id + ": " + (kind == "verify" ? "the verification run" : "run " + std.string(n)) + " could not start - the host refused the task. Next attempt " + gt_format_local(gt_zone(def.schedule.timezone), a.retry_at) + ".");
+			notify_once("run:" + a.akey + ":" + std.string(n) + ":refused", "Goal " + def.id + ": " + (kind == "verify" ? "the verification run" : "run " + std.string(n)) + " could not start - the host refused the task. Next attempt " + gt_format_local(gt_zone(def.schedule.timezone), a.retry_at) + ".");
 			return;
 		}
 
@@ -2176,7 +2283,7 @@ class GoalScheduler {
 
 		if(kind == "verify") {
 			p += "## Your job: verify\n\nCheck the acceptance criteria below against the actual state of the work (files, tests, branches), not against the report. ";
-			p += "Signal finished when they are met. Signal failed with the concrete gaps when they are not — the next run gets your list.\n\n";
+			p += "finalize(signal='finished', result=...) when they are met. finalize(signal='failed', result='the concrete gaps') when they are not — the next run gets your list.\n\n";
 			p += "## Report of the last run\n\n" + goal_clip(gj_str(a, "last_report", ""), 3000) + "\n\n";
 		}
 
@@ -2218,7 +2325,7 @@ class GoalScheduler {
 		p += "## Rules\n\n";
 		if(def.policy.allow.size())
 			p += "- Allowed actions: " + gfm_join(def.policy.allow, ", ") + ".\n";
-		p += "- Never do without the owner's explicit approval: " + gfm_join(def.policy.require_approval, ", ") + ". Ask with signal(question) instead.\n";
+		p += "- Never do without the owner's explicit approval: " + gfm_join(def.policy.require_approval, ", ") + ". Ask with finalize(signal='question', result=...) instead.\n";
 		p += "- Repository edits: work on a branch / isolated worktree, never on a shared main checkout.\n";
 		if(def.policy.plan_updates == "allow")
 			p += "- Keep " + def.dir + "/plan.md current: tick off what you finished, add what you discovered (short checklist).\n";
@@ -2228,7 +2335,7 @@ class GoalScheduler {
 			p += "- Do not edit plan.md or goal.md.\n";
 		p += "- Never edit goal.md or anything under .agentspace/.runtime/ (the scheduler owns them).\n";
 		p += "- Your memory across runs of this goal is the Mind topic .megamind/goal_" + def.id.replace("-", "_") + "/ (read its index.md first, update it before you finish).\n";
-		p += "- End with signal(): finished (what was done, what is left, evidence such as tests run), question (you need the owner), or failed (why).\n";
+		p += "- End with finalize(signal='finished|failed|question', result=...): finished (what was done, what is left, evidence such as tests run), question (you need the owner), or failed (why).\n";
 
 		return p;
 	}
@@ -2248,6 +2355,8 @@ class GoalScheduler {
 				known = run_still_known(r);
 				if(known)
 					continue;
+				r.settled = true;
+				r.terminal_reported = true;
 				r.state = "lost";
 				r.ended = t_now;
 				r.report = "interrupted: the node restarted while the run was active";
@@ -2334,6 +2443,11 @@ class GoalScheduler {
 		write_overview();
 
 		cs.release();
+	}
+
+	// Synchronous alias: one tick, for callers that drive the scheduler themselves.
+	update() {
+		tick();
 	}
 
 	// ── overview (CLI, receptionist tools, router) ──────────────────────────

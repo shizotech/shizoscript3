@@ -299,15 +299,15 @@ check("the role of the job tasks can be set", host2.added[0].role == "planner", 
 
 std.print("\n── --web command line ──");
 o = web_ui_parse(["--web"]);
-check("--web", o.web && o.port == 13337 && o.agentspace == miniagent_node_architecture(), std.string(o));
+check("--web", o.web && o.port == 13337 && std.string(o.api_token) == "", std.string(o));
 o = web_ui_parse(["--config", "gpu", "--web", "--port", "8080", "--api-token", "x"]);
 check("--web --port --api-token", o.web && o.port == 8080 && o.api_token == "x", std.string(o));
 o = web_ui_parse(["--web=9000", "--agentspace", "/tmp/space"]);
-check("--web=<port> --agentspace", o.web && o.port == 9000 && o.agentspace == "/tmp/space", std.string(o));
+check("--web=<port>", o.web && o.port == 9000, std.string(o));
 o = web_ui_parse(["--port", "1234"]);
 check("no --web", !o.web, std.string(o));
-check("the architecture role defaults to adaptive", o.architecture_role == "adaptive", std.string(o));
-check("--architecture-role", web_ui_parse(["--web", "--architecture-role", "coder"]).architecture_role == "coder");
+check("the web options no longer carry an architecture role", !o.has("architecture_role"), std.string(o));
+check("--architecture-role is ignored", !web_ui_parse(["--web", "--architecture-role", "coder"]).has("architecture_role"));
 d = web_ui_chat_delta([tool_start = [name = "start_task", args = [name = "Sushi"]]]);
 check("the model-side tool action is not shown twice", std.is_none(web_ui_chat_delta([tool = [name = "start_task", args = [name = "Sushi"]]])));
 check("chat delta of a tool call", d.text.contains("start_task") && d.text.contains("Sushi"), std.string(d));

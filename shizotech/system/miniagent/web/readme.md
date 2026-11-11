@@ -6,16 +6,17 @@ HTML / CSS / JS, no build step and no CDN: the pages work without internet.
 ```
 web/
 ├── index.html, dashboard.js/.css   the shell: compact workspace tree + main pane
-├── chat/                           chat with the node's receptionist (POST /api/adminagent, /poll, /stop)
-├── tasks/                          the worker tasks (/api/tasks, /api/status, /api/events, POST/PUT/DELETE /api/task)
-├── architecture/                   the architecture graph (/api/architecture/..., ../architecture_spec.md)
+├── chat/                           legacy standalone chat page (retained on disk, denied at /chat)
+├── tasks/                          legacy worker-pool page (retained on disk, denied at /tasks)
+├── architecture/                   the architecture graph (served, embedded by the Architecture tab; /api/workspaces/<id>/architecture/..., ../architecture_spec.md)
 │   ├── graph.js                    SVG renderer, layout, editing, side panel
 │   └── style.css
 ├── components/
 │   ├── nodeapi.js                  fetch helper: the {ok, data} envelope, the API token (X-Api-Token)
 │   ├── icons.css                   the fa-* icon classes as plain glyphs (no Font Awesome download)
 │   ├── minimd.js                   small Markdown renderer + highlight.js stand-in for the chat
-│   ├── theme.css, ui.css, utils.js shared theme (green / black) and helpers
+│   ├── theme.css, ui.css, utils.js shared theme and helpers
+│   ├── industrial.css               animated old-console layer loaded after dashboard.css
 └── cow_lays_eggs.html              the secret egg
 ```
 
@@ -76,6 +77,18 @@ recurring Goal: use `create_recurring_goal`, never the one-off `create_workspace
 The hazard stripe is a compact sidebar footer. The workspace task tab and Global Tasks view poll every 15 seconds and skip unchanged
 render signatures. The task form is a persistent sibling of `taskContent`, so task polling only replaces task
 cards and leaves an open form and its typed values intact. On the first prompt, the dashboard displays the accepted
-user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/`
-worker-pool page polls only while visible; it reconciles changed cards by task ID and preserves unchanged card nodes
-and the task-creation form, so updates do not repaint the full dashboard.
+user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/` worker-pool page is a legacy page denied at `/tasks`; the dashboard's Tasks tab uses the workspace goal/task API instead.
+
+## Industrial console layer (2026-11-11)
+
+`components/industrial.css` is loaded after `dashboard.css` and adds the animated old-console layer:
+
+* the yellow/black hazard stripe slowly slides (`hazardSlide`) and has a moving light sweep (`hazardSweep`);
+* the topbar has a POWER / LINK / BUSY / WARN lamp bank; `dashboard.js` toggles the `on` class from live session status, while the LEDs blink (`lampBusyBlink`, `lampWarnFlash`);
+* status dots, active tabs and task cards pulse (`statusLampPulse`, `statusAmberBlink`, `statusRedFlash`, `tabLampPulse`);
+* a pointer-events-free CRT overlay adds scanlines, a vignette and a slow scan (`crtScan`);
+* panel edges get rivets/bevels; labels use a monospaced console font; the topbar and lamp bank flicker subtly;
+* `prefers-reduced-motion` disables the animations and calms the overlay.
+
+`web_ui_protect` denies the legacy standalone `/chat` and `/tasks` pages but serves `/architecture/`
+because the dashboard's Architecture tab embeds `architecture/index.html`.

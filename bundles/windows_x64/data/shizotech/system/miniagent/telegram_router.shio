@@ -8,6 +8,8 @@
 //                [--verbose-events]
 //
 //  What it does:
+//    * node info and task state come from the Router only (no direct Node API
+//      calls); the Router talks to Nodes over ShizoNet.
 //    * plain text from a TRUSTED chat is ONE router-agent turn: the agent
 //      (roles/router) reads get_nodes(), picks the node and delegates. The
 //      answer of the turn is sent back to that chat.

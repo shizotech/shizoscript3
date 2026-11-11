@@ -7,33 +7,34 @@ sessions, architecture and tasks live inside the workspace directory, not in the
 
 | Path | Owner | Purpose |
 |---|---|---|
-| `workspaces.shio` | backend | `WorkspaceStore`, `SessionManager`, `WorkspaceHost`, API registration |
-| `workspace_agent.shio` | backend | subprocess session agent, JSON line protocol |
+| `node.shio` | backend | `Node` class: `WorkspaceRegistry`, own node `Workspace`, `Receptionist` connector, ShizoNet service, web/API |
+| `workspaces.shio` | backend | `Workspace`, `WorkspaceRegistry`, `WorkspaceStore`, `SessionManager`, API registration |
+| `workspace_agent.shio` | backend | subprocess session agent, `--config-spec`, JSON line protocol (`done status=stopped` on intentional stop; `file` / `notify` events) |
 | `workspaces_selftest.shio` | backend | store / settings / protocol tests |
 | `web/index.html`, `web/dashboard.css`, `web/dashboard.js` | frontend | workspace dashboard |
 | `web/*` existing modules | frontend may reuse components, must not rewrite archive/chat/tasks pages |
-| `web_ui.shio` | parent | includes and registers `workspaces.shio` |
+| `web_ui.shio` | parent | includes and registers `workspaces.shio`; the web UI is the connector to `WorkspaceRegistry` |
 | `telegram_router.shio` | follow-up | client mode |
 
 ## User data root
 
 `store_root = std.user_path() + "/miniagent/workspaces"`
 
-- The global workspace is the root directory itself.
+- The registry root is a container, not a project workspace; it has no `.agentspace`.
 - `workspaces.json` is the registry.
 - `settings.json` holds `max_sessions` (default 2).
 - `WorkspaceStore.ensure_agentspace` initializes each real workspace/subworkspace with `.agentspace/` when registered and repairs missing template files on load (2026-11-06). The synthetic `root` workspace does not get its own `.agentspace/`.
 - `.agentspace/` is the sole goal-engine root per real workspace: preferences, templates, goals and runtime ledger. It is initialized from the bundled `agentspace_template/` without overwriting existing files. Existing goal files under the former `.megamind/tasks/` root are imported here on workspace load; the legacy directory is left intact as a backup and is no longer read or written. All registered real workspace schedulers start at node startup; the synthetic `root` workspace has no project goal store.
-- The node's own goal/architecture store is global: `std.user_path()/miniagent/node/.agentspace` and `std.user_path()/miniagent/node/.megamind/architecture`. It is independent of the directory the node was started from.
+- The Node's own goal/architecture store is node-level at `std.user_path()/miniagent/node`: `.agentspace` and `.megamind/architecture`. The Node's own Workspace is the registry's `root` Workspace, whose sessions live under `workspaces/.megamind/sessions`. It is independent of the directory the node was started from.
 - `.megamind/` contains:
   - `.megamind/sessions/<session_id>/session.json` (metadata and a bounded 300-event live/replay window)
   - `.megamind/sessions/<session_id>/chat.json` (the complete agent conversation, the source for chat reloads)
-  - `.megamind/sessions/<session_id>/chat.json.result.json` (durable terminal result, written before the worker's `done` event)
-  - `.megamind/sessions/<session_id>/config.json`
+  - `.megamind/sessions/<session_id>/chat.json.result.json` (durable terminal result, written before the session agent's `done` event)
+  
   - `.megamind/architecture/architecture.json`
 
 The 300-entry `session.json.events` window serves live replay only; it is not the chat transcript.
-The worker writes the full conversation to `chat.json` after each agent turn and also on every
+The session agent writes the full conversation to `chat.json` after each agent turn and also on every
 tool start (so a crash keeps the latest conversation), and a matching terminal result to
 `chat.json.result.json` before announcing completion. `chat.json` is the only source of truth
 for the UI's chat; `session.json.events` is a bounded live/replay window, not a transcript copy.
@@ -83,15 +84,20 @@ Routes:
 
 ## Session agent protocol
 
-`workspace_agent.shio` runs in the workspace directory, with `--workspace`, `--config-file`,
-`--session-id`, `--history-file`, `--reasoning-effort`, `--role`, `--mode`. It emits one JSON object per line on stdout:
+`workspace_agent.shio` runs in the workspace directory, with `--workspace`, `--config-spec`,
+`--session-id`, `--history-file`, `--reasoning-effort`, `--role`, `--mode`. The spec is a
+`name|path[#profile]`; `model_config_cli` resolves it and falls back to the default config. No
+`config.json` is written per session. It emits one JSON object per line on stdout:
 
 ```json
 {"type":"ready","session_id":"..."}
 {"type":"delta","action":{...}}
-{"type":"done","ok":true,"status":"finished|failed|question","report":"...","token_usage":0}
+{"type":"done","ok":true,"status":"finished|failed|question|stopped","report":"...","token_usage":0}
 {"type":"error","message":"..."}
+{"type":"warning","message":"..."}
 {"type":"stats","token_usage":0}
+{"type":"file",...}          // share_file protocol event
+{"type":"notify",...}        // notify_user protocol event
 ```
 
 It reads stdin JSON lines:
@@ -111,20 +117,30 @@ and needs the owner; a crash / API failure / process exit before a terminal stat
 
 ## Architecture and tasks
 
-For a workspace `W`:
+For a workspace `W`, `W.scheduler` owns the scheduler and `W.board` owns the board:
 
-- `ArchitectureBoard(WorkspaceHost(manager, W.id), W.path + "/.megamind/architecture", role)`
-- `GoalScheduler(W.path + "/.agentspace", WorkspaceHost(manager, W.id))`
+- `ArchitectureBoard(W, W.path + "/.megamind/architecture", role)`
+- `GoalScheduler(W.path + "/.agentspace", W, [workspace_id = W.id])`
 
-`WorkspaceHost` is duck-typed like `Megamind`:
+`Workspace` holds the registry's shared `manager`, plus its `board`, `scheduler`, `cfg` and
+`token`; it starts and stops its scheduler and its workspace sessions. `WorkspaceRegistry` owns
+`store`, `manager`, the `workspaces` map, `cfg` and `token`, starts every real workspace scheduler
+in `start_all_schedulers()`, and stops them plus active session workers in `stop()`. `Node` owns the registry and its own `goals` scheduler;
+`WorkspaceRegistry.scheduler(workspace_id)` and `WorkspaceRegistry.board(workspace_id)` expose
+the per-workspace scheduler and board.
 
-- `add_task(name, goal, role)` -> session id
-- `inspect_task(taskid)` -> `{state, active, report, name, ...}`; `active` comes from the live session status, while `state` is the display state.
+`Workspace` is the duck-typed host for architecture and goals:
+
+- `add_task(name, goal, role)` -> session id (empty = refused)
+- `inspect_task(taskid)` -> canonical JSON `{ok, taskid, state, active, report, error, name, token_usage, last_update_ms}`; unknown -> `ok=false, state="lost", error="not found"`.
+- `get_overview()` / `tasks()`
 - `stop_task(taskid)`
 - `update_task(taskid, message)`
 - `background_capacity()`
 - `add_task_finished_listener(cb)`
+- `add_notify_listener(cb)` / `add_file_listener(cb)`
 - `notify_user(msg)`
+- `share_file(path, caption)` -> forwards a workspace agent's `file` protocol event
 
 API routes for architecture/tasks mirror the existing node routes under
 `/api/workspaces/<id>/architecture/...` and `/api/workspaces/<id>/tasks/...`.
@@ -145,7 +161,7 @@ separate task system or just an abstract objective. Chat workers must use `creat
 work (weekdays or an interval such as `every: 5m` or `every: 2d`); `create_workspace_task` is strictly one-off. Sub-day intervals run continuously from activation and need no time window. A recurring goal stays proposed until the user approves activation.
 session ensures its parent goal scheduler is running, so an active
 one-off task queued by a worker is consumed by the goal engine. The dashboard's Create & run action creates
-an active manual goal and queues it through the same scheduler. Workers also expose `architecture_overview`
+an active manual goal and queues it through the same scheduler. Workspace agents also expose `architecture_overview`
 and validated pending node/edge edit tools; they cannot run architecture jobs or apply graph/source changes.
 Retry has no attempt cap: the manager restarts
 an exited non-terminal process, and the agent retries API failures with backoff capped at 30 s. The selected
@@ -156,8 +172,7 @@ reasoning effort is persisted with the session and applied before every turn.
 - The SSE route sets `Content-Type: text/event-stream` (it used to merge the JSON content type
   into the header set), accepts `?token=<t>` because EventSource cannot send headers, and
   accepts `?since=<last_seq>` so the dashboard does not replay history it already rendered.
-- `SessionManager` loads every `session.json` from each workspace's `.megamind/sessions/` on
-  start. Non-terminal saved sessions are marked stopped because their subprocess is gone.
+- The registry `SessionManager` loads every saved `session.json` from each workspace's `.megamind/sessions/` on start. Non-terminal saved sessions are marked stopped because their subprocess is gone.
 - `WorkspaceStore.ensure_megamind` copies a legacy `.agentspace/architecture.json` into
   `.megamind/architecture/architecture.json` when that workspace has no per-workspace graph.
 - Task API: `GET /api/workspaces/<id>/tasks` returns `{goals, sessions, templates}`; goal summaries expose
@@ -168,7 +183,7 @@ reasoning effort is persisted with the session and applied before every turn.
 - The dashboard has one sidebar: workspace tree with the selected workspace's sessions nested
   below it. Selecting a workspace refreshes the already-open Architecture or Tasks tab; task responses
   from a previous workspace are ignored. The visible Tasks or Global Tasks view refreshes every five seconds
-  without a loading flash; active worker tasks use the API's live `active` flag. Goal cards show a dispatched
+  without a loading flash; active workspace tasks use the API's live `active` flag. Goal cards show a dispatched
   run as Running, with its task ID, independently of the goal's configured status. A `+` creates an empty session immediately with an auto title
   (the first prompt renames it); there is no session popup. Tasks are split into Active, Proposed, Templates and
   Finished; the task menu can start a normal/goal session task. Architecture has Analyze,
