@@ -34,6 +34,7 @@ can be used.
 | `telegram_router.shio` | `TelegramRouter : Router` — the Telegram front end: trusted-chat access control + every node event pushed into the chat |
 | `shizonet_ai.shio` | the node ⇄ router wire protocol (both sides, one place) |
 | `node_api.shio` | optional JSON web API of a `Node` (`--webserver` / `--port`) |
+| `telegram_client.shio` | `shz miniagent.telegram_client --bot-token ... --workspace_dir <dir>` — an isolated Telegram client for one workspace: 24/7 receptionist, worker only in a configured local window, no ShizoNet |
 | `web_ui.shio` + `web/` | the web interface of a `Node` (`--web`): the workspace dashboard on top of the JSON API |
 | `architecture.shio` | the architecture graph: a workspace's `.megamind/architecture/architecture.json`, plus the node-level graph under `std.user_path()/miniagent/node/.megamind/architecture`; pending edits, analyze / plan / apply jobs (`architecture_spec.md`) |
 | `goal_engine.shio` | scheduled goals: `.agentspace/` Markdown goals, validation, the deterministic `GoalScheduler` (`goals_spec.md`) |
@@ -148,6 +149,18 @@ http://localhost:13337/ — every page works offline (no CDN):
 
 With `--api-token` the pages ask for the token once. The JSON API (`node_api.md`) is the
 same as with `--port`, its index moves to `/api`.
+
+## Initializing a workspace
+
+```
+shz miniagent --init          (= shz miniagent.node --init)
+```
+
+Registers the current directory as a project workspace under
+`std.user_path()/miniagent/workspaces`, creates its `.megamind` and `.agentspace`, and writes a
+short `AGENTS.md` if the directory has none. It returns without starting the node, ShizoNet,
+goals or the web UI. The workspace then shows in the web UI tree. Every newly created workspace
+also gets `AGENTS.md` when it is missing; an existing project `AGENTS.md` is never overwritten.
 
 ## Goals (scheduled autonomous work)
 
@@ -327,6 +340,24 @@ shz router.shio --config router-fast
 shz router.shio "task text"        single shot: one agent turn, print the answer
 ```
 
+### Isolated Telegram client for friends (`telegram_client.shio`)
+
+```
+shz miniagent.telegram_client --bot-token <token> --workspace_dir <dir>
+    [--work-start 09:00] [--work-end 17:00] [--timezone Europe/Berlin]
+    [--trusted <path>] [--config <name|path[#profile]>]
+    [--receptionist-config <...>] [--worker-config <...>]
+```
+
+One project workspace, created/initialized if missing, with its own registry under
+`<workspace_dir>/.client_registry` (it does not appear in the node's private workspace tree).
+No ShizoNet: no `Router`, no node discovery, no polling. A 24/7 receptionist answers trusted
+chats; the worker agent runs only inside the configured local work window. Requests outside the
+window are queued and dispatched at the next window; active worker tasks are stopped at window
+close. Long reports and `send_file` documents are delivered as Telegram documents. Trusted
+chats bootstrap like `telegram_router` (`/allow`, `/deny`, `/forget`), and text files sent by a
+friend are read and attached verbatim to the delegated task.
+
 ## Node
 
 ```
@@ -362,6 +393,15 @@ reaches a chat on another.
 `router_api.md` is the binding contract: command names, payloads, props, events, the
 `Router` surface and the role tool surface. `shizonet_ai.shio` is the only place the wire
 format is implemented.
+
+## Long tasks and compaction
+
+A context warning is injected once per compaction episode (`compaction_requested`), not on every
+streamed usage chunk. After a successful handover the flag resets, so a long open-ended task can
+compact repeatedly. The warning run is internal (`internal_run`): its text/tool deltas are not
+shown, its finalize report is consumed as a handover, and the real task prompt is restored and
+continues. A warning run that finalizes with `finished` is still treated as a handover, not as the
+task's terminal answer. An unusable warning report falls back to `compact_handover()`.
 
 ## Stop
 
@@ -413,8 +453,12 @@ shz shizonet_ai_selftest.shio   protocol only: node service + router service, no
                                  the node info advertising goals = 1|0 over the wire
                                  -> 128 checks, ALL PASSED
 shz workspaces_selftest.shio    workspace store, session manager, scheduler,
-                                 deletion and the agent protocol
-                                 -> 77 checks, ALL PASSED
+                                  deletion and the agent protocol
+                                  -> 82 checks, ALL PASSED
+shz testbench/telegram_client/telegram_client_selftest.shio  the isolated Telegram client against a fake bot and a fake
+                                  workspace: trust bootstrap, window queue/dispatch, stop at
+                                  close, files, no ShizoNet
+                                  -> 44 checks, ALL PASSED
 shz node_api_selftest.shio      node JSON API over real HTTP, stub host
                                  -> 40 checks, ALL PASSED
 shz goals_selftest.shio         time zones / DST, front matter, validation, the scheduler
