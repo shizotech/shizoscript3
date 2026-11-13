@@ -36,6 +36,15 @@ gzip-tar / zip: the installers use `tar -xzf` and `Expand-Archive`, and an alrea
 updater keeps doing exactly that, so a format change (xz, zstd) silently stops every existing
 client from updating.
 
+## Publishing the rebuilt assets
+
+`git_commit.shio` runs `compile_scripts/publish_assets.ps1` after committing and pushing
+`release/`. The script extracts the rebuilt archives from `release/` HEAD, verifies their
+sha256 against the git blobs, reuses the tag `bundles-2026-10-28`, deletes the old six
+assets and uploads the new six. The tag stays the same on purpose: an installed
+`shzupdate` carries that tag, and replacing the assets under it makes the next update
+fetch the new build without a tag bump.
+
 Consumers that carry the tag (4 places, keep them in sync):
 
 | File | Line | What it points at |
@@ -82,8 +91,9 @@ Rules, in order of importance:
    rule 2 keeps them at `Up-to-date.` - but they stop receiving updates).
 
 Never publish a bumped top-level `version.json` before the archive that carries the same number is
-uploadable at the URL the clients fetch. Bump order: **assets first, then `version.json`, then the
-tag in the four consumer sites.**
+uploadable at the URL the clients fetch. With the same-tag publish used by `git_commit.shio`, only
+the assets are replaced; the four tag sites stay unchanged. If a new tag is used, bump order is
+**assets first, then `version.json`, then the tag in the four consumer sites.**
 
 ## Failing safe
 
