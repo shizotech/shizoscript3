@@ -379,8 +379,14 @@ class Receptionist {
         thread = None;
 
         agent = miniagent(cfg, "receptionist");
-        agent.set_reasoning_effort("low");
-        agent.env.mind = _owner;
+         agent.set_reasoning_effort("low");
+         agent.env.mind = _owner;
+
+         // Read-only workspace questions: the receptionist reads the node's own
+         // workspace root, never the directory the node was launched from.
+         node_root = miniagent_node_root();
+         if(node_root && fileio.is_directory(node_root))
+             agent.filesystem = fileio.container(node_root);
 
         rt = std.thread(this.loop);
         rt.run();
@@ -598,6 +604,9 @@ class Node {
         ];
 
         this.node_workspace = Workspace(node_record, this.registry.manager, this.registry.cfg_spec, "");
+
+         if(this.node_workspace && this.node_workspace.path && this.receptionist && this.receptionist.agent)
+             this.receptionist.agent.filesystem = fileio.container(std.string(this.node_workspace.path));
 
         if(this.node_workspace)
             this.goals = this.node_workspace.scheduler;

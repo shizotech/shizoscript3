@@ -320,8 +320,9 @@ The router role (`roles/router/`) is a coordinator only: it gets `get_nodes`,
 `get_node_overview`, `get_tasks` (the fleet-wide task mirror), `start_task`,
 `update_task`, `stop_task`, `inspect_task`,
 `get_last_actions`, `notify`, `finish(report)` — no file, command or execution tools, so it
-cannot do the work it routes. It is the local receptionist's tool surface pointed at
-**remote nodes**: start / stop / update / check tasks across the network, and every node
+cannot do the work it routes. It is the coordination surface of the local receptionist pointed at
+**remote nodes**; unlike the local receptionist it has no workspace file tools, because it does
+not own a local workspace: start / stop / update / check tasks across the network, and every node
 notification lands on `on_event` so the owner can show it to the user.
 `get_nodes` reports per node whether it has a goal system (`goals`), and the role relays every
 tool error into its `finish(report)` — the concrete reason of a refused delegation
@@ -352,11 +353,14 @@ shz miniagent.telegram_client --bot-token <token> --workspace_dir <dir>
 One project workspace, created/initialized if missing, with its own registry under
 `<workspace_dir>/.client_registry` (it does not appear in the node's private workspace tree).
 No ShizoNet: no `Router`, no node discovery, no polling. A 24/7 receptionist answers trusted
-chats; the worker agent runs only inside the configured local work window. Requests outside the
-window are queued and dispatched at the next window; active worker tasks are stopped at window
-close. Long reports and `send_file` documents are delivered as Telegram documents. Trusted
-chats bootstrap like `telegram_router` (`/allow`, `/deny`, `/forget`), and text files sent by a
-friend are read and attached verbatim to the delegated task.
+chats; the worker agent runs only inside the configured local work window. The receptionist also
+has read-only workspace tools (`list_dir`, `file_info`, `file_line_count`, `read_file`), so a
+question about the workspace is answered immediately, outside the work window and without waiting
+for a worker; substantive work is still delegated. Requests outside the window are queued and
+dispatched at the next window; active worker tasks are stopped at window close. Long reports and
+`send_file` documents are delivered as Telegram documents. Trusted chats bootstrap like
+`telegram_router` (`/allow`, `/deny`, `/forget`), and text files sent by a friend are read and
+attached verbatim to the delegated task.
 
 ## Node
 
@@ -504,11 +508,13 @@ shz tests/stop_propagation_test.shio  miniagent.stop() across the agent tree, no
                                   start_task / continue_task / fork / file_task_batch
                                   obeying a stop  -> 45 checks, ALL PASSED
 shz tests/receptionist_tools_test.shio  the receptionist role's tools against a stub
-                                   node + the turn-result fold: every goal tool answers
-                                   the disabled-node error when the node has no
-                                   .agentspace, finish(summary) sets task_result, a
-                                   crash / stop / silent turn ends with readable text
-                                   + send_file -> 63 checks, ALL PASSED
+                                    node + the turn-result fold: read-only workspace tools
+                                    (list_dir / file_info / file_line_count / read_file)
+                                    answer questions without touching a worker, every goal
+                                    tool answers the disabled-node error when the node has no
+                                    .agentspace, finish(summary) sets task_result, a
+                                    crash / stop / silent turn ends with readable text
+                                    + send_file -> 73 checks, ALL PASSED
 shz tests/feedback_chain_test.shio  the whole feedback chain, no LLM: a stub AI node
                                   behind the real ShizoNet service, the real Router
                                   mirror + poller + watchdog, the real TelegramRouter

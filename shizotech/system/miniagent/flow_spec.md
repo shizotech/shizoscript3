@@ -169,11 +169,12 @@ scheduler immediately.
 `shz miniagent.telegram_client --bot-token ... --workspace_dir <dir>` creates one project
 workspace with a private registry under `<workspace_dir>/.client_registry`; it does not use the
 node's ShizoNet service or workspace tree. The receptionist agent runs 24/7 and answers trusted
-chats; `Workspace.add_task` is called only inside the configured local work window. Requests
-outside the window are queued in `ClientMind.queue` and dispatched when the window opens; active
-worker sessions are stopped at close. The GoalScheduler is hosted by `ClientMind`, so it obeys the
-same window and queue. Reports longer than the message limit and `send_file` documents are sent as
-Telegram documents.
+chats; it also has read-only workspace file tools so it can answer questions about the workspace
+immediately, without waiting for the worker or its work window. `Workspace.add_task` is called
+only inside the configured local work window. Requests outside the window are queued in
+`ClientMind.queue` and dispatched when the window opens; active worker sessions are stopped at
+close. The GoalScheduler is hosted by `ClientMind`, so it obeys the same window and queue. Reports
+longer than the message limit and `send_file` documents are sent as Telegram documents.
 
 ## 4. The single finalize contract
 

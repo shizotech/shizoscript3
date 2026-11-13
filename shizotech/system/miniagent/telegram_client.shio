@@ -593,8 +593,13 @@ class ClientReceptionist {
     __init__(cfg, _owner) {
         owner = _owner;
         agent = miniagent(cfg, "receptionist");
-        agent.set_reasoning_effort("low");
-        agent.env.mind = owner;
+         agent.set_reasoning_effort("low");
+         agent.env.mind = owner;
+
+         // The receptionist answers questions about THIS workspace, not the
+         // directory the client was launched from.
+         if(owner && owner.workspace && std.string(owner.workspace.path ?? ""))
+             agent.filesystem = fileio.container(std.string(owner.workspace.path));
 
         queue = [];
         updates = [];
