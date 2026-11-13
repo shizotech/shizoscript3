@@ -39,11 +39,19 @@ client from updating.
 ## Publishing the rebuilt assets
 
 `git_commit.shio` runs `compile_scripts/publish_assets.ps1` after committing and pushing
-`release/`. The script extracts the rebuilt archives from `release/` HEAD, verifies their
-sha256 against the git blobs, reuses the tag `bundles-2026-10-28`, deletes the old six
-assets and uploads the new six. The tag stays the same on purpose: an installed
-`shzupdate` carries that tag, and replacing the assets under it makes the next update
-fetch the new build without a tag bump.
+`release/`. The script extracts the rebuilt archives from the **`release/` working tree**,
+verifies their size + sha256 against those built files, updates the release body to the
+current `release` HEAD, reuses the tag `bundles-2026-10-28`, deletes the old six assets
+and uploads the new six. The tag stays the same on purpose: an installed `shzupdate`
+carries that tag, and replacing the assets under it makes the next update fetch the
+new build without a tag bump.
+
+The archive files in `release/bundles/` are marked `skip-worktree` in the release repo:
+they are too large to push, and the blobs in `release` HEAD are older *pinned* archives.
+So `git add .` does not stage the newly built archives, and `git cat-file HEAD:bundles/...`
+returns the old blob. Publishing from `HEAD` therefore uploads the old build even though
+the local worktree has the new one. The publish script uses the worktree, and `verify_assets.ps1`
+compares the remote assets to that same worktree copy, not to `HEAD`.
 
 Consumers that carry the tag (4 places, keep them in sync):
 
