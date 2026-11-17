@@ -35,6 +35,8 @@ WS_LIVE_WAIT_MAX_MS = 25000;    // longest long-poll (a ShizoNet get has to outl
 WS_EVENTS_WAIT_MAX_MS = 10000;
 WS_SAVE_DELTA_MS = 1000;        // session.json is rewritten at most this often while tokens stream
 WS_EVENT_RESULT_MAX = 16000;    // characters of a tool result kept in an event (chat.json has all of it)
+WS_TURN_ITEMS_MAX = 600;        // items of the running turn kept for a page that opens the session
+WS_TURN_TEXT_MAX = 400000;      // characters of one text / reasoning item of the running turn
 
 // ── small helpers ──────────────────────────────────────────────────────────
 ws_str(v, def = "") {
@@ -656,6 +658,7 @@ class SessionManager {
     // background_capacity(); a goal dispatch itself must not count as interactive.
     last_interactive_ms = 0;
     saved_at = [];          // session id -> std.millis_steady() of the last session.json write
+    turn_logs = [];         // session id -> the running turn as items (see turn_log_add)
     last_interactive_ms = 0;    // when a person last asked for something (web, gateway): the goal
                                 // scheduler yields to interactive use for a while after it
 
@@ -681,6 +684,7 @@ class SessionManager {
         // background_capacity(); a goal dispatch itself must not count as interactive.
         last_interactive_ms = 0;
         saved_at = [];
+        turn_logs = [];
         last_interactive_ms = 0;
         load_sessions();
     }
@@ -894,6 +898,154 @@ class SessionManager {
         ];
     }
 
+    // ── the running turn, for a page that opens the session in the middle of it ──
+    //
+    // The event window holds the last WS_EVENT_KEPT events, which is a few seconds of
+    // streamed tokens, and chat.json is only written at a tool call and at the end of
+    // a turn. So a page that opened a running session saw the reasoning and the tool
+    // calls of the turn only from the moment it connected. The turn log is the same
+    // stream folded into items as it arrives:
+    //     [kind = "user", text]                 the prompt (also one sent while it runs)
+    //     [kind = "reasoning", text]            consecutive reasoning deltas, joined
+    //     [kind = "text", text]                 consecutive text deltas, joined
+    //     [kind = "tool", id, name, args, state = running|ok|failed, result, sub]
+    //     [kind = "milestone" | "notice" | "error", text]
+    // GET /api/sessions/<id> answers it as `turn` together with `turn_seq`, the seq of
+    // the last event that is in it: the page draws the items and takes the stream from
+    // there. It is memory only; a finished turn is read from chat.json.
+    turn_log_reset(sid, prompt = "") {
+        items = [];
+
+        if(ws_str(prompt))
+            items.push_back([kind = "user", text = ws_str(prompt)]);
+
+        turn_logs[sid] = items;
+    }
+
+    turn_log(sid) {
+        if(!turn_logs.has(sid))
+            return [];
+
+        return turn_logs[sid].copy();
+    }
+
+    turn_log_push(sid, item) {
+        if(!turn_logs.has(sid))
+            turn_logs[sid] = [];
+
+        items = turn_logs[sid];
+        items.push_back(item);
+
+        // too many: the oldest go (the prompt at the front stays)
+        for(items.size() > WS_TURN_ITEMS_MAX)
+            items.erase(items[0].kind == "user" ? 1 : 0);
+    }
+
+    turn_log_text(sid, kind, text) {
+        text = ws_str(text);
+
+        if(!text)
+            return;
+
+        if(turn_logs.has(sid) && turn_logs[sid].size()) {
+            items = turn_logs[sid];
+            last = items[items.size() - 1];
+
+            if(last.kind == kind) {
+                last.text = ws_str(last.text) + text;
+
+                if(last.text.length() > WS_TURN_TEXT_MAX)
+                    last.text = "…" + last.text.substr(last.text.length() - WS_TURN_TEXT_MAX + 1000);
+
+                return;
+            }
+        }
+
+        turn_log_push(sid, [kind = kind, text = text]);
+    }
+
+    // one streamed action of the session's agent (sub = it came from a sub-agent)
+    turn_log_add(sid, action, sub = false) {
+        if(!std.is_json(action))
+            return;
+
+        // the actions of a sub-agent arrive wrapped: [agent = [id, action]]
+        if(action.has("agent") && std.is_json(action.agent)) {
+            if(std.is_json(action.agent.action))
+                turn_log_add(sid, action.agent.action, true);
+            return;
+        }
+
+        if(action.has("tool_start") && std.is_json(action.tool_start)) {
+            t = action.tool_start;
+            args = std.json();
+
+            if(std.is_json(t.args)) {
+                for(k, v : t.args) {
+                    // what the harness adds to the arguments is not a parameter
+                    if(std.string(k) != "tool_call" && std.string(k) != "tool_call_index")
+                        args[std.string(k)] = v;
+                }
+            }
+
+            turn_log_push(sid, [
+                kind = "tool",
+                id = ws_str(t.id),
+                name = ws_str(t.name, "tool"),
+                args = args,
+                state = "running",
+                result = None,
+                sub = json.bool(sub),
+            ]);
+            return;
+        }
+
+        if(action.has("tool_end") && std.is_json(action.tool_end)) {
+            t = action.tool_end;
+            id = ws_str(t.id);
+
+            if(!turn_logs.has(sid))
+                return;
+
+            items = turn_logs[sid];
+
+            for(i = items.size() - 1; i >= 0; i--) {
+                if(items[i].kind == "tool" && ws_str(items[i].id) == id) {
+                    res = t.result;
+                    failed = false;
+
+                    if(std.is_json(res) && res.has("ok") && !res.ok && res.has("error"))
+                        failed = true;
+
+                    items[i].state = failed ? "failed" : "ok";
+                    items[i].result = res;
+
+                    if(t.has("result_truncated"))
+                        items[i].result_truncated = json.bool(true);
+                    break;
+                }
+            }
+            return;
+        }
+
+        // the text and the reasoning of sub-agents would interleave: only their tools show
+        if(sub)
+            return;
+
+        if(action.has("reasoning") && !std.is_none(action.reasoning)) {
+            turn_log_text(sid, "reasoning", action.reasoning);
+            return;
+        }
+
+        if(action.has("text") && !std.is_none(action.text)) {
+            turn_log_text(sid, "text", action.text);
+            return;
+        }
+
+        if(action.has("milestone") && !std.is_none(action.milestone))
+            turn_log_push(sid, [kind = "milestone", text = ws_str(action.milestone)]);
+    }
+
     // While tokens stream, an event arrives every few milliseconds; writing the whole
     // session.json for each of them made the disk the slowest part of a turn. A
     // streamed delta is saved at most every WS_SAVE_DELTA_MS, everything else (a tool
@@ -1034,6 +1186,7 @@ class SessionManager {
         terminal_reported.erase(sid);
         deleting_sessions.erase(sid);
         saved_at.erase(sid);
+        turn_logs.erase(sid);
         guard.release();
         save_lock.release();
 
@@ -1305,6 +1458,7 @@ class SessionManager {
         if(prompt) {
             send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
             s.status = "running";
+            turn_log_reset(sid, prompt);
             push_event(s, "user", [text = prompt]);
             push_event(s, "status", [status = "running"]);
         }
@@ -1392,8 +1546,9 @@ class SessionManager {
         s.chat_history_size_at_prompt = history.size();
         s.status = "running";
         s.updated = std.millis();
-        if(interactive)
+if(interactive)
             last_interactive_ms = std.millis();
+        turn_log_reset(sid, prompt);
         push_event(s, "user", [text = prompt]);
         push_event(s, "status", [status = "running"]);
         save_session(sid);
@@ -1578,7 +1733,9 @@ class SessionManager {
 
                 s.status = "running";
                 s.updated = std.millis();
-                e = push_event(s, "delta", [action = ws_clip_event_action(action)]);
+                clipped = ws_clip_event_action(action);
+                e = push_event(s, "delta", [action = clipped]);
+                turn_log_add(sid, clipped);
                 streamed = !std.is_none(action.text) || !std.is_none(action.reasoning);
 
                 if(!std.is_none(action.text)) {
@@ -1608,7 +1765,9 @@ class SessionManager {
                 ];
 
                 s.updated = std.millis();
-                push_event(s, "file", f.copy());
+                // (the event says that a file went out, not the file: the data is megabytes)
+                push_event(s, "file", [name = f.name, bytes = f.bytes, caption = f.caption]);
+                turn_log_push(sid, [kind = "notice", text = "sent the file " + f.name + " (" + std.string(f.bytes) + " bytes)" + (f.caption ? ": " + f.caption : "")]);
                 save_session(sid);
                 file_event(f);
             }
@@ -1617,6 +1776,7 @@ class SessionManager {
 
                 s.updated = std.millis();
                 push_event(s, "notify", [message = msg]);
+                turn_log_push(sid, [kind = "notice", text = "notification: " + msg]);
                 save_session(sid);
                 notify_user(msg);
             }
@@ -2713,6 +2873,40 @@ workspaces_api_register(server, cfg, api_token, registry = None) {
         ]);
     });
 
+    // GET /api/tasks/overview: the goals and the sessions of every workspace of this
+    // node in one answer (the "All tasks" view; one call per node instead of one per
+    // workspace, which matters when the node is asked over ShizoNet).
+    server.route("GET", "^/api/tasks/overview$", [ctx, token](req, writer) {
+        if(!node_api_authorized(req, token))
+            return node_api_err("Unauthorized", 401);
+
+        out = [];
+
+        for(w : ctx.list()) {
+            if(w.id == "root")
+                continue;
+
+            goals = [];
+
+            if(w.scheduler) {
+                try {
+                    goals = w.scheduler.overview();
+                } catch(e) {
+                    std.error("[workspaces] goals overview failed: ", e);
+                }
+            }
+
+            out.push_back([
+                id = w.id,
+                name = w.name,
+                goals = goals,
+                sessions = ctx.manager.host_tasks(w.id),
+            ]);
+        }
+
+        return node_api_ok([workspaces = out]);
+    });
+
     // GET /api/live?since=<rev>&wait=<ms>&workspace=<id>: the change feed (LiveFeed).
     // Answers at once when the page is behind, otherwise when something changes.
     server.route("GET", "^/api/live$", [ctx, token](req, writer) {
@@ -3297,10 +3491,15 @@ workspaces_api_register(server, cfg, api_token, registry = None) {
             history = [];
         }
 
+        // after the file read (it suspends): the turn log and the seq of one moment
         live = ctx.manager.session_live_state(sid);
+        now_s = ctx.manager.get_session(sid);
         s.chat_history = history;
         s.live_text = live.text;
         s.live_text_seq = live.seq;
+        s.turn = ctx.manager.turn_log(sid);
+        s.turn_seq = now_s ? now_s.seq : s.seq;
+        s.status = now_s ? now_s.status : s.status;
         return node_api_ok(s);
     });
 

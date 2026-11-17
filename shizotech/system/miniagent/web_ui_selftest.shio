@@ -137,7 +137,7 @@ check(!std.is_none(ui.runtime) && !std.is_none(ui.runtime.store) && !std.is_none
 std.sleep(300);
 
 std.print("\n── the pages and their files ──");
-for(p : ["/", "/dashboard.js", "/components/nodeapi.js", "/components/icons.css", "/components/industrial.css",
+for(p : ["/", "/dashboard.js", "/dashboard.css", "/components/nodeapi.js", "/components/minimd.js", "/components/icons.css", "/components/theme.css",
 	"/architecture/index.html", "/architecture/graph.js", "/architecture/style.css"]) {
 	r = http("GET", p);
 	check("GET " + p, r.http_code == 200 && std.string(r.body).length() > 50, std.string(r.http_code));
@@ -280,6 +280,18 @@ check("a workspace without a path goes below the projects folder", r.http_code =
 r = http("GET", "/api/live?since=" + std.string(res_live.rev) + "&wait=3000");
 live2 = std.json(std.string(r.body), true).data;
 check("a new workspace moves tree_rev", std.int(live2.tree_rev) > std.int(live.tree_rev) && r.ms < 2500, std.string(live2.tree_rev) + " after " + std.string(live.tree_rev));
+
+// the tasks of all workspaces in one answer (the "All tasks" view)
+r = http("GET", "/api/tasks/overview");
+ov = std.json(std.string(r.body), true);
+ov_probe = None;
+if(ov.ok) {
+	for(w : ov.data.workspaces) {
+		if(std.string(w.id) == std.string(made.id))
+			ov_probe = w;
+	}
+}
+check("GET /api/tasks/overview lists every workspace with its goals and sessions", r.http_code == 200 && ov.ok && !std.is_none(ov_probe) && ov_probe.name == "Live Probe" && ov_probe.has("goals") && ov_probe.has("sessions"), std.string(r.body).substr(0, 300));
 alive("after the live feed");
 
 std.print("\n── the node list, the gateway settings ──");
@@ -360,7 +372,13 @@ check("the other node is found on ShizoNet", found, std.string(host.peers.list()
 
 r = http("GET", "/api/nodes");
 nodes = std.json(std.string(r.body), true).data.nodes;
-check("the node list shows both", nodes.size() == 2 && nodes[1].name == "RemoteBox" && nodes[1].kind == "node" && nodes[1].model == "big" && nodes[1].workspaces == 1, std.string(r.body));
+// (another node of some other test on this machine may be in the list as well)
+remote_rec = None;
+for(n : nodes) {
+	if(n.name == "RemoteBox")
+		remote_rec = n;
+}
+check("the node list has this node first and the other node", nodes.size() >= 2 && nodes[0].id == "local" && !std.is_none(remote_rec) && remote_rec.kind == "node" && remote_rec.model == "big" && remote_rec.workspaces == 1, std.string(r.body));
 
 r = http("GET", "/api/nodes/" + found + "/api/workspaces?since=7&token=secret");
 j = std.json(std.string(r.body), true);

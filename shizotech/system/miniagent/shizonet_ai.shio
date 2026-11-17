@@ -13,9 +13,11 @@
 //  online / goals travel as 1/0 (shizoscript has no bool type), so the receiver
 //  tests them for truthiness and never compares them to a JSON literal true.
 //
-//  on_get handlers run on the ShizoNet script thread: they only touch the
-//  request table and return. They never block and never call device.get().
-//  All blocking work (host.request) runs on the service worker thread.
+//  on_get handlers never call device.get(). The request handlers only touch the
+//  request table and return; all blocking work (host.request) runs on the service
+//  worker thread. The one handler that may wait is ai_api (a long-poll route of
+//  the API): every GET is answered by a task of its own, so it holds back only
+//  its own answer.
 //  ai_request_update is recorded in the update queue and applied by the
 //  refresh thread (the worker thread is blocked inside host.request while the
 //  request it runs is the one a follow-up has to reach).
@@ -34,7 +36,7 @@ AI_CMD_INFO = "ai_info";
 AI_CMD_REQUEST = "ai_request";
 AI_CMD_REQUEST_POLL = "ai_request_poll";
 AI_CMD_REQUEST_STOP = "ai_request_stop";
-AI_CMD_REQUEST_UPDATE = "ai_request_update";	// follow-up into a delegated receptionist turn
+AI_CMD_REQUEST_UPDATE = "ai_request_update";	// follow-up into a running request turn
 AI_CMD_OVERVIEW = "ai_overview";
 AI_CMD_TASKS = "ai_tasks";
 AI_CMD_TASK = "ai_task";

@@ -815,6 +815,66 @@ check("capacity back: the run starts", host4.tasks.size() == before + 1, "");
 space.move("cap", "archived");
 finish_open(host4, sch4);
 
+// a manual run is itself the interactive use: it does not wait for the owner to be idle
+// (2026-11-17: "Create & run" of the web UI sat for yield_after_interactive, 10 minutes)
+CAPM = R"(---
+id: cap-manual
+title: Manual under the capacity rules
+schedule:
+  type: manual
+---
+
+Manual capacity test.
+)";
+write_goal_file("active", "cap-manual", CAPM);
+sch4.tick();
+host4.idle = 60;
+before = host4.tasks.size();
+rn_cap = sch4.run_now("cap-manual");
+sch4.tick();
+check("a manual run does not yield to interactive use", rn_cap.ok && host4.tasks.size() == before + 1, "tasks " + host4.tasks.size() + " before " + before);
+host4.busy = 2;
+rn_cap = sch4.run_now("cap-manual");
+finish_open(host4, sch4);
+before = host4.tasks.size();
+sch4.tick();
+check("a manual run still waits for a free worker", host4.tasks.size() == before, "tasks " + host4.tasks.size() + " before " + before);
+host4.busy = 0;
+host4.idle = 100000;
+sch4.tick();
+check("the waiting manual run starts when a worker is free", host4.tasks.size() == before + 1, "tasks " + host4.tasks.size() + " before " + before);
+space.move("cap-manual", "archived");
+finish_open(host4, sch4);
+
+// "Run now" in the process of the scheduler does not wait for the next tick (15 s by default):
+// request_run wakes the loop (2026-11-17, the web interface's "Create & run" looked dead for seconds)
+CAPW = R"(---
+id: cap-wake
+title: Woken by its request
+schedule:
+  type: manual
+---
+
+Wake test.
+)";
+write_goal_file("active", "cap-wake", CAPW);
+sch4.tick();
+old_tick = sch4.tick_ms;
+sch4.tick_ms = 600000;
+before = host4.tasks.size();
+sch4.start();
+std.sleep(700);			// the loop's own first tick is over, it sleeps now
+rq = sch4.request_run("cap-wake");
+t_wake = std.millis_steady();
+for(host4.tasks.size() == before && std.millis_steady() - t_wake < 5000)
+	std.sleep(50);
+check("request_run wakes the scheduler loop (no wait for the tick)", rq.ok && host4.tasks.size() == before + 1, "after " + (std.millis_steady() - t_wake) + " ms, tasks " + host4.tasks.size());
+sch4.running = false;
+std.sleep(400);
+sch4.tick_ms = old_tick;
+space.move("cap-wake", "archived");
+finish_open(host4, sch4);
+
 ONCE = R"(---
 id: once-goal
 title: Once

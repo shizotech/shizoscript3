@@ -185,7 +185,8 @@ thread, and `update()` is a synchronous alias for one `tick()`.
    those the scheduler still looks back at (8 days; two intervals for a sub-day `every`).
 5. **Dispatch** runs within the limits: `max_background_tasks` (node), free workspace task
 capacity minus `reserve_interactive_workers`, no new run within `yield_after_interactive` of
-    the owner's last request (`Workspace.background_capacity()`), per goal
+    the owner's last request (`Workspace.background_capacity()`; a manual run, `goals run` /
+    "Run now", is such a request itself and does not wait for it), per goal
     `max_parallel_workers` (over all its windows: a manual run or a catch-up waits for the run
     that is working). `Workspace.background_capacity()` reports the idle seconds since the
     last interactive session prompt; a goal dispatch itself is created with `interactive=false`

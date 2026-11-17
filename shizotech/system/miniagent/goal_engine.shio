@@ -1425,6 +1425,7 @@ class GoalScheduler {
 	defs = [];				// id -> applied (valid) definition
 	running = false;
 	tick_ms = GOAL_TICK_MS;
+	wake_now = false;			// a run was requested in this process: do not sleep out the tick
 	thread = None;
 	notify_enabled = true;
 	last_scan = 0;
@@ -1532,6 +1533,9 @@ class GoalScheduler {
 
 	loop() {
 		for(running) {
+			// cleared BEFORE the tick: a request that arrives while it runs is not lost
+			wake_now = false;
+
 			try {
 				tick();
 			}
@@ -1540,7 +1544,7 @@ class GoalScheduler {
 			}
 
 			slept = 0;
-			for(running && slept < tick_ms) {
+			for(running && !wake_now && slept < tick_ms) {
 				std.sleep(250);
 				slept += 250;
 			}
@@ -2297,7 +2301,9 @@ class GoalScheduler {
 	}
 
 	// does the node have room for background work right now?
-	capacity_ok(def) {
+	// `a` is the activation that wants to start: a manual one ("run now", a task a
+	// person just made) IS the interactive use, so it does not yield to it
+	capacity_ok(def, a = None) {
 		max_bg = std.int(gj(prefs, "max_background_tasks", 1));
 		if(max_bg > 0 && background_running() >= max_bg && def.priority != "urgent")
 			return [ok = false, why = "max_background_tasks reached"];
@@ -2320,9 +2326,10 @@ class GoalScheduler {
 		if(busy >= workers - reserve)
 			return [ok = false, why = "no free worker (" + busy + "/" + workers + " busy, " + reserve + " reserved for interactive work)"];
 
+		manual = gj_is_map(a) && gj_str(a, "kind", "") == "manual";
 		yield_secs = gt_parse_duration(gj(prefs, "yield_after_interactive", "0")) ?? 0;
 		idle = gj(cap, "interactive_idle_secs", 1000000000);
-		if(yield_secs > 0 && idle < yield_secs)
+		if(!manual && yield_secs > 0 && idle < yield_secs)
 			return [ok = false, why = "yielding to interactive use"];
 
 		return [ok = true, why = ""];
@@ -2373,7 +2380,7 @@ class GoalScheduler {
 			if(kind == "work" && goal_open_runs(a.goal) >= a.policy.max_parallel_workers)
 				continue;
 
-			cap = capacity_ok(def);
+			cap = capacity_ok(def, a);
 			if(!cap.ok) {
 				if(gj_str(a, "waiting_for", "") != cap.why) {
 					a.waiting_for = cap.why;
@@ -2566,6 +2573,12 @@ class GoalScheduler {
 		goal_mkdir(dir);
 		path = dir + "/" + std.string(gt_now()) + "-" + std.random_hash(4) + ".json";
 		ok = goal_write_atomic(path, [action = "run", goal = id, dry_run = dry_run ? 1 : 0, at = gt_now()].string());
+
+		// the scheduler of THIS process starts it now ("Run now" of the web interface, a tool
+		// of an agent); a request of another process (shz miniagent.goals run) waits for the tick
+		if(ok)
+			wake_now = true;
+
 		return ok ? [ok = true, queued = true] : [ok = false, error = "could not write " + path];
 	}
 
