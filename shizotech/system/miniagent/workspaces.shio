@@ -659,8 +659,6 @@ class SessionManager {
     last_interactive_ms = 0;
     saved_at = [];          // session id -> std.millis_steady() of the last session.json write
     turn_logs = [];         // session id -> the running turn as items (see turn_log_add)
-    last_interactive_ms = 0;    // when a person last asked for something (web, gateway): the goal
-                                // scheduler yields to interactive use for a while after it
 
     __init__(_store, _cfg_spec, _token = "") {
         store = _store;
@@ -685,7 +683,6 @@ class SessionManager {
         last_interactive_ms = 0;
         saved_at = [];
         turn_logs = [];
-        last_interactive_ms = 0;
         load_sessions();
     }
 
@@ -1370,7 +1367,7 @@ class SessionManager {
     // gateway over ShizoNet, "goal" a scheduled goal, "" unknown). It travels with the
     // task-finished event, so a chat gateway can stay quiet about turns the owner is
     // watching in the web interface.
-    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive", reasoning_effort = "medium", origin = "", interactive = true) {
+    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive", reasoning_effort = "medium", origin = "") {
         path = workspace_path(workspace_id);
 
         if(!path)
@@ -1465,9 +1462,6 @@ class SessionManager {
 
         s.updated = std.millis();
         save_session(sid);
-
-        if(interactive)
-            last_interactive_ms = std.millis();
 
         pump_active[sid] = true;
 
@@ -2060,8 +2054,10 @@ if(interactive)
     // yield_after_interactive = 10m no scheduled goal ever started, only urgent ones.)
     capacity() {
         idle = 1000000000;
-if(last_interactive_ms)
+
+        if(last_interactive_ms)
             idle = math.max(0, std.int((std.millis() - last_interactive_ms) / 1000));
+
         return [
             workers = max_sessions(),
             busy = active_count(),
@@ -2158,7 +2154,7 @@ class Workspace {
         if(!role)
             role = "adaptive";
 
-res = manager.create_session(id, ws_str(name), "normal", ws_str(goal), role, "medium", ws_str(origin), false);
+res = manager.create_session(id, ws_str(name), "normal", ws_str(goal), role, "medium", ws_str(origin));
 
         if(res.ok && std.is_json(res.session))
             return ws_str(res.session.id);

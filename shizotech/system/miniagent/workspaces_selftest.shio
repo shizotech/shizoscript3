@@ -323,7 +323,7 @@ if(!cfg.load(config_path, false)) {
     check(manager.capacity().interactive_idle_secs >= 600, "workspace capacity is idle before any interactive request");
     recovered = manager.get_session(recovery_id);
     check(recovered.status == "done" && recovered.report == "Completed before restart." && recovered.error == "", "restart recovers a durable worker completion instead of reporting an interruption");
-    mres = manager.create_session(proto.workspace.id, "manager-test", "normal", "", "adaptive", "high");
+    mres = manager.create_session(proto.workspace.id, "manager-test", "normal", "", "adaptive", "high", "web");
     check(manager.capacity().interactive_idle_secs < 600, "workspace capacity yields after a recent owner request");
 
     check(mres.ok, "session manager create");
