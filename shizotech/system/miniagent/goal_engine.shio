@@ -1574,6 +1574,17 @@ class GoalScheduler {
 		notify(msg);
 	}
 
+	// is `taskid` an open run of one of this scheduler's goals? (call with GOAL_LOCK held)
+	owns_open_run(taskid) {
+		for(akey, a : ledger.data.activations) {
+			for(r : a.runs) {
+				if(goal_run_open(r) && gj_str(r, "taskid", "") == taskid)
+					return true;
+			}
+		}
+		return false;
+	}
+
 	on_host_task_finished(task) {
 		cs = std.critical_section_named(GOAL_LOCK);
 		tid = gj_str(task, "taskid", "");
@@ -1588,6 +1599,14 @@ class GoalScheduler {
 				error = gj_str(task, "error", ""),
 				last_update_ms = std.int(gj(task, "last_update_ms", 0)),
 			];
+
+			// a run of ours ended: settle it now, not at the next tick (the goal showed
+			// as running for up to a tick after its session had finished)
+			try {
+				if(owns_open_run(tid))
+					wake_now = true;
+			}
+			catch(e) {}
 		}
 		cs.release();
 	}

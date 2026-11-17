@@ -869,6 +869,16 @@ t_wake = std.millis_steady();
 for(host4.tasks.size() == before && std.millis_steady() - t_wake < 5000)
 	std.sleep(50);
 check("request_run wakes the scheduler loop (no wait for the tick)", rq.ok && host4.tasks.size() == before + 1, "after " + (std.millis_steady() - t_wake) + " ms, tasks " + host4.tasks.size());
+
+// ... and the end of that run is settled at once too (the goal showed as running for up to a
+// tick after its session had finished)
+std.sleep(600);			// the tick that started the run is over, the loop sleeps again
+wake_open = sch4.goal_open_runs("cap-wake");
+host4.finish(host4.tasks[host4.tasks.size() - 1].taskid, "finished", "done");
+t_wake = std.millis_steady();
+for(sch4.goal_open_runs("cap-wake") > 0 && std.millis_steady() - t_wake < 5000)
+	std.sleep(50);
+check("a finished run wakes the loop: it is settled without waiting for the tick", wake_open == 1 && sch4.goal_open_runs("cap-wake") == 0, "open before " + wake_open + ", after " + sch4.goal_open_runs("cap-wake") + " (" + (std.millis_steady() - t_wake) + " ms)");
 sch4.running = false;
 std.sleep(400);
 sch4.tick_ms = old_tick;

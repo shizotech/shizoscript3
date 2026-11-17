@@ -568,8 +568,8 @@ shz goals_selftest.shio         time zones / DST, front matter, validation, the 
                                  pause, dry run, verification, capacity, a manual run does
                                  not yield to interactive use, a refused dispatch is
                                  notified, day and minute interval schedules, agent goal
-                                 tools, stall watchdog, a run request wakes the loop), fake
-                                 host + fake clock -> 235 checks
+                                 tools, stall watchdog, a run request and a finished run
+                                 wake the loop), fake host + fake clock -> 236 checks
 shz architecture_selftest.shio   the architecture board: model file, merge of a re-sync,
                                  pending edits, analyze / plan / apply jobs on a fake
                                  host, restart, the job role (adaptive), the split of a big

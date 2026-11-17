@@ -155,7 +155,10 @@ scheduling a few weeks ahead needs.
 `GoalScheduler(space_or_path, host = None, opts = None)` is bound to one
 workspace's `.agentspace`; `opts` may contain `workspace_id`, `tick_ms` and `notify`.
 It exposes `root` and `workspace_id`. `start()` runs `tick()` every 15 s on its own
-thread, and `update()` is a synchronous alias for one `tick()`.
+thread, and `update()` is a synchronous alias for one `tick()`. Two things do not wait for
+the tick: a run requested in the scheduler's own process (`request_run`: "Run now" of the web
+interface, a tool of an agent) and the end of one of its runs (the finished listener) wake
+the loop, so a manual task starts and is settled within a moment, not within 15 s.
 
 1. **Rescan** the tree (definitions, status folders, preferences).
 2. **Settle runs**: terminal task events (`Workspace.add_task_finished_listener`) are
