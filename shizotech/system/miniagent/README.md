@@ -226,6 +226,37 @@ shz miniagent.goals list | show <id> | validate | run <id> [--dry-run] | pause <
 * Telegram: `/goals`, `/goal pause <id>`; every start, missed window, result, question and
   refused dispatch of a goal arrives as a node notification.
 
+## Default tools and blind tests
+
+The tools every role gets are in `roles/SHARED.shio` (files, commands, finalize); the bridge
+around every tool call is `miniagent.add_tool()`.
+
+* **A failure says what failed and what to do.** A tool answers a value or
+  `[ok = false, error, hint]`. An exception inside a tool reaches the model (and the session
+  view) with its text and the name of the tool, plus the `&` parameters the call left out;
+  before, every exception became "The tool call caused an unexpected exception.".
+* **Results are bounded and say so.** `read_file`: 2000 lines / 80 KB per call with
+  `total_lines` and `next_start_line`; `list_dir`: 400 files and 400 directories (200 each
+  recursive) with the totals; command output: head and tail of 40 KB with the dropped byte
+  count. Whatever still comes out above 200 KB is cut by the bridge: a structured result keeps
+  every entry and loses the middle of its long texts, a plain text keeps head and tail.
+* **Paths** are relative to the working directory; `..` out of it, absolute paths, `~` and a
+  link that leads out are refused with the reason (and the relative form when there is one).
+* `write_file` does not overwrite a file that has content, `replace_string` says how often the
+  text occurs and where when it is not unique, `remove` asks once (the first call is a
+  confirmation step, not an error). Yes / no parameters accept `"true"`, `true`, `1`, `"yes"`.
+* **Blind tests** (`write_blind_tests(spec, api, test_path, framework?, reference_paths?,
+  run_command?, run_timeout?, constraints?)`, role `util/blind_tester`): the tests of
+  non-trivial work are written by a sub-agent that gets the specification and the signatures
+  and nothing else. Its file tools work on a restricted view (`fs_path_guard`): it reads and
+  writes `test_path`, reads `reference_paths`, every other path is refused; it has no command
+  or skill tools. The parent runs the tests and sends findings with
+  `continue_task(task_id, ...)` (the feedback goes out with the task again). With
+  `run_command` the test writer may run that one command itself; tests that run are code with
+  the access of the workspace, so that mode is not blind by construction: the harness stops
+  the test writer from reading files a run left in the test path and names them to the parent
+  (`files_changed_by_test_runs`), nothing more. Leave it out unless you need it.
+
 ## Parallel agents
 
 `max_running_agents` (model config) counts agents that **generate** at the same time. Agents
@@ -551,12 +582,13 @@ shz tests/shared_tools_test.shio  the default tools of every role (roles/SHARED.
                                  and limits of read_file / list_dir, the diagnostics of
                                  write / append / replace, the JSON results of the file
                                  operations, finalize validation, the tool bridge (an
-                                 exception, a missing parameter, an oversized result)
-                                 -> 147 checks
+                                 exception, a missing parameter, an oversized result that
+                                 keeps its entries) -> 154 checks
 shz tests/blind_tests_test.shio  write_blind_tests: the sub-agent gets the spec and the
                                  signatures only, every path into the implementation is
-                                 refused, argument errors, the result for the parent
-                                 -> 114 checks
+                                 refused, a file a test run left is unreadable and named to
+                                 the parent, argument errors, the result for the parent
+                                 -> 125 checks
 shz tests/command_tools_test.shio  command_start with multi-line sh / python scripts:
                                  state across lines, quotes, here documents, exit codes,
                                  a running script as a session, long output keeps its

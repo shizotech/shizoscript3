@@ -325,7 +325,7 @@ function applyLive(id, snap) {
   if (num(snap.tree_rev) !== d.treeRev) {
     const first = d.treeRev < 0;
     d.treeRev = num(snap.tree_rev);
-    if (!first || !d.loaded) loadNode(id);
+    if (!first || (!d.loaded && !d.loading)) loadNode(id);
   }
 
   if (id === 'local' && snap.peers_rev != null && num(snap.peers_rev) !== state.peersRev) loadNodes();

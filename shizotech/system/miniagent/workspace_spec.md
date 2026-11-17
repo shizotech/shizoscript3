@@ -140,7 +140,8 @@ looks at the state every 250 ms and counts `rev` up when it differs:
   `goals_rev` the goals and the dispatched runs of the workspace named by `workspace`
   (reload its tasks), `notifications` their number (reload them when it differs),
   `peers_rev` the node list (`GET /api/nodes`; only a node on ShizoNet has it).
-- Token usage moves `rev` at most once a second per session.
+- A session row has no `updated` on purpose: it moves with every streamed token and would
+  wake every page all the time. Token usage moves with each model call.
 
 The same route works for another node through `/api/nodes/<id>/api/live`.
 
