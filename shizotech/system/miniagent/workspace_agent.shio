@@ -423,6 +423,8 @@ try {
 task_space = GoalSpace(workspace + "/.agentspace");
 if(!task_space.exists())
     task_space.init(__DIR__ + "/agentspace_template");
+// (only the handle of the goal tools: it never ticks, and with notify off it cannot
+// print a "[goals] ..." line into the JSON-lines protocol on stdout)
 task_scheduler = GoalScheduler(task_space, None, [notify = false]);
 task_scheduler.rescan();
 mind = WorkspaceAgentMind(task_scheduler);

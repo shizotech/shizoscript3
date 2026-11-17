@@ -67,11 +67,44 @@ goal_tool_context(sch) {
 	];
 }
 
+// The goals with their runtime state. A scheduler that ticks has them in memory.
+// One that never ticks (the tool scheduler of a workspace worker process,
+// workspace_agent.shio) has no definitions at all: there the list comes from the
+// goal files, and the runtime state from the ledger the node's scheduler writes
+// (read only; this process never writes it).
+goal_tool_overview(sch) {
+	if(sch.last_scan || sch.running)
+		return sch.overview();
+
+	try {
+		disk = std.json(goal_read(sch.ledger.path));
+		if(gj_is_map(disk) && disk.has("goals") && disk.has("activations")) {
+			if(!disk.has("events"))
+				disk.events = [];
+			if(!disk.has("seq"))
+				disk.seq = 0;
+			sch.ledger.data = disk;
+		}
+	}
+	catch(e) {}
+
+	out = [];
+	prefs = sch.space.preferences();
+	for(f : sch.space.folders()) {
+		r = sch.space.load(f, prefs);
+		if(r.ok)
+			out.push_back(sch.goal_summary(f.id, r.def));
+		else
+			out.push_back([id = f.id, title = "(invalid)", status = f.status, errors = r.errors, invalid_edit = true]);
+	}
+	return out;
+}
+
 goal_tool_list(sch) {
 	ctx = goal_tool_context(sch);
 	goals = [];
 	try {
-		goals = sch.overview();
+		goals = goal_tool_overview(sch);
 	}
 	catch(e) {}
 	ctx.goals = goals;
@@ -204,8 +237,16 @@ goal_tool_create(sch, args) {
 		out.note = "The goal allows high impact actions, so it stays in goals/proposed/ until the owner activates it (set_goal_status active after an explicit yes).";
 	else if(status == "proposed")
 		out.note = "Saved as PROPOSED: nothing runs until it is activated. Show the user the schedule and ask for a yes.";
+	else if(res.def.schedule.type == "manual")
+		out.note = "Active, manual: it has no schedule and runs only when it is started (run_goal_now).";
 	else
 		out.note = "Active: the scheduler starts it in its next window. Tell the user the window and the time zone so they can correct it.";
+
+	// a once goal with a date in the past, an end_date that is over: no "next window"
+	if(res.def.schedule.type != "manual" && !out.next_windows.size()) {
+		no_window = "The schedule has no window ahead (is the date in the past?): nothing will run until it is corrected with update_goal.";
+		out.note = status == "active" ? no_window : no_window + " " + out.note;
+	}
 	return out;
 }
 
@@ -268,6 +309,17 @@ goal_tool_update(sch, args) {
 	}
 	if(goal_arg(args, "duration") && sch_new.has("end") && !goal_arg(args, "end"))
 		sch_new.remove("end");
+	if(goal_arg(args, "end") && sch_new.has("duration") && !goal_arg(args, "duration"))
+		sch_new.remove("duration");
+	// a sub-day interval is continuous: it replaces the stored window and times
+	// (they cannot be cleared through this tool, and both together are refused)
+	every_secs = gt_parse_duration(goal_arg(args, "every"));
+	if(!std.is_none(every_secs) && every_secs < GT_DAY) {
+		for(k : ["window", "start", "end", "duration"]) {
+			if(!goal_arg(args, k) && sch_new.has(k))
+				sch_new.remove(k);
+		}
+	}
 	// days and every are alternatives: the one given in this call wins
 	if(goal_arg(args, "every") && sch_new.has("days"))
 		sch_new.remove("days");

@@ -656,6 +656,8 @@ class SessionManager {
     // background_capacity(); a goal dispatch itself must not count as interactive.
     last_interactive_ms = 0;
     saved_at = [];          // session id -> std.millis_steady() of the last session.json write
+    last_interactive_ms = 0;    // when a person last asked for something (web, gateway): the goal
+                                // scheduler yields to interactive use for a while after it
 
     __init__(_store, _cfg_spec, _token = "") {
         store = _store;
@@ -679,6 +681,7 @@ class SessionManager {
         // background_capacity(); a goal dispatch itself must not count as interactive.
         last_interactive_ms = 0;
         saved_at = [];
+        last_interactive_ms = 0;
         load_sessions();
     }
 
@@ -1248,6 +1251,11 @@ class SessionManager {
             }
         }
 
+        // a session a person asked for (the web interface, a gateway) is interactive use
+        origin = ws_str(origin);
+        if(origin == "web" || origin == "net")
+            last_interactive_ms = std.millis();
+
         cs = std.critical_section_named("workspace_sessions");
 
         if(active_count() >= max_sessions()) {
@@ -1316,11 +1324,16 @@ class SessionManager {
         return [ok = true, session = session_view(sid)];
     }
 
+// interactive = false: the prompt comes from the node itself (a goal run that is
+    // told to wrap up, an architecture job), not from a person
     send_prompt(sid, prompt, reasoning_effort = None, interactive = true) {
         s = sessions[sid];
 
         if(!s)
             return [ok = false, error = "unknown session"];
+
+        if(interactive)
+            last_interactive_ms = std.millis();
 
         if(deleting_sessions[sid])
             return [ok = false, error = "session deletion is in progress"];
@@ -1880,13 +1893,15 @@ class SessionManager {
         }
     }
 
+    // What the goal scheduler asks before it starts background work.
+    // interactive_idle_secs: seconds since a person last asked for something, a huge
+    // number when nobody has since the node started. (It was a constant 0, which the
+    // scheduler read as "someone is typing right now": with the template's
+    // yield_after_interactive = 10m no scheduled goal ever started, only urgent ones.)
     capacity() {
         idle = 1000000000;
-        if(last_interactive_ms > 0) {
-            idle = (std.millis() - last_interactive_ms) / 1000;
-            if(idle < 0)
-                idle = 0;
-        }
+if(last_interactive_ms)
+            idle = math.max(0, std.int((std.millis() - last_interactive_ms) / 1000));
         return [
             workers = max_sessions(),
             busy = active_count(),
@@ -1991,6 +2006,8 @@ res = manager.create_session(id, ws_str(name), "normal", ws_str(goal), role, "me
         return "";
     }
 
+    // (the workspace's own callers: its goal scheduler and architecture board;
+    // a person's follow-up goes through SessionManager.send_prompt directly)
     update_task(taskid, message) {
         res = manager.send_prompt(ws_str(taskid), ws_str(message), None, false);
         return res.ok ? true : false;

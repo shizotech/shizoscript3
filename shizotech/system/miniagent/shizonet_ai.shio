@@ -127,6 +127,36 @@ ai_field(data, key, def = "") {
 	return ai_str(data.geti(key), def);
 }
 
+// A value as it can travel over ShizoNet. A JSON boolean (json.bool, what the HTTP
+// API answers with) is an object the receiver cannot read: the whole payload is
+// dropped there ("invalid json payload"). Every reply and event of this service
+// goes through here, so `active: true` of a task record arrives as 1.
+// (Found with a real node behind a gateway: every ai_task poll of a worker session
+// was lost, a finished task was only seen through its task_finished push.)
+ai_wire(value) {
+	if(std.type(value) == "json.bool")
+		return value ? 1 : 0;
+
+	if(!std.is_json(value))
+		return value;
+
+	if(std.is_list(value)) {
+		out = [];
+
+		for(item : value)
+			out.push_back(ai_wire(item));
+
+		return out;
+	}
+
+	out = std.json();
+
+	for(k, item : value)
+		out[std.string(k)] = ai_wire(item);
+
+	return out;
+}
+
 ai_trim(list, max_keep) {
 	for(list.size() > max_keep)
 		list.erase(0);
@@ -539,21 +569,21 @@ class AiService {
 
 	register_node() {
 		server.set_prop(AI_PROP_NODE, AI_NET_VERSION);
-		server.set_prop(AI_PROP_NODE_INFO, info());
+		server.set_prop(AI_PROP_NODE_INFO, ai_wire(info()));
 
-		server.on_get(AI_CMD_INFO, [this](dev, data) { return handle_info(dev, data); });
-		server.on_get(AI_CMD_REQUEST, [this](dev, data) { return handle_request(dev, data); });
-		server.on_get(AI_CMD_REQUEST_POLL, [this](dev, data) { return handle_poll(dev, data); });
-		server.on_get(AI_CMD_REQUEST_STOP, [this](dev, data) { return handle_request_stop(dev, data); });
-		server.on_get(AI_CMD_REQUEST_UPDATE, [this](dev, data) { return handle_request_update(dev, data); });
-		server.on_get(AI_CMD_OVERVIEW, [this](dev, data) { return handle_overview(dev, data); });
-		server.on_get(AI_CMD_TASKS, [this](dev, data) { return handle_tasks(dev, data); });
-		server.on_get(AI_CMD_TASK, [this](dev, data) { return handle_task(dev, data); });
-		server.on_get(AI_CMD_TASK_ADD, [this](dev, data) { return handle_task_add(dev, data); });
-		server.on_get(AI_CMD_TASK_UPDATE, [this](dev, data) { return handle_task_update(dev, data); });
-		server.on_get(AI_CMD_TASK_STOP, [this](dev, data) { return handle_task_stop(dev, data); });
-		server.on_get(AI_CMD_GOALS, [this](dev, data) { return handle_goals(dev, data); });
-		server.on_get(AI_CMD_API, [this](dev, data) { return handle_api(dev, data); });
+		server.on_get(AI_CMD_INFO, [this](dev, data) { return ai_wire(handle_info(dev, data)); });
+		server.on_get(AI_CMD_REQUEST, [this](dev, data) { return ai_wire(handle_request(dev, data)); });
+		server.on_get(AI_CMD_REQUEST_POLL, [this](dev, data) { return ai_wire(handle_poll(dev, data)); });
+		server.on_get(AI_CMD_REQUEST_STOP, [this](dev, data) { return ai_wire(handle_request_stop(dev, data)); });
+		server.on_get(AI_CMD_REQUEST_UPDATE, [this](dev, data) { return ai_wire(handle_request_update(dev, data)); });
+		server.on_get(AI_CMD_OVERVIEW, [this](dev, data) { return ai_wire(handle_overview(dev, data)); });
+		server.on_get(AI_CMD_TASKS, [this](dev, data) { return ai_wire(handle_tasks(dev, data)); });
+		server.on_get(AI_CMD_TASK, [this](dev, data) { return ai_wire(handle_task(dev, data)); });
+		server.on_get(AI_CMD_TASK_ADD, [this](dev, data) { return ai_wire(handle_task_add(dev, data)); });
+		server.on_get(AI_CMD_TASK_UPDATE, [this](dev, data) { return ai_wire(handle_task_update(dev, data)); });
+		server.on_get(AI_CMD_TASK_STOP, [this](dev, data) { return ai_wire(handle_task_stop(dev, data)); });
+		server.on_get(AI_CMD_GOALS, [this](dev, data) { return ai_wire(handle_goals(dev, data)); });
+		server.on_get(AI_CMD_API, [this](dev, data) { return ai_wire(handle_api(dev, data)); });
 
 		server.on_connect([this](dev) { node_connected(dev); });
 
@@ -705,7 +735,7 @@ class AiService {
 		accepted = 0;
 
 		try {
-			accepted = server.broadcast(AI_CMD_EVENT, payload);
+			accepted = server.broadcast(AI_CMD_EVENT, ai_wire(payload));
 		}
 		catch(err) {
 			accepted = 0;
@@ -721,7 +751,7 @@ class AiService {
 	update_props() {
 		try {
 			if(kind == "node")
-				server.set_prop(AI_PROP_NODE_INFO, info());
+				server.set_prop(AI_PROP_NODE_INFO, ai_wire(info()));
 			else
 				server.set_prop(AI_PROP_ROUTER_INFO, ai_router_info(server, router, opts));
 		}
