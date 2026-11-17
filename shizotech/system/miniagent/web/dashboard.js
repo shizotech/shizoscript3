@@ -1006,11 +1006,15 @@ function renderSessionHistory(events, chatHistory, liveText) {
       if (savedAssistant && live.startsWith(savedAssistant)) {
         state.currentAgentText = live;
         if (state.currentAgentBubble) state.currentAgentBubble.innerHTML = mdRender(live);
+        if (active && state.currentAgentBubble) {
+          const wrap = state.currentAgentBubble.closest('.msg.agent');
+          if (wrap) wrap.classList.add('streaming');
+        }
       } else if (savedAssistant && savedAssistant.startsWith(live)) {
         // The saved snapshot is already at least as complete as the live text.
       } else if (savedAssistant !== live) {
         resetAgentBubble();
-        addAgentText(live);
+        addAgentText(live, true);
       }
     }
   } else {
@@ -1031,6 +1035,7 @@ function renderSessionHistory(events, chatHistory, liveText) {
 
   if (!historySize && !prompt && !live && !list.length) setChatEmpty();
   state.renderingHistory = false;
+  if (terminal) finishAgentStream();
   scrollChat();
 }
 
@@ -1058,7 +1063,7 @@ function renderCurrentTurnEvents(list, skipText = false) {
       else if (action.tool_start) addToolStart(action.tool_start);
       else if (action.tool_end) addToolEnd(action.tool_end);
       else if (action.milestone != null) addMilestone(String(action.milestone));
-      else if (action.text != null && !skipText) addAgentText(String(action.text));
+      else if (action.text != null && !skipText) addAgentText(String(action.text), true);
     } else if (ev.type === 'done' && ev.report) {
       addReport(ev.report);
       reportRendered = true;
@@ -1095,7 +1100,14 @@ function scrollChat() {
   el.scrollTop = el.scrollHeight;
 }
 
+function finishAgentStream() {
+  if (!state.currentAgentBubble) return;
+  const wrap = state.currentAgentBubble.closest('.msg.agent');
+  if (wrap) wrap.classList.remove('streaming');
+}
+
 function resetAgentBubble() {
+  finishAgentStream();
   state.currentAgentBubble = null;
   state.currentAgentText = '';
 }
@@ -1142,16 +1154,19 @@ function addUser(text, local = false) {
   }
 }
 
-function addAgentText(text) {
+function addAgentText(text, streaming = false) {
   if (!text) return;
   resetReasoningBubble();
   if (!state.currentAgentBubble) {
     const wrap = document.createElement('div');
-    wrap.className = 'msg agent';
+    wrap.className = 'msg agent' + (streaming ? ' streaming' : '');
     wrap.innerHTML = '<div class="msg-label"><span>Agent</span></div><div class="msg-body"></div>';
     $('chatMessages').appendChild(wrap);
     state.currentAgentBubble = wrap.querySelector('.msg-body');
     state.currentAgentText = '';
+  } else if (streaming) {
+    const wrap = state.currentAgentBubble.closest('.msg.agent');
+    if (wrap) wrap.classList.add('streaming');
   }
   state.currentAgentText += String(text);
   state.currentAgentBubble.innerHTML = mdRender(state.currentAgentText);
@@ -1286,6 +1301,9 @@ function setSessionStatus(status) {
   if (s) s.status = mapped;
   if (!state.stats.session_status) state.stats.session_status = {};
   state.stats.session_status[state.session.id] = mapped;
+  if (!state.renderingHistory && !['starting', 'running', 'waiting'].includes(mapped)) {
+    finishAgentStream();
+  }
   renderSessionHeader();
   renderWorkspaceTree();
   updateConsoleLamps();
@@ -1434,7 +1452,7 @@ function handleStreamEvent(name, raw) {
   if (name === 'delta') {
     const action = (data && (data.action || data.delta)) || data;
     if (!action || typeof action !== 'object') return;
-    if (action.text != null) addAgentText(String(action.text));
+    if (action.text != null) addAgentText(String(action.text), true);
     else if (action.reasoning != null) addReasoning(String(action.reasoning));
     else if (action.tool_start) addToolStart(action.tool_start);
     else if (action.tool_end) addToolEnd(action.tool_end);
@@ -1496,7 +1514,7 @@ function handleStreamEvent(name, raw) {
   }
 
   if (name === 'message') {
-    if (data && data.text != null) addAgentText(String(data.text));
+    if (data && data.text != null) addAgentText(String(data.text), true);
     else if (data && data.action) handleStreamEvent('delta', data);
     return;
   }

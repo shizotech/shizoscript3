@@ -210,10 +210,10 @@ for(1) {
 	if(cmd.empty())
 		continue;
 	
+	planner_prompt = cmd;
+	
 	std.cout("\n");
 	
 	stdfcol("magenta");
 	std.cout("(miniagent) ");
-	
-	planner_prompt = cmd;
 }

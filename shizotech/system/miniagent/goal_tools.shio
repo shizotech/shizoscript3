@@ -192,10 +192,12 @@ goal_tool_create(sch, args) {
 
 	res = sch.space.write_goal(id, data, body, status);
 
-	if(!res.ok)
-		return [ok = false, errors = res.errors, error = "the goal is invalid, nothing was written: " + gfm_join(res.errors, "; ")];
+    if(!res.ok)
+        return [ok = false, errors = res.errors, error = "the goal is invalid, nothing was written: " + gfm_join(res.errors, "; ")];
 
-	out = goal_tool_summary(sch, res.def, res.path, status);
+    try { sch.rescan(); } catch(e) {}
+
+    out = goal_tool_summary(sch, res.def, res.path, status);
 	out.ok = true;
 	out.warnings = gj(res, "warnings", []);
 	if(needs_owner)
@@ -290,11 +292,13 @@ goal_tool_update(sch, args) {
 		return [ok = false, conflict = gj(res, "conflict", false), error = gfm_join(res.errors, "; ")];
 
 	try {
-		sch.ledger.goal(id).pending_actor = "agent";
-	}
-	catch(e) {}
+        sch.ledger.goal(id).pending_actor = "agent";
+    }
+    catch(e) {}
 
-	out = goal_tool_summary(sch, res.def, res.path, f.status);
+    try { sch.rescan(); } catch(e) {}
+
+    out = goal_tool_summary(sch, res.def, res.path, f.status);
 	out.ok = true;
 	out.note = "Saved. A run that is working right now keeps its revision; the change applies from the next run.";
 	return out;
@@ -316,10 +320,12 @@ goal_tool_set_status(sch, args) {
 		to = "archived";
 
 	res = sch.space.move(id, to);
-	if(!res.ok)
-		return [ok = false, error = res.error];
+    if(!res.ok)
+        return [ok = false, error = res.error];
 
-	what = [
+    try { sch.rescan(); } catch(e) {}
+
+    what = [
 		active = "it runs in its next window",
 		paused = "no new windows; a run working right now finishes",
 		cancelled = "no new windows; a running task is stopped",

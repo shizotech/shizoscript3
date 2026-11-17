@@ -82,16 +82,15 @@ render signatures. The task form is a persistent sibling of `taskContent`, so ta
 cards and leaves an open form and its typed values intact. On the first prompt, the dashboard displays the accepted
 user message immediately, then reloads the session and reconciles it with saved history. The separate `tasks/` worker-pool page is a legacy page denied at `/tasks`; the dashboard's Tasks tab uses the workspace goal/task API instead.
 
-## Industrial console layer (2026-11-11)
+## Industrial console layer (2026-11-11, clean static skin)
 
-`components/industrial.css` is loaded after `dashboard.css` and adds the animated old-console layer:
+`components/industrial.css` is loaded after `dashboard.css` and gives the old-console look without looping background motion:
 
-* the yellow/black hazard stripe slowly slides (`hazardSlide`) and has a moving light sweep (`hazardSweep`);
-* the topbar has a POWER / LINK / BUSY / WARN lamp bank; `dashboard.js` toggles the `on` class from live session status, while the LEDs blink (`lampBusyBlink`, `lampWarnFlash`);
-* status dots, active tabs and task cards pulse (`statusLampPulse`, `statusAmberBlink`, `statusRedFlash`, `tabLampPulse`);
-* a pointer-events-free CRT overlay adds scanlines, a vignette and a slow scan (`crtScan`);
-* panel edges get rivets/bevels; labels use a monospaced console font; the topbar and lamp bank flicker subtly;
-* `prefers-reduced-motion` disables the animations and calms the overlay.
+* static hazard banner, lamp bank and status dots; no sliding stripe, no scan band, no LED blink loops;
+* a pointer-events-free CRT overlay with static scanlines and vignette (no moving `crtScan` band);
+* flat metal-toned panels without rivets or grain; technical labels use a monospaced console font;
+* event animations only: new messages fade in, task cards and toasts enter, and the current agent bubble gets a `streaming` pulse plus blinking caret while text is streaming; `dashboard.js` removes that class on a terminal status;
+* `prefers-reduced-motion` disables the remaining entrance animations and calms the overlay.
 
 `web_ui_protect` denies the legacy standalone `/chat` and `/tasks` pages but serves `/architecture/`
 because the dashboard's Architecture tab embeds `architecture/index.html`.

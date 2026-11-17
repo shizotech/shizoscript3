@@ -1,95 +1,75 @@
-/* ── Hazard-warning industrial skin ──
-   Loaded last. Pure CSS gradients / pseudo-elements, no CDN or external images.
+/* ── Console skin ──
+   Loaded after dashboard.css. Static, clean industrial look.
+   No looping background animations, no moving scan band, no diagonal texture noise.
    Keeps every class used by dashboard.js; changes only appearance. */
 
 :root {
-  --bg: #12100d;
-  --panel: #241f18;
-  --panel-deep: #1a1510;
-  --surface: #352c22;
-  --surface-hover: #43382b;
-  --text: #f2e6d2;
-  --text-secondary: #b6a58b;
+  --bg: #0f1318;
+  --panel: #161c23;
+  --panel-deep: #10151b;
+  --surface: #202933;
+  --surface-hover: #2a3540;
+  --text: #e9e3d6;
+  --text-secondary: #9aa4ae;
 
-  --accent: linear-gradient(135deg, #f08a2b 0%, #ffc15e 100%);
-  --accent-hover: linear-gradient(135deg, #d9771f 0%, #f4a33c 100%);
-  --accent-glow: rgba(245, 166, 65, .22);
-  --accent-secondary: linear-gradient(135deg, #a34a1c 0%, #e58a2a 100%);
+  --accent: linear-gradient(135deg, #e0a24a 0%, #ffd08a 100%);
+  --accent-hover: linear-gradient(135deg, #c98435 0%, #e9b263 100%);
+  --accent-glow: rgba(224, 162, 74, .20);
+  --accent-secondary: linear-gradient(135deg, #9b5a2c 0%, #d08c45 100%);
 
   --danger: #d4553e;
   --danger-hover: #e87355;
-  --danger-glow: rgba(212, 85, 62, .25);
-  --running: #f0a33a;
-  --running-glow: rgba(240, 163, 58, .2);
-  --success: #e6a84b;
-  --success-glow: rgba(230, 168, 75, .2);
+  --danger-glow: rgba(212, 85, 62, .24);
+  --running: #e0a24a;
+  --running-glow: rgba(224, 162, 74, .18);
+  --success: #d6a15a;
+  --success-glow: rgba(214, 161, 90, .18);
 
-  --border: #4b3d2d;
-  --border-light: #6b563d;
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .04);
-  --shadow-md: 0 10px 26px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .04);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .04);
-  --shadow-glow: 0 0 16px rgba(240, 163, 58, .18);
-  --card-radius: 6px;
+  --border: #2e3944;
+  --border-light: #47525c;
+  --shadow-sm: 0 3px 10px rgba(0, 0, 0, .38);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, .46);
+  --shadow-lg: 0 14px 32px rgba(0, 0, 0, .52);
+  --shadow-glow: 0 0 12px rgba(224, 162, 74, .14);
+  --card-radius: 8px;
 
-  --stencil-font: "Courier New", "Consolas", "Lucida Console", ui-monospace, monospace;
-
-  --metal-panel:
-    linear-gradient(135deg, rgba(255,255,255,.09), transparent 28%, rgba(0,0,0,.28) 72%, rgba(0,0,0,.46)),
-    repeating-linear-gradient(112deg, rgba(155,96,48,.16) 0 2px, rgba(0,0,0,.07) 2px 6px, transparent 6px 11px),
-    linear-gradient(180deg, #31281e, #1b1510);
-
-  --metal-surface:
-    linear-gradient(135deg, rgba(255,255,255,.075), transparent 32%, rgba(0,0,0,.26) 76%),
-    repeating-linear-gradient(90deg, rgba(150,95,48,.12) 0 1px, transparent 1px 5px),
-    linear-gradient(180deg, #3b3126, #241d16);
-
-  --metal-inset:
-    linear-gradient(180deg, #1b1510, #241d16),
-    repeating-linear-gradient(112deg, rgba(255,255,255,.028) 0 1px, transparent 1px 5px);
-
-  --hazard: repeating-linear-gradient(135deg, #f4a23a 0 9px, #17110b 9px 18px);
+  --stencil-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono-font: "Cascadia Code", "Consolas", ui-monospace, monospace;
 }
 
-/* ── Rough rusty base ── */
+/* ── Clean base ── */
 body {
   background-color: var(--bg);
   background-image:
-    radial-gradient(ellipse at 18% -5%, rgba(184, 91, 33, .18), transparent 55%),
-    radial-gradient(ellipse at 92% 94%, rgba(118, 54, 27, .16), transparent 48%),
-    repeating-linear-gradient(108deg, rgba(255,255,255,.03) 0 1px, rgba(0,0,0,.05) 1px 3px, transparent 3px 7px),
-    repeating-linear-gradient(0deg, rgba(0,0,0,.07) 0 1px, transparent 1px 4px);
-  background-blend-mode: overlay, overlay, normal, normal;
+    radial-gradient(ellipse at 18% -8%, rgba(224, 162, 74, .06), transparent 52%),
+    radial-gradient(ellipse at 86% 104%, rgba(224, 162, 74, .045), transparent 52%);
 }
 
 .app {
   position: relative;
 }
 
-/* Low-opacity grunge grain over the whole shell */
-.app::before {
-  content: "";
-  position: absolute;
+/* Static CRT texture only: no scan band, no vertical movement. */
+.crt-overlay {
+  position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
-  opacity: .18;
+  z-index: 8;
+  opacity: .14;
   background:
-    radial-gradient(circle at 12% 20%, rgba(255,255,255,.09) 0 1px, transparent 2px),
-    radial-gradient(circle at 66% 72%, rgba(0,0,0,.22) 0 1px, transparent 3px),
-    repeating-linear-gradient(135deg, rgba(255,184,110,.08) 0 1px, transparent 1px 8px);
-  mix-blend-mode: soft-light;
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% 45%, transparent 58%, rgba(0, 0, 0, .28) 100%);
 }
 
-/* ── Metal panels ── */
+/* ── Panels ── */
 .sidebar,
 .topbar,
 .chat-panel,
 .dialog,
 .notification-panel,
 .global-group {
-  background: var(--metal-panel);
-  border: 1px solid #59402a;
+  background: linear-gradient(180deg, #1b222b, #141a21);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);
 }
 
@@ -105,8 +85,8 @@ body {
 .notification-item,
 .stat-chip,
 .lamp-bank {
-  background: var(--metal-surface);
-  border: 1px solid #61472e;
+  background: linear-gradient(180deg, #212a34, #19202a);
+  border: 1px solid #34404b;
   box-shadow: var(--shadow-sm);
 }
 
@@ -125,7 +105,8 @@ body {
 }
 
 .topbar {
-  border-bottom: 2px solid #67472b;
+  background: linear-gradient(180deg, #1a222a, #141a21);
+  border-bottom: 2px solid #34404b;
 }
 
 .tabbar,
@@ -139,155 +120,30 @@ body {
   position: relative;
 }
 
-/* ── Riveted panel edges ── */
-.sidebar::after,
-.topbar::after,
-.chat-panel::after,
-.task-card::after,
-.dialog::after,
-.notification-panel::after,
-.global-group::after,
-.arch-card::after,
-.pane::after,
-.inline-form::after,
-.stats-panel::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  pointer-events: none;
-  border: 1px solid rgba(255, 198, 126, .17);
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .06);
-  background:
-    radial-gradient(circle at 0 0, #ffdba8 0 1.2px, #a1663a 2px, #281b12 2.8px, transparent 4px),
-    radial-gradient(circle at 100% 0, #ffdba8 0 1.2px, #a1663a 2px, #281b12 2.8px, transparent 4px),
-    radial-gradient(circle at 0 100%, #ffdba8 0 1.2px, #a1663a 2px, #281b12 2.8px, transparent 4px),
-    radial-gradient(circle at 100% 100%, #ffdba8 0 1.2px, #a1663a 2px, #281b12 2.8px, transparent 4px);
-  opacity: .9;
-}
-
-/* Riveted seam lines */
-.sidebar-header::after,
-.chat-head::after,
-.composer::after,
-.dialog-head::after,
-.dialog-foot::after,
-.tabbar::after,
-.task-section-head::after {
-  content: "";
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 3px;
-  height: 2px;
-  pointer-events: none;
-  background: repeating-linear-gradient(90deg, #e1b47a 0 1px, #6d4728 1px 3px, transparent 3px 11px);
-  opacity: .55;
-}
-
-/* ── Hazard stripes ── */
+/* ── Hazard banners: compact and static ── */
 .hazard-banner {
   position: relative;
-  background: var(--hazard);
-  border-top: 1px solid #8a4b1b;
-  border-bottom: 1px solid #0d0906;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 236, 190, .22),
-    inset 0 -3px 8px rgba(0, 0, 0, .55),
-    0 2px 6px rgba(0, 0, 0, .4);
-  animation: hazardSlide 16s linear infinite;
-}
-
-.hazard-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 248, 200, .22) 24%, rgba(255, 248, 200, .04) 42%, transparent 64%);
-  background-size: 260% 100%;
-  animation: hazardSweep 9s linear infinite;
-  opacity: .75;
-  mix-blend-mode: screen;
+  background: repeating-linear-gradient(135deg, #2a343e 0 10px, #141a21 10px 20px);
+  border-top: 1px solid #3d4954;
+  border-bottom: 1px solid #0a0f14;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
 }
 
 .hazard-banner span {
   position: relative;
   z-index: 1;
   padding: 2px 10px;
-  border: 1px solid rgba(244, 162, 58, .8);
-  border-radius: 2px;
-  background: rgba(20, 15, 10, .92);
-  color: #ffd18a;
+  border: 1px solid rgba(221, 163, 94, .40);
+  border-radius: 3px;
+  background: rgba(12, 17, 22, .92);
+  color: #dca76a;
   font-size: 9px;
-  font-weight: 900;
-  letter-spacing: .18em;
+  font-weight: 800;
+  letter-spacing: .16em;
   line-height: 1.2;
   white-space: nowrap;
-  box-shadow:
-    0 0 12px rgba(244, 162, 58, .22),
-    inset 0 1px 0 rgba(255, 255, 255, .08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
   text-shadow: 0 1px 0 #000;
-}
-
-@keyframes hazardSlide {
-  from { background-position: 0 0; }
-  to { background-position: 36px 36px; }
-}
-
-@keyframes hazardSweep {
-  from { background-position: -100% 0; }
-  to { background-position: 160% 0; }
-}
-
-/* Hazard strip at the top of the sidebar and bottom of the topbar */
-.sidebar::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 7px;
-  pointer-events: none;
-  background: var(--hazard);
-  opacity: .55;
-  z-index: 1;
-}
-
-.topbar::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 6px;
-  pointer-events: none;
-  background: var(--hazard);
-  opacity: .32;
-}
-
-.chat-panel::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 88px;
-  height: 9px;
-  pointer-events: none;
-  background: repeating-linear-gradient(135deg, rgba(244,162,58,.9) 0 6px, rgba(23,17,11,.9) 6px 12px);
-  opacity: .72;
-}
-
-.task-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 52px;
-  height: 7px;
-  pointer-events: none;
-  background: repeating-linear-gradient(135deg, #f4a23a 0 5px, #17110b 5px 10px);
-  border-radius: 0 0 3px 0;
-  opacity: .85;
 }
 
 /* ── Stencil / monospace typography ── */
@@ -323,6 +179,14 @@ body {
   font-family: var(--stencil-font);
 }
 
+.session-activity,
+.session-tokens,
+.task-state,
+.tool-state,
+.template-chip {
+  font-family: var(--mono-font);
+}
+
 .workspace-title-block h1,
 .session-title,
 .task-name,
@@ -337,8 +201,8 @@ body {
 .warning-plate,
 .brand-title {
   text-transform: uppercase;
-  letter-spacing: .09em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, .12), 0 -1px 0 rgba(0, 0, 0, .55);
+  letter-spacing: .07em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .10), 0 -1px 0 rgba(0, 0, 0, .45);
 }
 
 .breadcrumb,
@@ -347,20 +211,20 @@ body {
 .task-state,
 .tool-state,
 .stat-line b {
-  letter-spacing: .08em;
+  letter-spacing: .06em;
 }
 
-/* ── Warning plate in the topbar ── */
+/* ── Warning plate ── */
 .warning-plate {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   padding: 5px 8px;
-  border: 1px solid #715033;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #3a2b20, #241a12);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -2px 4px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.35);
-  color: #ffd08a;
+  border: 1px solid #46515c;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #252e38, #1a222a);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 2px 6px rgba(0, 0, 0, .28);
+  color: #e8c48d;
   font-size: 8px;
   font-weight: 800;
   line-height: 1.15;
@@ -371,281 +235,205 @@ body {
   place-items: center;
   width: 18px;
   height: 18px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #f4a23a, #b96722);
-  color: #17110b;
-  font-family: var(--stencil-font);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #f3b56c, #b87332);
+  color: #1a1109;
+  font-family: var(--mono-font);
   font-size: 12px;
   font-weight: 900;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 0 8px rgba(244,162,58,.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28);
 }
 
 .warning-copy b {
   display: block;
   font-size: 9px;
-  letter-spacing: .12em;
+  letter-spacing: .10em;
 }
 
 .warning-copy small {
   display: block;
   font-size: 7px;
   font-weight: 700;
-  color: #c89a68;
-  letter-spacing: .1em;
+  color: #b7a17d;
+  letter-spacing: .09em;
 }
 
 /* ── Sidebar details ── */
 .sidebar-header {
-  border-bottom: 1px solid #6d4a2a;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), transparent 35%, rgba(0,0,0,.34)),
-    linear-gradient(180deg, #31271d, #201912);
-}
-
-.sidebar-brand {
-  gap: 10px;
+  border-bottom: 1px solid #34404b;
+  background: linear-gradient(180deg, #1d242c, #161c23);
 }
 
 .logo {
-  background: radial-gradient(circle at 35% 30%, #f8c47a 0 10%, #c7762b 42%, #8f451a 72%, #3b1d0e 100%);
-  border: 1px solid #d8944b;
+  background: linear-gradient(135deg, #e8b56f, #b87332);
+  border: 1px solid #d7954e;
   color: #1a1109;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 0 14px rgba(244,162,58,.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), 0 0 10px rgba(224, 162, 74, .16);
 }
 
 .brand-title {
-  color: #ffe2b0;
+  color: #f3e0c2;
 }
 
 .brand-sub {
-  color: #c9a878;
+  color: #b6a486;
   font-size: 10px;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
 }
 
 .section-head {
-  color: #c8ad83;
+  color: #c4b393;
 }
 
 .section-head .fa-solid {
-  color: #f4a23a;
+  color: #e0a24a;
 }
 
 .btn-icon,
 .bell-btn {
-  border: 1px solid #62472e;
-  border-radius: 3px;
-  background: var(--metal-surface);
-  color: #c9b393;
+  border: 1px solid #3a4651;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #252e38, #1b222a);
+  color: #c9b793;
 }
 
 .btn-icon:hover,
 .bell-btn:hover {
   border-color: #d08a4b;
-  background: #433629;
-  color: #ffd08a;
+  background: #2c353f;
+  color: #f2d7ae;
 }
 
 .btn-icon.accent {
-  color: #f4a23a;
+  color: #e0a24a;
 }
 
 .nav-item:hover {
-  border-color: rgba(244, 162, 58, .4);
-  background: #433629;
+  border-color: rgba(224, 162, 74, .38);
+  background: #2a3540;
 }
 
 .nav-item.active {
-  border-color: rgba(244, 162, 58, .45);
-  background: linear-gradient(100deg, rgba(244, 162, 58, .16), rgba(212, 85, 62, .07));
-  color: #ffd08a;
+  border-color: rgba(224, 162, 74, .42);
+  background: linear-gradient(100deg, rgba(224, 162, 74, .14), rgba(212, 85, 62, .05));
+  color: #f2d7ae;
 }
 
-/* ── Lamps ── */
+/* ── Lamps: static glow, no blinking ── */
 .lamp-bank {
-  border: 1px solid #755033;
-  border-radius: 3px;
-  box-shadow:
-    inset 0 2px 6px rgba(0,0,0,.55),
-    inset 0 1px 0 rgba(255,255,255,.08),
-    0 0 12px rgba(244,162,58,.08);
-  animation: consoleFlicker 4.2s ease-in-out infinite;
+  border: 1px solid #46515c;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .45), 0 2px 6px rgba(0, 0, 0, .25);
 }
 
 .lamp-label {
-  color: #e0b878;
+  color: #c9b88e;
   font-size: 7px;
   font-weight: 900;
-  letter-spacing: .14em;
+  letter-spacing: .12em;
 }
 
 .lamp {
-  border-color: #5b432d;
-  background: #2a241d;
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.16), inset 0 -2px 3px rgba(0,0,0,.55);
+  border-color: #3a4651;
+  background: #252e36;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .14), inset 0 -2px 3px rgba(0, 0, 0, .45);
 }
 
 .lamp.lamp-power.on {
-  background: radial-gradient(circle at 35% 30%, #fff2bf 0 12%, #f4a23a 34%, #a65b1c 76%, #3c1d0b 100%);
+  background: radial-gradient(circle at 35% 30%, #fff2bf 0 12%, #e0a24a 36%, #a65b1c 76%, #3c1d0b 100%);
   border-color: #d08a4b;
-  box-shadow: inset 0 0 4px rgba(255,247,190,.5), 0 0 7px rgba(244,162,58,.55), 0 0 16px rgba(244,162,58,.16);
-  animation: lampPowerBreath 2.6s ease-in-out infinite;
+  box-shadow: inset 0 0 4px rgba(255, 247, 190, .45), 0 0 7px rgba(224, 162, 74, .45);
 }
 
 .lamp.lamp-link.on {
   background: radial-gradient(circle at 35% 30%, #fffbe0 0 12%, #f5c66d 36%, #b47a26 76%, #3d2a0d 100%);
   border-color: #d08a4b;
-  box-shadow: inset 0 0 4px rgba(255,247,190,.5), 0 0 7px rgba(245,198,109,.5), 0 0 14px rgba(245,198,109,.14);
-  animation: lampLinkPulse 3s ease-in-out infinite;
+  box-shadow: inset 0 0 4px rgba(255, 247, 190, .45), 0 0 7px rgba(245, 198, 109, .42);
 }
 
 .lamp.lamp-busy.on {
   background: radial-gradient(circle at 35% 30%, #ffd2b0 0 10%, #ff6a4f 34%, #b52d22 76%, #44100d 100%);
   border-color: #7d332b;
-  box-shadow: inset 0 0 4px rgba(255,180,160,.45), 0 0 8px rgba(255,92,72,.62), 0 0 17px rgba(255,92,72,.18);
-  animation: lampBusyBlink 1.15s ease-in-out infinite;
+  box-shadow: inset 0 0 4px rgba(255, 180, 160, .38), 0 0 8px rgba(255, 92, 72, .45);
 }
 
 .lamp.lamp-warn.on {
   background: radial-gradient(circle at 35% 30%, #fff3c4 0 10%, #ffcf5a 35%, #c07a20 76%, #4b2607 100%);
   border-color: #9f6b27;
-  box-shadow: inset 0 0 4px rgba(255,246,190,.45), 0 0 8px rgba(255,207,90,.58), 0 0 16px rgba(255,207,90,.16);
-  animation: lampWarnFlash 2.25s ease-in-out infinite;
+  box-shadow: inset 0 0 4px rgba(255, 246, 190, .38), 0 0 8px rgba(255, 207, 90, .42);
 }
 
-@keyframes consoleFlicker {
-  0%, 100% { opacity: 1; }
-  46% { opacity: .96; }
-  50% { opacity: .82; }
-  53% { opacity: 1; }
-  77% { opacity: .9; }
-  80% { opacity: 1; }
-}
-
-@keyframes lampPowerBreath {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .82; }
-}
-
-@keyframes lampLinkPulse {
-  0%, 100% { opacity: .9; }
-  50% { opacity: 1; }
-}
-
-@keyframes lampBusyBlink {
-  0%, 100% { opacity: 1; filter: brightness(1.08); }
-  30% { opacity: .35; filter: brightness(.65); }
-  42% { opacity: 1; filter: brightness(1.12); }
-  70% { opacity: .58; filter: brightness(.8); }
-}
-
-@keyframes lampWarnFlash {
-  0%, 100% { opacity: 1; }
-  20% { opacity: .45; }
-  26% { opacity: 1; }
-  55% { opacity: .75; }
-  62% { opacity: 1; }
-}
-
-/* ── Status dots and active tabs ── */
+/* ── Status dots: static ── */
 .status-dot.running,
 .status-dot.generating {
-  background: #f0a33a;
-  box-shadow: 0 0 0 0 rgba(240,163,58,.5), 0 0 7px rgba(240,163,58,.55);
-  animation: statusLampPulse 1.15s ease-in-out infinite;
+  background: #e0a24a;
+  box-shadow: 0 0 6px rgba(224, 162, 74, .38);
+  animation: none;
 }
 
 .status-dot.done {
-  background: #e6b56b;
-  box-shadow: 0 0 5px rgba(230,181,107,.28);
+  background: #d6a15a;
+  box-shadow: 0 0 5px rgba(214, 161, 90, .24);
 }
 
 .status-dot.question {
   background: #ffbf47;
-  box-shadow: 0 0 6px rgba(255,191,71,.55);
-  animation: statusAmberBlink 1.7s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 191, 71, .38);
+  animation: none;
 }
 
 .status-dot.failed {
   background: #d4553e;
-  box-shadow: 0 0 7px rgba(212,85,62,.55);
-  animation: statusRedFlash 1.25s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(212, 85, 62, .38);
+  animation: none;
 }
 
 .status-dot.stopped {
   background: #8f8171;
 }
 
-@keyframes statusLampPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(240,163,58,.5), 0 0 7px rgba(240,163,58,.55); }
-  50% { box-shadow: 0 0 0 5px rgba(240,163,58,.06), 0 0 10px rgba(240,163,58,.45); }
+.pulse-ring {
+  animation: none;
 }
 
-@keyframes statusAmberBlink {
-  0%, 100% { opacity: 1; }
-  40% { opacity: .52; }
-  50% { opacity: 1; }
-}
-
-@keyframes statusRedFlash {
-  0%, 100% { opacity: 1; }
-  25% { opacity: .4; }
-  35% { opacity: 1; }
-  72% { opacity: .65; }
-}
-
+/* ── Tabs ── */
 .tab {
-  border-radius: 3px 3px 0 0;
+  border-radius: 4px 4px 0 0;
   color: #c8b393;
 }
 
 .tab:hover {
-  background: #3b3025;
+  background: #2a3540;
   color: #f2e6d2;
 }
 
 .tab.active {
-  background: linear-gradient(180deg, #4b3928, #2b2118);
-  border-bottom-color: #f4a23a;
-  color: #ffd08a;
-  box-shadow: 0 0 14px rgba(244,162,58,.16), inset 0 1px 0 rgba(255,255,255,.07);
-  animation: tabLampPulse 1.9s ease-in-out infinite;
-}
-
-@keyframes tabLampPulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(244,162,58,.10), inset 0 1px 0 rgba(255,255,255,.07); }
-  50% { box-shadow: 0 0 18px rgba(244,162,58,.22), inset 0 1px 0 rgba(255,255,255,.07); }
+  background: linear-gradient(180deg, #2c3540, #1d242c);
+  border-bottom-color: #e0a24a;
+  color: #f2d7ae;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+  animation: none;
 }
 
 /* ── Sentinel orb ── */
 .sentinel-orb {
   border-color: #7a4a26;
-  background: radial-gradient(circle at 34% 30%, #ffe1a8 0 4%, #ffb04f 14%, #d4682a 42%, #6d2a12 76%, #24110b 100%);
-  box-shadow: inset 0 0 8px rgba(255,220,170,.45), 0 0 12px 2px rgba(244,162,58,.5), 0 0 28px rgba(244,162,58,.22);
-  animation: sentinelFlicker 3.7s ease-in-out infinite;
+  background: radial-gradient(circle at 34% 30%, #ffe1a8 0 4%, #ffb04f 15%, #d4682a 42%, #6d2a12 76%, #24110b 100%);
+  box-shadow: inset 0 0 8px rgba(255, 220, 170, .38), 0 0 10px 2px rgba(224, 162, 74, .38);
 }
 
 .sentinel-orb::after {
-  border-color: rgba(255,196,120,.32);
-}
-
-@keyframes sentinelFlicker {
-  0%, 100% { opacity: 1; filter: brightness(1); }
-  42% { opacity: .84; filter: brightness(.85); }
-  47% { opacity: 1; filter: brightness(1.1); }
-  73% { opacity: .9; filter: brightness(.92); }
+  border-color: rgba(255, 196, 120, .28);
 }
 
 /* ── Chat ── */
 .chat-head {
-  border-bottom: 1px solid #5d4229;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%, rgba(0,0,0,.34)),
-    linear-gradient(180deg, #352b20, #211a13);
+  border-bottom: 1px solid #34404b;
+  background: linear-gradient(180deg, #1d242c, #161c23);
 }
 
 .session-title {
-  color: #ffe2b0;
+  color: #f3e0c2;
 }
 
 .session-meta,
@@ -662,32 +450,67 @@ body {
 
 .chat-messages {
   background:
-    radial-gradient(circle at 75% 0, rgba(174,96,38,.10), transparent 48%),
-    linear-gradient(180deg, rgba(0,0,0,.12), transparent 35%);
+    radial-gradient(circle at 25% 0, rgba(224, 162, 74, .06), transparent 50%),
+    linear-gradient(180deg, rgba(0, 0, 0, .06), transparent 40%);
 }
 
 .msg {
-  border-radius: 4px;
-  border-color: #55402a;
-  background: var(--metal-surface);
+  border-radius: 6px;
+  border-color: #34404b;
+  background: linear-gradient(180deg, #222b35, #1a222a);
 }
 
 .msg.user {
-  background: linear-gradient(110deg, rgba(244,162,58,.13), rgba(244,162,58,.035));
-  border-color: rgba(244,162,58,.28);
+  background: linear-gradient(110deg, rgba(224, 162, 74, .12), rgba(224, 162, 74, .035));
+  border-color: rgba(224, 162, 74, .24);
 }
 
 .msg.user .msg-label {
-  color: #f4a23a;
+  color: #e0a24a;
 }
 
 .msg.agent {
   border-left: 2px solid #d06a2b;
 }
 
+.msg.agent.streaming {
+  animation: fadeIn .24s ease both, streamPulse 2.2s ease-in-out infinite;
+  border-left-color: #e0a24a;
+}
+
+.msg.agent.streaming .msg-label::after {
+  content: "STREAMING";
+  color: #e0a24a;
+  font-size: 8px;
+  font-family: var(--mono-font);
+  letter-spacing: .12em;
+  animation: caretBlink 1.1s steps(2) infinite;
+}
+
+.msg.agent.streaming .msg-body::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  background: #e0a24a;
+  vertical-align: text-bottom;
+  animation: caretBlink .9s steps(2) infinite;
+}
+
+@keyframes streamPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(224, 162, 74, .10); }
+  50% { box-shadow: 0 0 16px rgba(224, 162, 74, .24); }
+}
+
+@keyframes caretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .25; }
+}
+
 .msg.reasoning {
   border-left: 2px solid #b58a54;
-  background: rgba(255,190,120,.04);
+  background: rgba(255, 190, 120, .035);
   color: #b9a488;
 }
 
@@ -696,42 +519,42 @@ body {
 }
 
 .reasoning-latest {
-  color: #f4a23a;
+  color: #e0a24a;
   font-size: 9px;
-  letter-spacing: .14em;
+  letter-spacing: .12em;
 }
 
 .msg.tool {
   border-left: 2px solid #c07c34;
-  background: rgba(244,162,58,.045);
+  background: rgba(224, 162, 74, .035);
 }
 
 .msg.tool.failed {
   border-left-color: #d4553e;
-  background: rgba(212,85,62,.09);
+  background: rgba(212, 85, 62, .08);
 }
 
 .msg.milestone,
 .msg.report {
-  border-color: rgba(244,162,58,.28);
-  background: rgba(244,162,58,.08);
+  border-color: rgba(224, 162, 74, .24);
+  background: rgba(224, 162, 74, .07);
   color: #f1c27d;
 }
 
 .msg.error {
-  border-color: rgba(212,85,62,.4);
-  background: rgba(212,85,62,.12);
+  border-color: rgba(212, 85, 62, .34);
+  background: rgba(212, 85, 62, .10);
   color: #ffb4a0;
 }
 
 .msg-body pre {
-  border-color: #5b432d;
-  background: #1b1510;
+  border-color: #34404b;
+  background: #161d24;
 }
 
 .msg-body code {
-  background: #2a2118;
-  color: #ffd08a;
+  background: #222a33;
+  color: #e8c48d;
 }
 
 .tool-name {
@@ -751,22 +574,20 @@ body {
 }
 
 .composer {
-  border-top: 1px solid #5d4229;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.05), transparent 30%, rgba(0,0,0,.3)),
-    linear-gradient(180deg, #30271d, #201811);
+  border-top: 1px solid #34404b;
+  background: linear-gradient(180deg, #1d242c, #161c23);
 }
 
 .mode-toggle {
-  border: 1px solid #62472e;
-  background: #1b1510;
+  border: 1px solid #3a4651;
+  background: #1a222a;
 }
 
 .mode-toggle button.active {
   background: var(--accent);
   color: #1b1108;
   border-color: #f5c48b;
-  box-shadow: 0 0 10px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .20);
   text-transform: uppercase;
 }
 
@@ -774,73 +595,72 @@ body {
 .task-state.planned,
 .task-state.running,
 .task-state.active {
-  background: rgba(244,162,58,.14);
+  background: rgba(224, 162, 74, .15);
   color: #f7b85c;
 }
 
 .task-state.proposed,
 .task-state.question {
-  background: rgba(255,180,70,.18);
+  background: rgba(255, 180, 70, .18);
   color: #ffcf7f;
 }
 
 .task-state.done,
 .task-state.finished,
 .task-state.completed {
-  background: rgba(230,168,75,.15);
+  background: rgba(214, 161, 90, .15);
   color: #f0c277;
 }
 
 .task-state.paused,
 .task-state.stopped,
 .task-state.archived {
-  background: rgba(143,129,113,.18);
+  background: rgba(143, 129, 113, .18);
   color: #c8b79e;
 }
 
 .task-state.failed,
 .task-state.cancelled,
 .task-state.invalid {
-  background: rgba(212,85,62,.18);
+  background: rgba(212, 85, 62, .18);
   color: #ff8c72;
 }
 
 .task-card {
-  border-radius: 4px;
-  border-color: #5a412a;
+  border-radius: 6px;
+  border-color: #3b4651;
 }
 
 .task-card:hover {
-  border-color: #8a5d39;
-  box-shadow: var(--shadow-sm), 0 0 12px rgba(244,162,58,.1);
+  border-color: #5a6875;
+  box-shadow: var(--shadow-sm), 0 0 12px rgba(224, 162, 74, .08);
 }
 
 .task-card.invalid {
   border-color: rgba(212, 85, 62, .55);
-  box-shadow: var(--shadow-sm), 0 0 10px rgba(212,85,62,.12);
+  box-shadow: var(--shadow-sm), 0 0 10px rgba(212, 85, 62, .10);
 }
 
 .task-section-head h3 {
-  color: #c8ad83;
+  color: #c4b393;
 }
 
 .template-chip {
-  border-radius: 3px;
+  border-radius: 4px;
   color: #d7bd97;
 }
 
 /* ── Architecture ── */
 .arch-svg {
-  border: 1px solid #5a412a;
-  border-radius: 4px;
+  border: 1px solid #3b4651;
+  border-radius: 6px;
   background:
-    radial-gradient(circle at 30% 20%, rgba(174,96,38,.14), rgba(15,12,9,.9)),
-    repeating-linear-gradient(112deg, rgba(255,255,255,.025) 0 1px, transparent 1px 6px);
+    radial-gradient(circle at 28% 18%, rgba(224, 162, 74, .10), rgba(13, 17, 22, .92));
 }
 
 .arch-edge {
   stroke: #c89a63;
-  opacity: .75;
+  opacity: .65;
 }
 
 .arch-edge-label {
@@ -848,17 +668,17 @@ body {
 }
 
 .arch-node rect {
-  stroke: rgba(255,210,150,.35);
+  stroke: rgba(255, 210, 150, .28);
 }
 
 .arch-node .arch-path {
-  fill: rgba(255,240,215,.65);
+  fill: rgba(255, 240, 215, .58);
 }
 
 .pending-item {
-  border: 1px solid rgba(244,162,58,.28);
-  border-radius: 3px;
-  background: rgba(244,162,58,.09);
+  border: 1px solid rgba(224, 162, 74, .25);
+  border-radius: 4px;
+  background: rgba(224, 162, 74, .08);
 }
 
 .pending-item .op {
@@ -866,12 +686,12 @@ body {
 }
 
 .job-live {
-  color: #f4a23a;
+  color: #e0a24a;
 }
 
 /* ── Global tasks ── */
 .global-group h3 {
-  color: #ffe2b0;
+  color: #f3e0c2;
 }
 
 .global-tasks-sub {
@@ -880,35 +700,33 @@ body {
 
 /* ── Buttons ── */
 .btn {
-  border: 1px solid #f5c48b;
-  border-radius: 3px;
+  border: 1px solid #d7ab75;
+  border-radius: 4px;
   background: var(--accent);
   color: #1b1108;
   font-weight: 900;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.35),
-    inset 0 -3px 4px rgba(0,0,0,.25),
-    0 3px 8px rgba(0,0,0,.35);
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    0 3px 8px rgba(0, 0, 0, .30);
 }
 
 .btn:hover {
   background: var(--accent-hover);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.35),
-    inset 0 -3px 4px rgba(0,0,0,.25),
-    0 0 14px var(--accent-glow);
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    0 0 12px var(--accent-glow);
 }
 
 .btn-ghost {
-  background: rgba(30,23,17,.55);
-  border-color: #6d4a2a;
+  background: rgba(25, 31, 38, .55);
+  border-color: #3a4651;
   color: #d8c2a4;
 }
 
 .btn-ghost:hover {
-  background: #3a2d21;
+  background: #2a3540;
   color: #f2e6d2;
-  border-color: #a56b3b;
+  border-color: #8a5d39;
   box-shadow: none;
 }
 
@@ -920,16 +738,16 @@ body {
 
 .btn-danger:hover {
   background: linear-gradient(135deg, #a33a2c, #e87355);
-  box-shadow: 0 0 12px var(--danger-glow);
+  box-shadow: 0 0 10px var(--danger-glow);
 }
 
 /* ── Inputs ── */
 input,
 select,
 textarea {
-  border: 1px solid #5c4630;
-  border-radius: 3px;
-  background: var(--metal-inset);
+  border: 1px solid #3a4651;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #161d24, #1e2731);
   color: #f2e6d2;
 }
 
@@ -942,61 +760,61 @@ textarea::placeholder {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #f4a23a;
-  box-shadow: 0 0 0 3px rgba(244,162,58,.18), inset 0 1px 0 rgba(255,255,255,.05);
+  border-color: #e0a24a;
+  box-shadow: 0 0 0 3px rgba(224, 162, 74, .16), inset 0 1px 0 rgba(255, 255, 255, .04);
 }
 
 /* ── Dialog / notifications / toasts ── */
 .dialog-backdrop {
-  background: rgba(8, 6, 4, .68);
+  background: rgba(6, 9, 12, .62);
 }
 
 .dialog {
-  border-radius: 4px;
-  border-top: 3px solid #f4a23a;
+  border-radius: 6px;
+  border-top: 2px solid #e0a24a;
 }
 
 .dialog-head {
-  border-bottom: 1px solid #5d4229;
-  background: linear-gradient(180deg, rgba(255,255,255,.07), transparent 35%, rgba(0,0,0,.28));
+  border-bottom: 1px solid #34404b;
+  background: linear-gradient(180deg, #1d242c, #161c23);
 }
 
 .dialog-foot {
-  border-top: 1px solid #5d4229;
-  background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 35%, rgba(0,0,0,.25));
+  border-top: 1px solid #34404b;
+  background: linear-gradient(180deg, #1d242c, #161c23);
 }
 
 .notification-badge {
-  background: #f4a23a;
+  background: #e0a24a;
   border: 1px solid #ffd08a;
   color: #1a1008;
-  box-shadow: 0 0 8px rgba(244,162,58,.3);
+  box-shadow: 0 0 6px rgba(224, 162, 74, .22);
 }
 
 .notification-panel {
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .notification-item {
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .toast {
-  border-radius: 3px;
-  border-color: #67472b;
+  border-radius: 4px;
+  border-color: #3a4651;
 }
 
 .toast.success {
-  border-color: rgba(244,162,58,.45);
+  border-color: rgba(224, 162, 74, .38);
 }
 
 .toast.error {
-  border-color: rgba(212,85,62,.5);
+  border-color: rgba(212, 85, 62, .45);
   color: #ffb4a0;
 }
 
 .toast.warn {
-  border-color: rgba(255,180,70,.45);
+  border-color: rgba(255, 180, 70, .38);
 }
 
 /* ── Scrollbars ── */
@@ -1006,7 +824,7 @@ textarea:focus {
 .chat-messages,
 .notification-panel {
   scrollbar-width: thin;
-  scrollbar-color: #d69c4d #1a130d;
+  scrollbar-color: #c48a44 #141a21;
 }
 
 .task-view::-webkit-scrollbar,
@@ -1015,8 +833,8 @@ textarea:focus {
 .chat-messages::-webkit-scrollbar,
 .notification-panel::-webkit-scrollbar,
 .msg-body pre::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 .task-view::-webkit-scrollbar-track,
@@ -1025,7 +843,7 @@ textarea:focus {
 .chat-messages::-webkit-scrollbar-track,
 .notification-panel::-webkit-scrollbar-track,
 .msg-body pre::-webkit-scrollbar-track {
-  background: #1a130d;
+  background: #141a21;
 }
 
 .task-view::-webkit-scrollbar-thumb,
@@ -1034,8 +852,8 @@ textarea:focus {
 .chat-messages::-webkit-scrollbar-thumb,
 .notification-panel::-webkit-scrollbar-thumb,
 .msg-body pre::-webkit-scrollbar-thumb {
-  background: #d69c4d;
-  border: 2px solid #1a130d;
+  background: #c48a44;
+  border: 2px solid #141a21;
   border-radius: 6px;
 }
 
@@ -1045,47 +863,13 @@ textarea:focus {
 .chat-messages::-webkit-scrollbar-thumb:hover,
 .notification-panel::-webkit-scrollbar-thumb:hover,
 .msg-body pre::-webkit-scrollbar-thumb:hover {
-  background: #f4a23a;
-}
-
-/* ── Warm CRT scanlines + vignette ── */
-.crt-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 8;
-  opacity: .55;
-  background:
-    repeating-linear-gradient(0deg, rgba(255,220,160,.04) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(255,180,100,.018) 0 1px, transparent 1px 5px),
-    radial-gradient(ellipse at 50% 42%, transparent 46%, rgba(0,0,0,.34) 100%),
-    radial-gradient(circle at 30% 20%, rgba(180,90,40,.07), transparent 35%);
-}
-
-.crt-overlay::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 110px;
-  background: linear-gradient(180deg, transparent 0%, rgba(255,230,180,.12) 50%, transparent 100%);
-  opacity: .55;
-  animation: crtScan 10s linear infinite;
-}
-
-@keyframes crtScan {
-  from { transform: translateY(-120px); }
-  to { transform: translateY(100vh); }
+  background: #e0a24a;
 }
 
 /* ── Responsive hardening ── */
 @media (max-width: 900px) {
   .warning-plate {
     display: none;
-  }
-
-  .sidebar::before {
-    height: 5px;
   }
 }
 
@@ -1096,49 +880,24 @@ textarea:focus {
 
   .hazard-banner span {
     font-size: 8px;
-    letter-spacing: .1em;
-  }
-
-  .sidebar::before,
-  .topbar::before {
-    opacity: .35;
-  }
-
-  .chat-panel::before,
-  .task-card::before {
-    opacity: .6;
+    letter-spacing: .10em;
   }
 }
 
-/* ── Reduced motion: keep the hazard look, stop the animations ── */
+/* ── Reduced motion: already static, keep entrance animations calm ── */
 @media (prefers-reduced-motion: reduce) {
-  .hazard-banner,
-  .hazard-banner::before,
-  .lamp-bank,
-  .lamp.on,
-  .status-dot.running,
-  .status-dot.generating,
-  .status-dot.question,
-  .status-dot.failed,
-  .tab.active,
-  .sentinel-orb,
-  .task-state.running,
-  .task-state.active,
-  .crt-overlay::after {
+  .msg,
+  .task-card,
+  .toast,
+  .dialog,
+  .notification-panel,
+  .msg.agent.streaming,
+  .msg.agent.streaming .msg-label::after,
+  .msg.agent.streaming .msg-body::after {
     animation: none !important;
   }
 
-  .hazard-banner {
-    background-position: 0 0;
-  }
-
   .crt-overlay {
-    opacity: .35;
-  }
-
-  .lamp-busy.on,
-  .lamp-warn.on,
-  .status-dot.failed {
-    opacity: 1;
+    opacity: .10;
   }
 }

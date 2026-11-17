@@ -505,6 +505,14 @@ class miniagent
 		}
 		return "";
 	}
+	
+	//Convenience function
+	send_prompt(prompt) {
+		if(running)
+			task_update(prompt);
+		else
+			task(prompt);
+	}
 
 	//Stop this agent and, top-down, the whole agent tree below it.
 	//Every child created through subagent()/simple_agent() is registered in

@@ -587,6 +587,9 @@ class SessionManager {
     workspace_paths = [];
     stop_requested = [];
     terminal_reported = [];
+    // Last owner request (std.millis). The goal scheduler yields to it through
+    // background_capacity(); a goal dispatch itself must not count as interactive.
+    last_interactive_ms = 0;
 
     __init__(_store, _cfg_spec, _token = "") {
         store = _store;
@@ -606,6 +609,9 @@ class SessionManager {
         workspace_paths = [];
         stop_requested = [];
         terminal_reported = [];
+        // Last owner request (std.millis). The goal scheduler yields to it through
+        // background_capacity(); a goal dispatch itself must not count as interactive.
+        last_interactive_ms = 0;
         load_sessions();
     }
 
@@ -1118,7 +1124,7 @@ class SessionManager {
         return p.write_line(obj.compact_string());
     }
 
-    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive", reasoning_effort = "medium") {
+    create_session(workspace_id, title = "", mode = "normal", prompt = "", role = "adaptive", reasoning_effort = "medium", interactive = true) {
         path = workspace_path(workspace_id);
 
         if(!path)
@@ -1207,6 +1213,9 @@ class SessionManager {
         s.updated = std.millis();
         save_session(sid);
 
+        if(interactive)
+            last_interactive_ms = std.millis();
+
         pump_active[sid] = true;
 
         std.thread([this, sid]() {
@@ -1216,7 +1225,7 @@ class SessionManager {
         return [ok = true, session = session_view(sid)];
     }
 
-    send_prompt(sid, prompt, reasoning_effort = None) {
+    send_prompt(sid, prompt, reasoning_effort = None, interactive = true) {
         s = sessions[sid];
 
         if(!s)
@@ -1279,6 +1288,8 @@ class SessionManager {
         s.chat_history_size_at_prompt = history.size();
         s.status = "running";
         s.updated = std.millis();
+        if(interactive)
+            last_interactive_ms = std.millis();
         push_event(s, "user", [text = prompt]);
         push_event(s, "status", [status = "running"]);
         save_session(sid);
@@ -1771,10 +1782,16 @@ class SessionManager {
     }
 
     capacity() {
+        idle = 1000000000;
+        if(last_interactive_ms > 0) {
+            idle = (std.millis() - last_interactive_ms) / 1000;
+            if(idle < 0)
+                idle = 0;
+        }
         return [
             workers = max_sessions(),
             busy = active_count(),
-            interactive_idle_secs = 0,
+            interactive_idle_secs = idle,
         ];
     }
 
@@ -1867,7 +1884,7 @@ class Workspace {
         if(!role)
             role = "adaptive";
 
-        res = manager.create_session(id, ws_str(name), "normal", ws_str(goal), role, "medium");
+        res = manager.create_session(id, ws_str(name), "normal", ws_str(goal), role, "medium", false);
 
         if(res.ok && std.is_json(res.session))
             return ws_str(res.session.id);
@@ -1876,7 +1893,7 @@ class Workspace {
     }
 
     update_task(taskid, message) {
-        res = manager.send_prompt(ws_str(taskid), ws_str(message));
+        res = manager.send_prompt(ws_str(taskid), ws_str(message), None, false);
         return res.ok ? true : false;
     }
 

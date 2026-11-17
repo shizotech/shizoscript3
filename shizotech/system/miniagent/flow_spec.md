@@ -78,6 +78,10 @@ scheduler immediately.
 8. `workspace_agent.shio`:
    - loads `chat.json` (the complete conversation, source of truth) and imports it into the agent;
    - creates `GoalSpace(workspace + "/.agentspace")` and a `GoalScheduler` for its goal tools;
+    - rescans that local scheduler once at startup (`notify = false`) so `get_goals` sees the
+      goals that already exist; the registry scheduler, not this local one, dispatches windows;
+    - goal tools rescan after create / update / status changes, so a new or moved goal is visible
+      to the next `get_goals` call;
    - registers `get_goals`, `create_goal`, `create_recurring_goal`, `update_goal`,
      `set_goal_status`, `run_goal_now`, `create_workspace_task`, `goal_finish`;
    - registers the architecture board at `workspace + "/.megamind/architecture"`;

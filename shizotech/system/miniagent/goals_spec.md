@@ -177,9 +177,11 @@ thread, and `update()` is a synchronous alias for one `tick()`.
    once, now, for the original length). A window that ended unseen is recorded as `missed` and
    reported. Windows before the goal became active are never "missed".
 5. **Dispatch** runs within the limits: `max_background_tasks` (node), free workspace task
-   capacity minus `reserve_interactive_workers`, no new run within `yield_after_interactive` of
-   the owner's last request (`Workspace.background_capacity()`), per goal
-   `max_parallel_workers`. A run is
+    capacity minus `reserve_interactive_workers`, no new run within `yield_after_interactive` of
+    the owner's last request (`Workspace.background_capacity()`), per goal
+    `max_parallel_workers`. `Workspace.background_capacity()` reports the idle seconds since the
+    last interactive session prompt; a goal dispatch itself is created with `interactive=false`
+    and does not reset that idle time. A run is
    written to the ledger before `add_task` (outbox): after a crash it is found and settled as
    `interrupted`, then retried while its window is open. A dispatch the host **refuses** (no
    taskid) is a failed attempt: `dispatch_failed` in the ledger **and** a notification to the
