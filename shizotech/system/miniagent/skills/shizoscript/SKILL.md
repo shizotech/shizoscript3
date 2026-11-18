@@ -1,4 +1,4 @@
-<!-- generated from shizoscript_language_doc.md by post_compile.shio on 2026-11-16 - do not edit: edit the source and re-run post_compile.shio -->
+<!-- generated from shizoscript_language_doc.md by post_compile.shio on 2026-11-19 - do not edit: edit the source and re-run post_compile.shio -->
 
 # ShizoScript Code Generation
 

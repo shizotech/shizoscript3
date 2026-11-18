@@ -530,9 +530,14 @@ node_api_register(server, host, cfg, port = 0, api_token = "", api_at_root = fal
         if(taskid.empty())
             return node_api_err("add_task refused (empty taskid)", 503);
 
-        reply = [taskid = taskid, name = name, state = "planned"];
-        if(workspace)
-            reply.workspace_id = workspace;
+        state = "planned";
+         info = host.inspect_task(taskid);
+         if(std.is_json(info) && info.ok && !std.is_none(info.state))
+             state = node_api_str(info.state, "planned");
+
+         reply = [taskid = taskid, name = name, state = state];
+         if(workspace)
+             reply.workspace_id = workspace;
 
         return node_api_ok(reply);
     });

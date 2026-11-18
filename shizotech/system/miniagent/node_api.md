@@ -61,10 +61,10 @@ The model endpoint token (`ModelConfig.token`) is never returned by any endpoint
 | GET | `/api/health` | – | liveness, uptime, request counter (no token needed) |
 | GET | `/api/status` | – | node (name, description, version), model, workspace and task statistics, `requests.active` |
 | GET | `/api/overview` | – | raw Node overview across workspaces |
-| GET | `/api/tasks` | – | flattened task list across all workspaces (`planned`, `research`, `implement`, `finished`, `failed`, `question`, `stopped`) |
+| GET | `/api/tasks` | – | flattened task list across all workspaces (`queued`, `planned`, `research`, `implement`, `finished`, `failed`, `question`, `stopped`) |
 | GET | `/api/task/<id>` | – | one task, full detail |
-| POST | `/api/task` | `{"name":"Sexy-Sushi","goal":"…","workspace?":"…"}` | `{"taskid":"…","name":"…","state":"planned","workspace_id?"}` (calls `Node.add_task`: a worker session in that workspace, an id or a name; default the node's own) |
-| PUT | `/api/task/<id>` | `{"message":"…"}` | a prompt into that session (a running turn continues with it, a finished one starts a new turn) |
+| POST | `/api/task` | `{"name":"Sexy-Sushi","goal":"…","workspace?":"…"}` | `{"taskid":"…","name":"…","state":"queued|planned","workspace_id?"}` (calls `Node.add_task`: a worker session in that workspace, an id or a name; default the node's own; a full session pool returns a queued task) |
+| PUT | `/api/task/<id>` | `{"message":"…"}` | a prompt into that session (a running turn continues with it, a finished one starts a new turn; if the pool is full that turn is queued) |
 | DELETE | `/api/task/<id>` | – | stops the task |
 | POST | `/api/request` | `{"prompt":"…","workspace?":"…"}` | `{"request_id":"…","status":"queued"}` |
 | POST | `/api/request/poll` | `{"request_id":"…"}` | `{"status":"…","delta":{…}}` |
@@ -160,7 +160,9 @@ curl -H 'Authorization: Bearer secret' http://192.168.1.10:13337/api/nodes/GPUBo
 ## Notes
 
 * Request turns run next to each other (each is a session of its own); `max_sessions` (the
-  settings) and `max_running_agents` (the model config) limit how many generate.
+  settings) and `max_running_agents` (the model config) limit how many generate. A task or request
+  that arrives while every session slot is busy is accepted as `queued` and started FIFO when a
+  slot frees; `POST /api/task` reports that `state`.
 * Notifications and task-finished events are registered as additive listeners
   (`add_notify_listener` / `add_task_finished_listener`) when the host provides them, so the
   ShizoNet service keeps its own hook; stub hosts fall back to the legacy single slot.

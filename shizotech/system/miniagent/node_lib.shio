@@ -241,7 +241,7 @@ class Node {
         taskid = w.add_task(name, goal, role, origin);
 
         if(!taskid)
-            return [ok = false, error = "the workspace '" + std.string(w.name) + "' could not start a session (the session limit of the node may be reached)"];
+            return [ok = false, error = "the workspace '" + std.string(w.name) + "' could not start a session"];
 
         return taskid;
     }

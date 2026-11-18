@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════════════════════════
 //  workspaces.shio — workspace tree, sessions and per-workspace mind state
 //  issue #907: every workspace owns its own .megamind, sessions, architecture
 //  and goals below std.user_path()/miniagent/workspaces.
@@ -641,6 +641,7 @@ class SessionManager {
     cfg_spec = "";
     token = "";
     sessions = [];
+    queue = [];             // session ids accepted while every slot is busy, FIFO
     live_texts = [];
     live_text_seqs = [];
     procs = [];
@@ -665,6 +666,7 @@ class SessionManager {
         cfg_spec = ws_config_spec_absolute(_cfg_spec);
         token = ws_str(_token);
         sessions = [];
+        queue = [];
         live_texts = [];
         live_text_seqs = [];
         procs = [];
@@ -684,6 +686,9 @@ class SessionManager {
         saved_at = [];
         turn_logs = [];
         load_sessions();
+
+        // sessions accepted before the restart and still queued run again
+        dispatch_queue();
     }
 
     // A Workspace registers its physical directory before any session is created.
@@ -777,7 +782,7 @@ class SessionManager {
             s.chat_history_size_at_prompt = std.int(s.chat_history_size_at_prompt);
             restarted = false;
 
-            if(s.status == "starting" || s.status == "running" || s.status == "waiting") {
+            if(s.status == "queued" || s.status == "starting" || s.status == "running" || s.status == "waiting") {
                 recovered = recovered_turn(dir + "/" + sid, s);
 
                 if(std.is_json(recovered)) {
@@ -812,6 +817,9 @@ class SessionManager {
             sessions[s.id] = s;
             loaded++;
 
+            if(s.status == "queued" && !queue_contains(s.id))
+                queue.push_back(s.id);
+
             if(restarted)
                 save_session(sid);
         }
@@ -827,15 +835,59 @@ class SessionManager {
         n = 0;
 
         for(k, s : sessions) {
-            if(s.status == "starting" || s.status == "running" || s.status == "waiting")
+            if(s && (s.status == "starting" || s.status == "running" || s.status == "waiting"))
                 n++;
         }
 
         return n;
     }
 
-    session_dir(sid) {
-        s = sessions[sid];
+    queued_count() {
+        n = 0;
+
+        for(k, s : sessions) {
+            if(s && s.status == "queued")
+                n++;
+        }
+
+        return n;
+    }
+
+    session_record(sid) {
+        sid = ws_str(sid);
+
+        // sessions[sid] on a missing key creates a null entry; use has() so a
+        // deleted session really leaves the map (and stats).
+        if(!sessions.has(sid))
+            return None;
+
+        return sessions[sid];
+    }
+
+    dequeue(sid) {
+        sid = ws_str(sid);
+
+        for(i = 0; i < queue.size(); i++) {
+            if(ws_str(queue[i]) == sid) {
+                queue.erase(i);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    queue_contains(sid) {
+        sid = ws_str(sid);
+
+        for(q : queue) {
+            if(ws_str(q) == sid)
+                return true;
+        }
+
+        return false;
+    }    session_dir(sid) {
+        s = session_record(sid);
 
         if(!s)
             return "";
@@ -1065,7 +1117,7 @@ class SessionManager {
         saved_at[sid] = std.millis_steady();
 
         cs = std.critical_section_named("workspace_session_save:" + path);
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s) {
             cs.release();
@@ -1111,6 +1163,8 @@ class SessionManager {
     }
 
     host_state(status) {
+        if(status == "queued")
+            return "queued";
         if(status == "done")
             return "finished";
         if(status == "failed")
@@ -1127,7 +1181,7 @@ class SessionManager {
     }
 
     session_view(sid) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return None;
@@ -1146,7 +1200,7 @@ class SessionManager {
 
     delete_session(sid) {
         sid = ws_str(sid);
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return [ok = false, error = "unknown session"];
@@ -1159,7 +1213,7 @@ class SessionManager {
         deleting_sessions[sid] = true;
         guard.release();
 
-        if(s.status == "starting" || s.status == "running" || s.status == "waiting")
+        if(s.status == "queued" || s.status == "starting" || s.status == "running" || s.status == "waiting")
             stop_session(sid);
 
         dir = session_dir(sid);
@@ -1235,7 +1289,7 @@ class SessionManager {
     }
 
     session_events(sid) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return [];
@@ -1244,7 +1298,7 @@ class SessionManager {
     }
 
     inspect_task(taskid) {
-        s = sessions[taskid];
+        s = session_record(taskid);
 
         if(!s) {
             return [
@@ -1289,7 +1343,7 @@ class SessionManager {
     }
 
     spawn(sid) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return false;
@@ -1354,6 +1408,90 @@ class SessionManager {
         return true;
     }
 
+    // FIFO dispatcher: a queued session consumes the next free slot. Called after
+    // every terminal/stopped/deleted session and after max_sessions is raised.
+    dispatch_queue() {
+        started = 0;
+
+        for(1) {
+            cs = std.critical_section_named("workspace_sessions");
+
+            if(active_count() >= max_sessions()) {
+                cs.release();
+                break;
+            }
+
+            sid = "";
+
+            for(q : queue) {
+                s = session_record(q);
+
+                if(s && s.status == "queued") {
+                    sid = ws_str(q);
+                    break;
+                }
+            }
+
+            if(!sid) {
+                // stopped or deleted ids are stale, not queue entries
+                for(i = queue.size() - 1; i >= 0; i--) {
+                    s = session_record(queue[i]);
+
+                    if(!s || s.status != "queued")
+                        queue.erase(i);
+                }
+
+                cs.release();
+                break;
+            }
+
+            dequeue(sid);
+            s = session_record(sid);
+            s.status = "starting";
+            s.attempts = 0;
+            s.report = "";
+            s.error = "";
+            s.updated = std.millis();
+            cs.release();
+
+            if(!spawn(sid)) {
+                s = session_record(sid);
+
+                if(s) {
+                    s.status = "failed";
+                    s.error = s.error ? s.error : "the session could not be started";
+                    s.report = s.error;
+                    finish_terminal(s, "failed", s.report, s.error, false);
+                }
+
+                started++;
+                continue;
+            }
+
+            if(ws_str(s.prompt)) {
+                send_json(sid, [type = "prompt", text = s.prompt, reasoning_effort = s.reasoning_effort]);
+                if(s.status == "starting")
+                    s.status = "running";
+                turn_log_reset(sid, s.prompt);
+                push_event(s, "status", [status = s.status]);
+            } else {
+                turn_log_reset(sid, "");
+            }
+
+            s.updated = std.millis();
+            save_session(sid);
+            pump_active[sid] = true;
+
+            std.thread([this, sid]() {
+                this.pump(sid);
+            }).run();
+
+            started++;
+        }
+
+        return started;
+    }
+
     send_json(sid, obj) {
         p = procs[sid];
 
@@ -1408,10 +1546,9 @@ class SessionManager {
 
         cs = std.critical_section_named("workspace_sessions");
 
-        if(active_count() >= max_sessions()) {
-            cs.release();
-            return [ok = false, error = "max_sessions reached"];
-        }
+        // Every task is accepted. When every slot is busy it becomes a queued
+        // session; dispatch_queue() starts it as soon as a slot frees.
+        full = active_count() >= max_sessions();
 
         sid = std.random_hash(16);
 
@@ -1421,7 +1558,7 @@ class SessionManager {
             title = title,
             mode = mode,
             reasoning_effort = reasoning_effort,
-            status = "starting",
+            status = full ? "queued" : "starting",
             prompt = prompt,
             events = [],
             chat_history_size_at_prompt = 0,
@@ -1437,6 +1574,8 @@ class SessionManager {
         ];
 
         sessions[sid] = s;
+        if(full)
+            queue.push_back(sid);
         live_texts[sid] = "";
         live_text_seqs[sid] = 0;
         stop_requested[sid] = false;
@@ -1447,17 +1586,32 @@ class SessionManager {
         fileio.mkdir(dir);
         save_session(sid);
 
+        if(full) {
+            if(prompt) {
+                turn_log_reset(sid, prompt);
+                push_event(s, "user", [text = prompt]);
+                push_event(s, "status", [status = "queued"]);
+                save_session(sid);
+            }
+
+            dispatch_queue();
+            return [ok = true, session = session_view(sid)];
+        }
+
         if(!spawn(sid)) {
             sessions.erase(sid);
+            dequeue(sid);
             return [ok = false, error = s.error];
         }
 
         if(prompt) {
             send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
-            s.status = "running";
+            // a spawn hook may already have set the status (a test fake); do not overwrite it
+            if(s.status == "starting")
+                s.status = "running";
             turn_log_reset(sid, prompt);
             push_event(s, "user", [text = prompt]);
-            push_event(s, "status", [status = "running"]);
+            push_event(s, "status", [status = s.status]);
         }
 
         s.updated = std.millis();
@@ -1475,7 +1629,7 @@ class SessionManager {
 // interactive = false: the prompt comes from the node itself (a goal run that is
     // told to wrap up, an architecture job), not from a person
     send_prompt(sid, prompt, reasoning_effort = None, interactive = true) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return [ok = false, error = "unknown session"];
@@ -1511,27 +1665,88 @@ class SessionManager {
 
         p = procs[sid];
 
-        if(!p || !p.running()) {
-            s.status = "starting";
+        // A prompt while the subprocess is generating updates its running task
+        // (miniagent.task_update); an interrupt would stop that task instead.
+        if(p && p.running()) {
+            send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
+
+            s.prompt = prompt;
+            live_texts[sid] = "";
+            live_text_seqs[sid] = s.seq;
+            s.chat_history_size_at_prompt = history.size();
+            s.status = "running";
+            s.updated = std.millis();
+            if(interactive)
+                last_interactive_ms = std.millis();
+            turn_log_reset(sid, prompt);
+            push_event(s, "user", [text = prompt]);
+            push_event(s, "status", [status = "running"]);
+            save_session(sid);
+
+            return [ok = true, session = session_view(sid)];
+        }
+
+        // The session is accepted but not started yet: the follow-up is part of the
+        // same task and is appended to the prompt that will run when a slot frees.
+        if(s.status == "queued") {
+            s.prompt = ws_str(s.prompt) ? ws_str(s.prompt) + "\n\n" + prompt : prompt;
+            s.chat_history_size_at_prompt = history.size();
+            s.updated = std.millis();
+            if(!queue_contains(sid))
+                queue.push_back(sid);
+
+            turn_log_reset(sid, s.prompt);
+            push_event(s, "user", [text = prompt]);
+            push_event(s, "status", [status = "queued"]);
+            save_session(sid);
+
+            dispatch_queue();
+            return [ok = true, session = session_view(sid)];
+        }
+
+        cs = std.critical_section_named("workspace_sessions");
+
+        if(active_count() >= max_sessions()) {
+            s.status = "queued";
+            s.prompt = prompt;
             s.attempts = 0;
             s.report = "";
             s.error = "";
+            s.chat_history_size_at_prompt = history.size();
+            s.updated = std.millis();
+            if(!queue_contains(sid))
+                queue.push_back(sid);
+            cs.release();
 
-            if(!spawn(sid)) {
+            turn_log_reset(sid, prompt);
+            push_event(s, "user", [text = prompt]);
+            push_event(s, "status", [status = "queued"]);
+            save_session(sid);
+
+            dispatch_queue();
+            return [ok = true, session = session_view(sid)];
+        }
+
+        cs.release();
+
+        s.status = "starting";
+        s.attempts = 0;
+        s.report = "";
+        s.error = "";
+
+        if(!spawn(sid)) {
             sessions.erase(sid);
+            dequeue(sid);
             return [ok = false, error = s.error];
         }
 
-            if(!pump_active[sid]) {
-                pump_active[sid] = true;
-                std.thread([this, sid]() {
-                    this.pump(sid);
-                }).run();
-            }
+        if(!pump_active[sid]) {
+            pump_active[sid] = true;
+            std.thread([this, sid]() {
+                this.pump(sid);
+            }).run();
         }
 
-        // A prompt while the subprocess is generating updates its running task
-        // (miniagent.task_update); an interrupt would stop that task instead.
         send_json(sid, [type = "prompt", text = prompt, reasoning_effort = s.reasoning_effort]);
 
         s.prompt = prompt;
@@ -1540,7 +1755,7 @@ class SessionManager {
         s.chat_history_size_at_prompt = history.size();
         s.status = "running";
         s.updated = std.millis();
-if(interactive)
+        if(interactive)
             last_interactive_ms = std.millis();
         turn_log_reset(sid, prompt);
         push_event(s, "user", [text = prompt]);
@@ -1551,7 +1766,7 @@ if(interactive)
     }
 
     set_mode(sid, mode) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return [ok = false, error = "unknown session"];
@@ -1574,7 +1789,7 @@ if(interactive)
     }
 
     set_reasoning_effort(sid, effort) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return [ok = false, error = "unknown session"];
@@ -1596,10 +1811,12 @@ if(interactive)
     }
 
     stop_session(sid) {
-        s = sessions[sid];
+        s = session_record(sid);
 
         if(!s)
             return false;
+
+        dequeue(sid);
 
         if(s.status == "done" || s.status == "failed" || s.status == "question" || s.status == "stopped") {
             stop_requested[sid] = true;
@@ -1632,12 +1849,15 @@ if(interactive)
                 p.kill();
         }
 
+        // the stopped session frees its slot: a queued task can start now
+        dispatch_queue();
+
         return true;
     }
 
     pump(sid) {
         for(1) {
-            s = sessions[sid];
+            s = session_record(sid);
 
             if(!s)
                 break;
@@ -1902,7 +2122,7 @@ if(interactive)
 
             if(state == "running")
                 active_tasks.push_back(info);
-            else if(state == "planned")
+            else if(state == "planned" || state == "queued")
                 tasks_scheduled.push_back(info);
             else if(state == "finished")
                 tasks_finished.push_back(info);
@@ -1942,7 +2162,7 @@ if(interactive)
             if(s.workspace_id != workspace_id)
                 continue;
 
-            if(s.status == "starting" || s.status == "running" || s.status == "waiting") {
+            if(s.status == "queued" || s.status == "starting" || s.status == "running" || s.status == "waiting") {
                 try {
                     if(stop_session(k))
                         stopped++;
@@ -1994,7 +2214,7 @@ if(interactive)
 
     // One terminal event per task turn. The durable result is written first,
     // the SSE `done` event follows, and listeners are notified at most once.
-    finish_terminal(s, status, report, error = "") {
+    finish_terminal(s, status, report, error = "", dispatch_next = true) {
         if(terminal_reported[s.id])
             return false;
 
@@ -2012,6 +2232,10 @@ if(interactive)
         live_text_seqs[s.id] = e.seq;
         save_session(s.id);
         emit_finished_task(s);
+
+        // A terminal turn frees its slot: the next accepted task starts now.
+        if(dispatch_next)
+            dispatch_queue();
 
         return true;
     }
@@ -2061,6 +2285,7 @@ if(interactive)
         return [
             workers = max_sessions(),
             busy = active_count(),
+            queued = queued_count(),
             interactive_idle_secs = idle,
         ];
     }
@@ -2068,10 +2293,15 @@ if(interactive)
     stats() {
         active = 0;
         running = 0;
+        total = 0;
         tokens = [];
         session_status = std.json();
 
         for(k, s : sessions) {
+            if(!s)
+                continue;
+
+            total++;
             session_status[k] = s.status;
             if(s.status == "starting" || s.status == "running" || s.status == "waiting")
                 active++;
@@ -2086,7 +2316,8 @@ if(interactive)
 
         return [
             active_sessions = active,
-            total_sessions = sessions.size(),
+            queued_sessions = queued_count(),
+            total_sessions = total,
             running_processes = running,
             token_usage = tokens,
             session_status = session_status,

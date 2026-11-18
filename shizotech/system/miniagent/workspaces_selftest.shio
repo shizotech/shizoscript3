@@ -403,7 +403,7 @@ if(!cfg.load(config_path, false)) {
 
     store.set_settings(1);
     second = manager.create_session(proto.workspace.id, "second", "normal", "", "adaptive");
-    check(!second.ok, "max_sessions enforced");
+    check(second.ok && second.session.status == "queued", "max_sessions accepts the next task as queued");
     store.set_settings(3);
 
     notify_count = 0;
@@ -417,6 +417,23 @@ if(!cfg.load(config_path, false)) {
     stopped = manager.get_session(sid);
     check(!std.is_none(stopped) && stopped.status == "stopped", "session stopped");
     check(notify_count == 1, "stopped session reports exactly one terminal event");
+
+    second_started = false;
+    for(i = 0; i < 100; i++) {
+        s2 = manager.get_session(second.session.id);
+
+        if(s2 && (s2.status == "waiting" || s2.status == "running")) {
+            second_started = true;
+            break;
+        }
+
+        std.sleep(100);
+    }
+    check(second_started, "a queued session starts when a slot frees");
+
+    // clean up the worker started by the queue check
+    manager.stop_session(second.session.id);
+
     loaded_session = SessionManager(store, config_path).get_session(sid);
     check(!std.is_none(loaded_session) && loaded_session.status == "stopped", "saved session loaded from .megamind");
     check(!std.is_none(loaded_session) && loaded_session.reasoning_effort == "high", "session reasoning effort survives manager reload");

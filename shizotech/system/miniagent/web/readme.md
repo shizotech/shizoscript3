@@ -130,4 +130,4 @@ because the dashboard's Architecture tab embeds `architecture/index.html`.
   answer, not the handover draft plus a second answer. A `done` status `failed` with "Agent was
   stopped during its run." is the old compaction bug, not an intentional stop.
 
-* A goal with `dry_run: true` says so on its card in the Tasks tab ("Dry run: the prompt is written to history.md, no worker starts"). **Activate** / **Resume** clears that policy (through `clear_dry_run: "yes"` on the status route) before moving it to active; the scheduler then dispatches a worker instead of writing only a prompt to `history.md`.
+* A goal with `dry_run: true` says so on its card in the Tasks tab ("Dry run: the prompt is written to history.md, no worker starts"). **Activate** / **Resume** clears that policy (through `clear_dry_run: "yes"` on the status route) before moving it to active; the scheduler then dispatches a worker instead of writing only a prompt to `history.md`.* A task/session accepted while every session slot is busy is shown in the **Queued** section of the Tasks tab; it starts FIFO when a slot frees, and the section label says it is waiting for a free session.

@@ -87,7 +87,9 @@ scheduler immediately.
    `config.json`, endpoint or API token is written next to the conversation.
 
 8. `workspace_agent.shio`:
-   - loads `chat.json` (the complete conversation, source of truth) and imports it into the agent;
+    - loads `<workspace>/.env/vars` at startup when it exists and exports each `KEY=VALUE` line
+      with `std.set_env`; the `SHARED.shio` command tools run in this process and inherit them;
+    - loads `chat.json` (the complete conversation, source of truth) and imports it into the agent;
    - creates `GoalSpace(workspace + "/.agentspace")` and a `GoalScheduler` for its goal tools;
     - rescans that local scheduler once at startup (`notify = false`) so `get_goals` sees the
       goals that already exist; the registry scheduler, not this local one, dispatches windows;
@@ -129,8 +131,12 @@ scheduler immediately.
     - `GoalScheduler` ticks every 15 s, rescans the workspace `.agentspace`, activates windows
       exactly once, and calls `Workspace.add_task(...)`.
     - `Workspace.add_task` calls the shared `SessionManager.create_session(workspace_id, name, "normal",
-     goal, "adaptive")`, i.e. the goal run is a subprocess session in that same workspace
-      directory. The scheduler settles it through `inspect_task` / the finished listener.
+      goal, "adaptive")`, i.e. the goal run is a subprocess session in that same workspace
+       directory. The scheduler settles it through `inspect_task` / the finished listener.
+    - `max_sessions` is the number of sessions that run at once. When every slot is busy the session is
+      created with `status = "queued"` (not refused); `SessionManager.dispatch_queue()` starts queued
+      sessions FIFO when a session finishes, is stopped or is deleted, and when `max_sessions` is raised.
+      A queued task is still open for the goal scheduler and the router (`state = "queued"`).
     - The Node's own workspace scheduler works the same way for
       `std.user_path()/miniagent/node/.agentspace`; there is no node-level worker pool.
 

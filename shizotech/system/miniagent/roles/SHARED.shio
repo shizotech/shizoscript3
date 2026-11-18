@@ -31,7 +31,7 @@ class local_file_lock
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Tool results
 //
 // Every default tool answers either a useful value (usually [ok = true, ...]) or
@@ -44,7 +44,7 @@ class local_file_lock
 //
 // No tool prints. A worker talks to its host over stdout, one JSON object per
 // line (workspace_agent.shio): std.print / std.cout in a tool is noise there.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Limits of one read_file call (bytes are UTF-8 bytes).
 READ_MAX_LINES = 2000;
@@ -120,6 +120,98 @@ agt_count_lines(text)
 		count++;
 
 	return count;
+}
+
+// UTF-16 BOM: FF FE is little endian, FE FF is big endian.
+agt_utf16_bom(little)
+{
+	var b = std.buffer();
+
+	if(little)
+		b.push(255, 254);
+	else
+		b.push(254, 255);
+
+	return b.string(0, 2);
+}
+
+// Decodes a UTF-16 text (with BOM) to UTF-8. Surrogate pairs become one
+// code point; the BOM itself is skipped.
+agt_utf16_to_utf8(text, little)
+{
+	var bytes = std.buffer();
+	bytes.append(text);
+	var out = std.buffer();
+
+	for(var i = 2; i + 1 < bytes.size(); i += 2) {
+		var lo = 0;
+		var hi = 0;
+
+		if(little) {
+			lo = bytes.read("u8", i);
+			hi = bytes.read("u8", i + 1);
+		}
+		else {
+			lo = bytes.read("u8", i + 1);
+			hi = bytes.read("u8", i);
+		}
+
+		var cu = lo + hi * 256;
+		var cp = cu;
+
+		if(cu >= 55296 && cu <= 56319 && i + 3 < bytes.size()) {
+			var lo2 = 0;
+			var hi2 = 0;
+
+			if(little) {
+				lo2 = bytes.read("u8", i + 2);
+				hi2 = bytes.read("u8", i + 3);
+			}
+			else {
+				lo2 = bytes.read("u8", i + 3);
+				hi2 = bytes.read("u8", i + 2);
+			}
+
+			var cu2 = lo2 + hi2 * 256;
+
+			if(cu2 >= 56320 && cu2 <= 57343) {
+				cp = 65536 + (cu - 55296) * 1024 + (cu2 - 56320);
+				i += 2;
+			}
+		}
+
+		if(cp < 128) {
+			out.push(cp);
+		}
+		else if(cp < 2048) {
+			out.push(192 + std.int(cp / 64), 128 + (cp % 64));
+		}
+		else if(cp < 65536) {
+			out.push(224 + std.int(cp / 4096), 128 + std.int((cp % 4096) / 64), 128 + (cp % 64));
+		}
+		else {
+			out.push(240 + std.int(cp / 262144), 128 + std.int((cp % 262144) / 4096), 128 + std.int((cp % 4096) / 64), 128 + (cp % 64));
+		}
+	}
+
+	return out.string(0, out.size());
+}
+
+// A text file that is UTF-16LE or UTF-16BE (with BOM) is decoded before the
+// binary check, so .md and other text files are not refused just because their
+// bytes contain zeros. Any other text is returned unchanged.
+agt_decode_text(text)
+{
+	if(!text)
+		return text;
+
+	if(text.starts(agt_utf16_bom(true)))
+		return agt_utf16_to_utf8(text, true);
+
+	if(text.starts(agt_utf16_bom(false)))
+		return agt_utf16_to_utf8(text, false);
+
+	return text;
 }
 
 // The byte at `pos` of `text` continues a UTF-8 character (10xxxxxx).
@@ -202,7 +294,7 @@ agt_clip_middle(text, max_bytes, what = "output", also_dropped = 0)
 	return [out = head + marker + tail, truncated = true, dropped_bytes = dropped, total_bytes = total + also_dropped];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Paths
 //
 // agt.filesystem is a fileio.container rooted at the working directory. A path
@@ -216,7 +308,7 @@ agt_clip_middle(text, max_bytes, what = "output", also_dropped = 0)
 //   * nothing a restricted view (agt.env.fs_guard, fs_path_guard below) does not allow.
 //
 // Returns [ok = true, path = <cleaned path>, names_directory] or a failure for the tool to return.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 agt_path_check(agt, raw, mode = "read", what = "path")
 {
 	var given = std.is_none(raw) ? "" : std.string(raw).strip();
@@ -324,7 +416,7 @@ agt_parent_dir(path)
 	return path.substr(0, cut);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // fs_path_guard: an allow-list view of a working directory
 //
 // Stands in for agt.filesystem (it has the methods the file tools call) and lets
@@ -344,7 +436,7 @@ agt_parent_dir(path)
 //     guard = fs_path_guard(agt.filesystem, ["tests/unit"], ["include/api.h"], "blind test writer", "...");
 //     child.filesystem = guard;      // the jail
 //     child.env.fs_guard = guard;    // lets the tools answer the refusal as a normal error
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class fs_path_guard
 {
 	base = None;			// the real fileio.container
@@ -573,7 +665,7 @@ class fs_path_guard
 		return list;
 	}
 
-	// ── what the file tools call ────────────────────────────────────────────
+	// â”€â”€ what the file tools call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	is_valid(path) { return base.is_valid(path); }
 
 	exists(path) { need(path, "stat"); return base.exists(path); }
@@ -602,7 +694,7 @@ class fs_path_guard
 		return done;
 	}
 
-	write_string(path, data)
+	write_string(path, data = "")
 	{
 		need(path, "write");
 		var done = base.write_string(path, data);
@@ -893,7 +985,7 @@ agt_add_read_tools(agt) {
 			if(size_bytes > READ_MAX_FILE_BYTES)
 				return agt_fail("'" + chk.path + "' has " + std.string(size_bytes) + " bytes, too large to load.", "Count its lines with a command (wc -l, find /c /v \"\").");
 
-			var text = fs.read_text(chk.path);
+			var text = agt_decode_text(fs.read_text(chk.path));
 
 			if(!text) {
 				if(size_bytes > 0)
@@ -946,7 +1038,7 @@ agt_add_read_tools(agt) {
 				];
 			}
 
-			var text = fs.read_text(file);
+			var text = agt_decode_text(fs.read_text(file));
 
 			if(!text) {
 				if(size_bytes > 0)
@@ -1319,7 +1411,7 @@ agt_add_code_read_tools(agt) {
 }
 
 
-// ── replace_string: what the model gets when the edit cannot be applied ──────
+// â”€â”€ replace_string: what the model gets when the edit cannot be applied â”€â”€â”€â”€â”€â”€
 
 agt_cut_text(text, max_bytes)
 {
@@ -2086,7 +2178,7 @@ agt_add_skill_tools(agt) {
 	);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Command Sessions
 //
 // Non-blocking process execution for agents (see cli_spec.md).
@@ -2096,7 +2188,7 @@ agt_add_skill_tools(agt) {
 //
 // Sessions are stored in the shared global "command_sessions" registry so that
 // they survive across individual tool calls (and across the agent tree).
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Bounded output buffer: cap how much console output is returned in a single
 // read so a long-running process cannot repeatedly inject its whole history.
@@ -2899,13 +2991,13 @@ agt_add_command_tools(agt)
 
 				if(!st.running)
 				{
-					// Session has exited — drain remaining output and prune
+					// Session has exited â€” drain remaining output and prune
 					cmd_drain_output(proc);
 					pruned_keys.push_back(key);
 				}
 				else
 				{
-					// Still running — collect remaining output
+					// Still running â€” collect remaining output
 					pending_out = cmd_drain_output(proc);
 
 					entry = [
@@ -2953,7 +3045,7 @@ agt_add_command_tools(agt)
 	);
 }
 
-// ── send_file: a document for the owner's chat ───────────────────────────────
+// â”€â”€ send_file: a document for the owner's chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // The node (Megamind) of an agent tree: the agent itself or one of its parents has
 // env.mind (the receptionist and the worker task get it, subagents find it here).
 SHARE_FILE_MAX = 20 * 1024 * 1024;   // Telegram bots can upload 50 MB, the event travels over ShizoNet

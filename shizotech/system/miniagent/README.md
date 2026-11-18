@@ -20,9 +20,9 @@ can be used.
 ## How the parts fit (#1015)
 
 ```
-Telegram chat ─► gateway (router agent) ─┐
-                                          ├─ ShizoNet ─► node A ─ workspaces ─ worker sessions
-browser ─► web interface of ANY node ────┘            ► node B ─ workspaces ─ worker sessions
+Telegram chat Ã¢â€â‚¬Ã¢â€“Âº gateway (router agent) Ã¢â€â‚¬Ã¢â€Â
+                                          Ã¢â€Å“Ã¢â€â‚¬ ShizoNet Ã¢â€â‚¬Ã¢â€“Âº node A Ã¢â€â‚¬ workspaces Ã¢â€â‚¬ worker sessions
+browser Ã¢â€â‚¬Ã¢â€“Âº web interface of ANY node Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Ëœ            Ã¢â€“Âº node B Ã¢â€â‚¬ workspaces Ã¢â€â‚¬ worker sessions
 ```
 
 * A **node** has no agent in front of its work. Every request, from the web interface, from a
@@ -45,24 +45,25 @@ browser ─► web interface of ANY node ────┘            ► node B �
 | File | What it is |
 |---|---|
 | `__init__.shio` | the CLI: the console agent, and the dispatch to `--node` / `--init` / `--telegram-gateway` |
-| `model_config.shio` | `ModelConfig()` — endpoint/model/generation config, flat and profile JSON layouts |
+| `model_config.shio` | `ModelConfig()` Ã¢â‚¬â€ endpoint/model/generation config, flat and profile JSON layouts |
 | `model_config_cli.shio` | shared CLI config resolver: named configs, cwd search, profiles, create/list/save |
 | `miniagent.shio` | the agent class: role loading, tools, subagents, LLM turn loop |
-| `node_lib.shio` | `Node` — the **AI node** as a class: one `WorkspaceRegistry`, its own "General" workspace, the ShizoNet service, the peers, optional web/API (`node_architecture.md`) |
+| `node_lib.shio` | `Node` Ã¢â‚¬â€ the **AI node** as a class: one `WorkspaceRegistry`, its own "General" workspace, the ShizoNet service, the peers, optional web/API (`node_architecture.md`) |
 | `node.shio` | the command line of a node (`shz miniagent --node ...`), nothing else |
-| `node_peers.shio` | `NodePeers` — the other nodes and gateways this node sees on ShizoNet, and one API call to one of them |
+| `node_peers.shio` | `NodePeers` Ã¢â‚¬â€ the other nodes and gateways this node sees on ShizoNet, and one API call to one of them |
 | `workspaces.shio` | `Workspace`, `WorkspaceRegistry`, `WorkspaceStore`, `SessionManager`, the live feed and the workspace API (`workspace_spec.md`) |
 | `workspace_agent.shio` | the subprocess of one worker session |
-| `api_router.shio` | `ApiRouter` — the route table of the JSON API, served over HTTP and callable without HTTP (`dispatch`) |
+| `workspace_env.shio` | workspace-local env vars from `<workspace>/.env/vars`, exported with `std.set_env` for the session and its command tools |
+| `api_router.shio` | `ApiRouter` Ã¢â‚¬â€ the route table of the JSON API, served over HTTP and callable without HTTP (`dispatch`) |
 | `node_api.shio` | the JSON API of a `Node` (`node_api.md`) |
 | `web_ui.shio` + `web/` | the web interface (`--web`): the dashboard, the calls for other nodes (`/api/nodes/...`) |
-| `shizonet_ai.shio` | the node ⇄ gateway wire protocol, both sides, one place (`router_api.md`) |
-| `router_api.shio` | `Router()` — the runtime of the **router agent**: discovers the nodes, starts worker sessions on them, keeps the threads, mirrors the task state, forwards node events |
-| `telegram_router.shio` | `TelegramRouter : Router` — the Telegram gateway: owner and guest chats, every task report pushed into the chat that started it |
+| `shizonet_ai.shio` | the node Ã¢â€¡â€ž gateway wire protocol, both sides, one place (`router_api.md`) |
+| `router_api.shio` | `Router()` Ã¢â‚¬â€ the runtime of the **router agent**: discovers the nodes, starts worker sessions on them, keeps the threads, mirrors the task state, forwards node events |
+| `telegram_router.shio` | `TelegramRouter : Router` Ã¢â‚¬â€ the Telegram gateway: owner and guest chats, every task report pushed into the chat that started it |
 | `telegram_gateway.shio` | the runnable of the gateway (`shz miniagent --telegram-gateway`) |
 | `gateway_config.shio` | the gateway settings of the web interface and `GatewayRunner`, which starts the gateway with the node |
 | `router.shio` | a **demo** console around `Router()` |
-| `telegram_client.shio` | `shz miniagent.telegram_client --bot-token ... --workspace_dir <dir>` — an isolated Telegram client for one workspace: 24/7 receptionist, worker only in a configured local window, no ShizoNet |
+| `telegram_client.shio` | `shz miniagent.telegram_client --bot-token ... --workspace_dir <dir>` Ã¢â‚¬â€ an isolated Telegram client for one workspace: 24/7 receptionist, worker only in a configured local window, no ShizoNet |
 | `architecture.shio` | the architecture graph: a workspace's `.megamind/architecture/architecture.json`, plus the node-level graph; pending edits, analyze / plan / apply jobs (`architecture_spec.md`) |
 | `goal_engine.shio` | scheduled goals: `.agentspace/` Markdown goals, validation, the deterministic `GoalScheduler` (`goals_spec.md`) |
 | `goal_time.shio` / `goal_frontmatter.shio` | time zones + DST, work windows / the front matter reader and writer |
@@ -132,6 +133,21 @@ shz miniagent --telegram-gateway --config ./endpoints.json#default     a small m
 A worker session receives the config spec as `--config-spec`; no endpoint or API token is stored
 per session.
 
+## Workspace environment variables
+
+A worker session reads `<workspace>/.env/vars` when it exists and exports every line with
+`std.set_env` before its first turn. The lines are `KEY=VALUE`:
+
+```
+ENV_VAR=Something
+ENV_VAR2=SomethingElse
+```
+
+Blank lines and lines starting with `#` are ignored. Because `std.set_env` sets the environment of
+the session process, the command tools of `roles/SHARED.shio` (`command_start`, `command_wait`,
+`command_read`, ...) inherit the variables in the commands they run. The file is read once at
+session start; changing it does not affect a session that is already running.
+
 ## Web interface
 
 ```
@@ -139,7 +155,7 @@ shz miniagent --node --web
 shz miniagent --node --web --port 8080 --api-token secret --config gpu
 ```
 
-Serves http://localhost:13337/ — every page works offline (no CDN). `web/readme.md` has the
+Serves http://localhost:13337/ Ã¢â‚¬â€ every page works offline (no CDN). `web/readme.md` has the
 page internals.
 
 * **Sidebar: every node of the network**, each one collapsible: this node first, then the others
@@ -147,16 +163,16 @@ page internals.
   workspaces (the node's own one is "General"), under a workspace its sessions. `+` on a node
   makes a workspace **on that node**, `+` on a workspace starts a session. Everything a node
   shows for itself works for the others: sessions, tasks, architecture, settings.
-* **Chat** — a session of a workspace. The first prompt starts it. Reasoning is one line (the
+* **Chat** Ã¢â‚¬â€ a session of a workspace. The first prompt starts it. Reasoning is one line (the
   sentence being thought); a click opens the whole text. A tool call is one line with its
   state; a click shows **every parameter and the result**, the square icon opens it in a window
   with a copy button. Opening a session in the middle of a turn shows the turn so far and
   continues live. Ctrl+Enter sends.
-* **Tasks** — the scheduled goals and the sessions of the workspace: running, needs input,
+* **Tasks** Ã¢â‚¬â€ the scheduled goals and the sessions of the workspace: running, needs input,
   scheduled, proposed, finished. The page is told about changes by the node (`GET /api/live`,
   a long-poll) and patches what differs; nothing is redrawn on a timer. *All tasks* shows the
   same for every workspace of every online node.
-* **Architecture** — the codebase as a per-workspace node graph (`architecture_spec.md`). On first use
+* **Architecture** Ã¢â‚¬â€ the codebase as a per-workspace node graph (`architecture_spec.md`). On first use
    *Analyze the codebase* lets a workspace task agent write the workspace's
    `.megamind/architecture/architecture.json` (modules, files, services with a one-line purpose;
    calls / data / includes / events / network between them). Add, change, connect or remove nodes
@@ -164,8 +180,8 @@ page internals.
    (no code changes), you give feedback and revise it; *Apply* lets a task agent implement them,
    and when it finishes the edits become the model. *Re-sync* analyzes again (positions and pending
    edits stay). Each job is one `adaptive` workspace task; a big change set is split into subtasks
-   (one per group of edits) within `max_running_agents` — `architecture_spec.md`, "Context".
-* **Settings** (per node) — how many sessions may run at once, and the **Telegram gateway**:
+   (one per group of edits) within `max_running_agents` Ã¢â‚¬â€ `architecture_spec.md`, "Context".
+* **Settings** (per node) Ã¢â‚¬â€ how many sessions may run at once, and the **Telegram gateway**:
   bot token, name, model config, "start the gateway with this node". A node with that switched
   on starts the gateway as a process of its own and restarts it when it ends
   (`gateway_config.shio`; `--no-gateway` leaves it off for one run).
@@ -201,7 +217,7 @@ clean up the repository", "check the server logs every 2 days at 06:00" (`schedu
 "check the service every 5 minutes" (`schedule.every: 5m`),
 "fix GitHub issues from 05:00 to 10:00". Goals are Markdown files in
 `.agentspace/goals/<status>/<id>/goal.md` (front matter = schedule + policy, body = the
-instructions); the Node's own workspace scheduler — plain code — activates each window exactly once, applies
+instructions); the Node's own workspace scheduler Ã¢â‚¬â€ plain code Ã¢â‚¬â€ activates each window exactly once, applies
 the stop policy at the window end, retries, verifies and reports. Contract: `goals_spec.md`.
 The Node's own goal store is `std.user_path()/miniagent/node/.agentspace`; every project workspace
 also has its own `.agentspace`, and all registered workspace schedulers run at node startup.
@@ -214,7 +230,7 @@ shz miniagent.goals list | show <id> | validate | run <id> [--dry-run] | pause <
 ```
 
 * Edit the files directly; an invalid edit is reported once and the last valid revision keeps
-  running. Moving a goal folder (`active/` → `paused/`) is the status change.
+  running. Moving a goal folder (`active/` Ã¢â€ â€™ `paused/`) is the status change.
 * From a chat or a session: "tonight, try X" reaches a worker session of the workspace, which
   resolves "tonight" with `preferences/scheduling.md` and creates the goal through validated
   tools (`get_goals`, `create_goal`, `update_goal`, `set_goal_status`, `run_goal_now`). Goals
@@ -236,7 +252,9 @@ around every tool call is `miniagent.add_tool()`.
   view) with its text and the name of the tool, plus the `&` parameters the call left out;
   before, every exception became "The tool call caused an unexpected exception.".
 * **Results are bounded and say so.** `read_file`: 2000 lines / 80 KB per call with
-  `total_lines` and `next_start_line`; `list_dir`: 400 files and 400 directories (200 each
+   `total_lines` and `next_start_line`; a UTF-16LE or UTF-16BE text file with a BOM is decoded
+   to UTF-8 before the binary check, so `.md` and other text files are not refused because
+   their bytes contain zeros; `list_dir`: 400 files and 400 directories (200 each
   recursive) with the totals; command output: head and tail of 40 KB with the dropped byte
   count. Whatever still comes out above 200 KB is cut by the bridge: a structured result keeps
   every entry and loses the middle of its long texts, a plain text keeps head and tail.
@@ -261,7 +279,7 @@ around every tool call is `miniagent.add_tool()`.
 
 `max_running_agents` (model config) counts agents that **generate** at the same time. Agents
 form a tree and a parent that waits for its children does not generate, so a waiting parent
-lends its slot to one child: a chain root → child → grandchild uses one slot; only the second
+lends its slot to one child: a chain root Ã¢â€ â€™ child Ã¢â€ â€™ grandchild uses one slot; only the second
 and further children running in parallel (fork siblings, batch items) take more. A workspace
 session task takes its slot from `max_running_agents`.
 `agent_slots.shio`, `tests/agent_slots_test.shio`.
@@ -312,7 +330,7 @@ coming online is announced once (the router's own discovery wins, the node's
 `ai_event` push of the same state is dropped) and a finished task is announced
 once per turn (the poller's `task_state` carries the report, the node's `task_finished`
 push of the same state is dropped). `on_notify` is a second sink for **local**
-`notify_user()` only — register `on_event` *or* `on_notify`, not both, or your own
+`notify_user()` only Ã¢â‚¬â€ register `on_event` *or* `on_notify`, not both, or your own
 notifications reach the user twice.
 
 One user goal is **one task**: `add_task` is idempotent (the same goal text on the same
@@ -346,7 +364,7 @@ shz miniagent --telegram-gateway [--bot-token 123456:ABC...]
     [--trusted <path>] [--no-stream] [--verbose-events]
 ```
 
-Without `--bot-token` it uses the token saved in the web interface (Settings → Telegram
+Without `--bot-token` it uses the token saved in the web interface (Settings Ã¢â€ â€™ Telegram
 gateway); with "start the gateway with this node" switched on there, `shz miniagent --node`
 starts and supervises it, so one command runs the node, the web interface and the bot.
 
@@ -358,7 +376,7 @@ starts and supervises it, so one command runs the node, the web interface and th
             {"chatid":777,"name":"Anna","role":"guest","node":"GPUBox","workspace":"Shop Frontend"}]}
   ```
 
-  No file / empty list → **the first chat that messages the bot becomes the owner
+  No file / empty list Ã¢â€ â€™ **the first chat that messages the bot becomes the owner
   chat** and is written to the file. Every other chat is ignored: the bot never answers
   strangers, and the owner chats are told once that a new chat knocked, with the command that
   lets it in. `/allow <chatid> [name]`, `/deny <chatid>` and `/forget` edit the list from the
@@ -372,11 +390,11 @@ starts and supervises it, so one command runs the node, the web interface and th
   that chat and the turn's progress streams as a Telegram draft (`--no-stream` off).
   The agent's `finish(report)` text is what you see: a job gets the routing
   confirmation with the thread label, a question gets an answer, and a message the agent cannot
-  place gets a question back ("Which workspace do you mean?") — a turn that routes nothing is
+  place gets a question back ("Which workspace do you mean?") Ã¢â‚¬â€ a turn that routes nothing is
   never reported as an error, and streaming never breaks a turn.
-* **Notifications — only what matters.** A chat gets the router agent's answer and every
+* **Notifications Ã¢â‚¬â€ only what matters.** A chat gets the router agent's answer and every
   terminal fact about **its** tasks: **finished / failed / lost / stopped / a question**, with
-  the thread label, the node, the workspace (`T12 · GPUBox / Shop Frontend`) and the worker's
+  the thread label, the node, the workspace (`T12 Ã‚Â· GPUBox / Shop Frontend`) and the worker's
   report, exactly one message per turn (the Router de-duplicates the node push and the poller
   transition; an empty report renders a visible fallback), a task that **stalled** (open for
   15 minutes with no progress, once per episode, `--stall <ms>`), and a `notify` from a node.
@@ -386,7 +404,7 @@ starts and supervises it, so one command runs the node, the web interface and th
   by the router agent with the reason `add_task_error()` gives (an unknown workspace names the
   ones the node has), a follow-up that could not be delivered says why
   (`update_task_error()`), and a goal run the node refuses is notified by the workspace
-  scheduler — nothing fails silently.
+  scheduler Ã¢â‚¬â€ nothing fails silently.
   Node online/offline, queued/running progress and tool calls are **not** sent;
   `--verbose-events` restores the full event stream.
 * **Follow-ups and files.** Messages a chat sends in quick succession are one turn (Telegram
@@ -410,12 +428,12 @@ starts and supervises it, so one command runs the node, the web interface and th
 The router role (`roles/router/`) is a coordinator only: it gets `get_nodes`,
 `get_node_overview`, `get_tasks` (the fleet-wide task mirror), `get_goals`, `start_task`,
 `update_task`, `stop_task`, `inspect_task`,
-`get_last_actions`, `notify`, `finish(report)` — no file, command or execution tools, so it
+`get_last_actions`, `notify`, `finish(report)` Ã¢â‚¬â€ no file, command or execution tools, so it
 cannot do the work it routes: start / stop / continue / check tasks across the network, and
 every node notification lands on `on_event` so the owner can show it to the user.
 `get_nodes` reports per node its workspaces and whether it has a goal system (`goals`), and the
-role relays every tool error into its `finish(report)` — the concrete reason of a refused
-start (`add_task_error()`), a schedule request aimed at a node without goals — so the user
+role relays every tool error into its `finish(report)` Ã¢â‚¬â€ the concrete reason of a refused
+start (`add_task_error()`), a schedule request aimed at a node without goals Ã¢â‚¬â€ so the user
 learns *why*, not only *that* something did not happen (`roles/router/ROLE.md`).
 
 Demo console (the product is `Router()` + the `router` role):
@@ -482,7 +500,7 @@ a Telegram thread: an error fails that one task / turn with its reason.
 
 A node announces itself with the ShizoNet props `AINode` (protocol version) and
 `AINodeInfo` (name, description, model, load, task counts, `goals`, `api` = it answers its API
-over ShizoNet, and its **workspaces** with their descriptions) — that table is the data the
+over ShizoNet, and its **workspaces** with their descriptions) Ã¢â‚¬â€ that table is the data the
 router **agent** reads when it picks a node and a workspace. The node pushes task
 lifecycle and notification events to the gateways, which is how a task started on one server
 reaches a chat on another.
@@ -508,7 +526,7 @@ task's terminal answer. An unusable warning report falls back to `compact_handov
 recurses into every child registered in `_child_agents` (a child's own `stop()`
 walks its subtree), so one call on the root ends generation everywhere.
 
-* Live children stay in `_child_agents` — that list is the propagation path. Pruning
+* Live children stay in `_child_agents` Ã¢â‚¬â€ that list is the propagation path. Pruning
   it down to the newest child leaves the siblings generating after a stop.
 * `should_stop()` is true for an agent whose **ancestor** was stopped. `task()`
   refuses to start under a stopped ancestor, and a child created under a stopped
@@ -518,7 +536,7 @@ walks its subtree), so one call on the root ends generation everywhere.
   the parent keeps running and can continue that child later.
 * Blocking tools (`sleep`, `command_start` / `command_read` / `command_wait`) poll
   `should_stop()`: a stopped agent leaves the wait instead of sitting out the
-  timeout. A command process is never killed by a stop — only the wait ends.
+  timeout. A command process is never killed by a stop Ã¢â‚¬â€ only the wait ends.
 * `Node.stop_task()` stops the **running** workspace session (and with it its whole
   subagent tree), not only a task that was still queued.
 
@@ -551,8 +569,12 @@ shz shizonet_ai_selftest.shio   protocol only: node service + gateway service, t
                                  over the wire, no JSON boolean in any payload (ai_wire)
                                  -> 130 checks
 shz workspaces_selftest.shio    workspace store, session manager, scheduler, deletion, the
-                                  agent protocol, the turn log of a running turn
-                                  -> 88 checks
+                                  agent protocol, the turn log of a running turn, and the
+                                  max_sessions queue (a full pool accepts a queued task; the oldest starts when a slot frees)
+                                  -> 91 checks
+shz tests/session_queue_test.shio  max_sessions queue: a full pool accepts tasks instead of
+                                  refusing them; FIFO start when a slot frees; prompt and delete behavior
+                                  -> 85 checks
 shz node_api_selftest.shio      node JSON API over real HTTP, stub host
                                  -> 40 checks
 shz web_ui_selftest.shio         the web interface under browser load, stub host: every page
@@ -608,7 +630,7 @@ shz tests/stop_propagation_test.shio  miniagent.stop() across the agent tree, no
 shz tests/feedback_chain_test.shio  the whole feedback chain, no LLM: a stub AI node
                                   behind the real ShizoNet service, the real Router
                                   mirror + poller + watchdog, the real TelegramRouter
-                                  into a fake bot — the node's report, the failure
+                                  into a fake bot Ã¢â‚¬â€ the node's report, the failure
                                   reason, the stall, the notify, the refused start
                                   and the goals flag all arrive in the chat, a long
                                   report / notify in full as an attached .md, a
@@ -620,7 +642,7 @@ shz tests/receptionist_tools_test.shio  the receptionist role (the isolated Tele
 ```
 
 ShizoNet on one machine: only the process binding UDP **6454** hears every beacon, so a
-selftest starts the router first and gives the stub nodes explicit ports (6455, 6456) —
+selftest starts the router first and gives the stub nodes explicit ports (6455, 6456) Ã¢â‚¬â€
 and a check that asks a *second* server to see a *third* one can never pass: ask the
 6454 owner. The same holds for real processes on one machine: start the one that has to see
 all the others first (the gateway, or the node whose web interface you open). The tests that
@@ -644,6 +666,11 @@ do not run next to each other or next to a node on the same machine.
 - Architecture and tasks are per `Workspace`, driven by its own `ArchitectureBoard`,
   `GoalScheduler` and task API; `Node` routes tasks to a workspace.
 - `max_sessions` is editable in the settings; `max_running_agents` comes from the model config.
+- **Tasks are always accepted.** When every session slot is busy, a new task becomes a `queued`
+  session (`session.json.status = "queued"`, `inspect_task.state = "queued"`) instead of being
+  refused. The registry keeps them FIFO and starts the oldest one as soon as a session ends,
+  is stopped or is deleted; raising `max_sessions` also starts waiting tasks. `stats` reports
+  `active_sessions` and `queued_sessions`, and the dashboard shows a **Queued** section.
 - Removing a workspace stops and deletes its sessions automatically; its project files stay on
   disk. A workspace with sub-workspaces is refused until the children are removed first.
 - The page follows a node with one long-poll (`GET /api/live`): sessions, token usage,

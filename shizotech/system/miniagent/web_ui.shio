@@ -104,6 +104,7 @@ web_ui_parse(args) {
 
 WEB_UI_REMOTE_EVENTS_WAIT_MS = 3000;    // long-poll of a remote session's events
 WEB_UI_REMOTE_EVENTS_FAILS = 5;         // failed polls in a row that end a remote stream
+WEB_UI_SESSION_LOAD_TIMEOUT_MS = 60000; // GET /api/sessions/<id> reads the whole chat history
 
 web_ui_node_self(node, cfg) {
     name = "Node";
@@ -284,8 +285,13 @@ web_ui_node_routes(http, node, cfg, api_token) {
         timeout = AI_TIMEOUT_API;
         wait_ms = node_api_int(req.query_params, "wait", 0);
 
-        if(wait_ms > 0)
+        if(wait_ms > 0) {
             timeout = wait_ms + AI_TIMEOUT_CONTROL;
+        } else if(std.string(req.method) == "GET" && path.starts("/api/sessions/") && !path.ends("/events")) {
+            // opening a session reads its whole chat history: a long one can take much
+            // longer than a normal API call
+            timeout = WEB_UI_SESSION_LOAD_TIMEOUT_MS;
+        }
 
         // the query of the page, without the token of THIS node
         query = std.json();

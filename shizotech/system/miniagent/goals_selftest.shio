@@ -986,9 +986,13 @@ section("agent tools (what the receptionist calls)");
 ctx = goal_tool_list(sch4);
 check("get_goals gives the time zone and the named windows", ctx.timezone == "Europe/Berlin" && ctx.windows.has("tonight") && ctx.now.length() > 0, std.string(ctx.timezone));
 
-cr = goal_tool_create(sch4, [title = "Try a new app idea", instructions = "Explore an app idea for musicians.", schedule_type = "once", date = "2026-11-02", window = "tonight"]);
+cr = goal_tool_create(sch4, [title = "Try a new app idea", instructions = "Explore an app idea for musicians.", schedule_type = "once", date = "2026-11-02", window = "tonight", activate = "no"]);
 check("create_goal: 'tonight' becomes a once goal 04:00-10:00", cr.ok && cr.schedule.contains("04:00-10:00") && cr.schedule.contains("Europe/Berlin"), gj_str(cr, "error", std.string(cr)));
-check("create_goal without activate is proposed", cr.ok && cr.status == "proposed" && fileio.exists(ROOT + "/goals/proposed/try-a-new-app-idea/goal.md"), "");
+check("create_goal with activate=no is proposed", cr.ok && cr.status == "proposed" && fileio.exists(ROOT + "/goals/proposed/try-a-new-app-idea/goal.md"), "");
+
+dflt = goal_tool_create(sch4, [title = "Default activation", instructions = "Check that creating activates.", schedule_type = "manual"]);
+check("create_goal without activate is active", dflt.ok && dflt.status == "active" && fileio.exists(ROOT + "/goals/active/default-activation/goal.md"), std.string(dflt));
+goal_tool_set_status(sch4, [id = "default-activation", status = "archive"]);
 
 dup = goal_tool_create(sch4, [title = "Try a new app idea", instructions = "again", schedule_type = "once", date = "2026-11-03", window = "tonight"]);
 check("create_goal refuses the same goal twice", !dup.ok && gj_str(dup, "duplicate_of", "") == "try-a-new-app-idea", gj_str(dup, "error", ""));
@@ -1005,10 +1009,10 @@ check("a goal that may release stays proposed even with activate=yes", hi.ok && 
 act = goal_tool_create(sch4, [title = "Fix GitHub issues", instructions = "Fix eligible issues.", schedule_type = "windowed", days = "weekdays", window = "tonight", start = "05:00", end = "10:00", activate = "yes"]);
 check("an explicit 05:00-10:00 wins over 'tonight' and is active", act.ok && act.status == "active" && act.schedule.contains("05:00-10:00"), std.string(act));
 
-recurring_tool = goal_tool_create_recurring(sch4, [title = "Recurring task tool test", instructions = "Check the scheduled report.", every = "3d", start = "07:00", duration = "20m"]);
-check("recurring task tool creates an interval goal proposed by default", recurring_tool.ok && recurring_tool.status == "proposed" && recurring_tool.schedule.contains("every 3d"), std.string(recurring_tool));
-recurring_days_tool = goal_tool_create_recurring(sch4, [title = "Bicycle maintenance patrol", instructions = "Inspect the chain and inflate the tires before each commute.", days = "weekdays", window = "tonight"]);
-check("recurring task tool accepts weekday cadence", recurring_days_tool.ok && recurring_days_tool.status == "proposed" && recurring_days_tool.schedule.contains("mon,tue,wed,thu,fri"), std.string(recurring_days_tool));
+recurring_tool = goal_tool_create_recurring(sch4, [title = "Recurring task tool test", instructions = "Check the scheduled report.", every = "3d", start = "07:00", duration = "20m", activate = "no"]);
+check("recurring task tool with activate=no is proposed", recurring_tool.ok && recurring_tool.status == "proposed" && recurring_tool.schedule.contains("every 3d"), std.string(recurring_tool));
+recurring_days_tool = goal_tool_create_recurring(sch4, [title = "Bicycle maintenance patrol", instructions = "Inspect the chain and inflate the tires before each commute.", days = "weekdays", window = "tonight", activate = "no"]);
+check("recurring task tool accepts weekday cadence (proposed with activate=no)", recurring_days_tool.ok && recurring_days_tool.status == "proposed" && recurring_days_tool.schedule.contains("mon,tue,wed,thu,fri"), std.string(recurring_days_tool));
 check("recurring task tool persists its interval", goal_read(ROOT + "/goals/proposed/recurring-task-tool-test/goal.md").contains("every: 3d"), "");
 
 ev = goal_tool_create(sch4, [title = "Check the server logs", instructions = "Read the last 200 lines of the server log.", schedule_type = "recurring", every = "2d", start = "06:00", duration = "30m", activate = "yes"]);

@@ -235,7 +235,7 @@ structured calls; code validates them.
 | Tool | Does |
 |---|---|
 | `get_goals()` | local time, time zone, named windows, defaults, precedence rules, the goals (read from the files and the ledger when the scheduler object never ticks: a workspace worker) |
-| `create_goal(title, instructions, schedule_type, date?, days?, every?, window?, start?, end?, duration?, timezone?, ..., activate?)` | validated create; refuses the same id and near duplicates (`allow_duplicate=yes` overrides); `activate` missing → `proposed`; goals that allow merge/release/deploy/delete stay `proposed` |
+| `create_goal(title, instructions, schedule_type, date?, days?, every?, window?, start?, end?, duration?, timezone?, ..., activate?)` | validated create; refuses the same id and near duplicates (`allow_duplicate=yes` overrides); `activate` missing → `active` (creating activates; `activate=no` keeps it `proposed`); goals that allow merge/release/deploy/delete stay `proposed` |
 | `update_goal(id, revision, ...)` | changes only the given fields; refuses a stale revision; a given field replaces the stored one it excludes (`start` ↔ `window`, `end` ↔ `duration`, `days` ↔ `every`, a sub-day `every` → window and times) |
 | `set_goal_status(id, status)` | the folder move |
 | `run_goal_now(id)` | queues a run (the tick thread starts it) |

@@ -24,7 +24,7 @@ sessions, architecture and tasks live inside the workspace directory, not in the
 - `shz miniagent --init [<dir>] [--name <n>]` registers a directory (default: the current one) as a real workspace, creates `.megamind`/`.agentspace`, writes `AGENTS.md` if missing, and returns without starting the node/web/ShizoNet. An already registered directory is reused.
 - `WorkspaceStore.ensure_agents_md(path)` writes a short project-agent `AGENTS.md` when missing; it never overwrites an existing project file. It runs on workspace creation and on load of registered non-root workspaces.
 - `workspaces.json` is the registry.
-- `settings.json` holds `max_sessions` (default 2).
+- `settings.json` holds `max_sessions` (default 2), the number of sessions that may run at once. Further tasks are not refused: they are accepted with `status = "queued"` and started FIFO when a slot frees.
 - `WorkspaceStore.ensure_agentspace` initializes each real workspace/subworkspace with `.agentspace/` when registered and repairs missing template files on load (2026-11-06). The synthetic `root` workspace does not get its own `.agentspace/`.
 - `.agentspace/` is the sole goal-engine root per real workspace: preferences, templates, goals and runtime ledger. It is initialized from the bundled `agentspace_template/` without overwriting existing files. Existing goal files under the former `.megamind/tasks/` root are imported here on workspace load; the legacy directory is left intact as a backup and is no longer read or written. All registered real workspace schedulers start at node startup; the synthetic `root` workspace has no project goal store.
 - The Node's own goal/architecture store is node-level at `std.user_path()/miniagent/node`: `.agentspace` and `.megamind/architecture`. The Node's own Workspace ("General", id `node`) lives there too, with its sessions under `node/.megamind/sessions`; the registry adopts it (`WorkspaceRegistry.adopt`), so every route of this spec takes `node` as a workspace id. It is independent of the directory the node was started from.
@@ -67,7 +67,7 @@ The description is what a gateway's router agent reads when it picks the workspa
 ```json
 {"id":"...","workspace_id":"...","title":"...","mode":"normal|goal",
  "reasoning_effort":"low|medium|high",
- "status":"starting|running|waiting|done|failed|question|stopped",
+ "status":"queued|starting|running|waiting|done|failed|question|stopped",
  "prompt":"...","events":[...],"chat_history_size_at_prompt":0,
  "token_usage":0,"created":123,"updated":123,
  "origin":"web|net|"}
@@ -77,7 +77,8 @@ Routes:
 
 - `GET /api/workspaces/<id>/sessions`
 - `POST /api/workspaces/<id>/sessions` body `{title?, mode?, prompt?, reasoning_effort?}`; effort defaults to
-  `medium` and accepts `low`, `medium` or `high`. At most `max_sessions` active sessions globally.
+  `medium` and accepts `low`, `medium` or `high`. At most `max_sessions` sessions run at once; a session created
+  while all slots are busy is accepted as `status = "queued"` and started when a slot frees.
 - `GET /api/sessions/<id>` includes the complete `chat_history` plus in-flight `live_text`; the event array is only a bounded replay window and must not be used as the full transcript. While a turn runs it also has `turn` (the turn so far as items, below) and `turn_seq` (the `seq` of the last event that is in it), and its `status` is the current one.
 - `GET /api/sessions/<id>/events?since=<seq>&wait=<ms>` => `{session_id, status, seq, terminal, events}`: the events of the stream as JSON. It answers at once when there are newer ones or the session is terminal, otherwise when one arrives or after `wait` (at most 10 s). For a caller that cannot hold an SSE stream: a node that serves another node's session (`web_ui_remote_stream`).
 - `DELETE /api/sessions/<id>` stops the worker if needed and permanently removes that session's stored files.
@@ -89,7 +90,7 @@ Routes:
 - `POST /api/sessions/<id>/stop`
 - `GET /api/sessions/<id>/stream` => SSE `delta`, `user`, `status`, `done`, `error`, `stats`
 - `GET /api/settings`, `PUT /api/settings` body `{max_sessions}`
-- `GET /api/stats` => active sessions, running processes, token usage and a `session_status` map keyed by
+- `GET /api/stats` => active and queued sessions, running processes, token usage and a `session_status` map keyed by
   session ID.
 - `GET /api/live?since=<rev>&wait=<ms>&workspace=<id>` => the live feed, below.
 - `GET /api/tasks/overview` => `{workspaces: [{id, name, goals, sessions}]}`, the tasks of every
@@ -148,7 +149,10 @@ The same route works for another node through `/api/nodes/<id>/api/live`.
 ## Session agent protocol
 
 `workspace_agent.shio` runs in the workspace directory, with `--workspace`, `--config-spec`,
-`--session-id`, `--history-file`, `--reasoning-effort`, `--role`, `--mode`. The spec is a
+`--session-id`, `--history-file`, `--reasoning-effort`, `--role`, `--mode`. It reads
+`<workspace>/.env/vars` at session start when the file exists (`KEY=VALUE` lines; blank lines and
+`#` comments are ignored) and exports every variable with `std.set_env`, so the command tools of
+`roles/SHARED.shio` inherit them in the commands they run. The spec is a
 `name|path[#profile]`; `model_config_cli` resolves it and falls back to the default config. No
 `config.json` is written per session. It emits one JSON object per line on stdout:
 
@@ -194,7 +198,7 @@ the per-workspace scheduler and board.
 
 `Workspace` is the duck-typed host for architecture and goals:
 
-- `add_task(name, goal, role)` -> session id (empty = refused)
+- `add_task(name, goal, role)` -> session id (empty = process start failed; a busy slot returns a `queued` task)
 - `inspect_task(taskid)` -> canonical JSON `{ok, taskid, state, active, report, error, name, token_usage, last_update_ms}`; unknown -> `ok=false, state="lost", error="not found"`.
 - `get_overview()` / `tasks()`
 - `stop_task(taskid)`
@@ -234,7 +238,7 @@ The session agent initializes the workspace goal store and registers the validat
 `create_goal`, `create_recurring_goal`, `update_goal`, `set_goal_status`, and `run_goal_now` tools plus
 `create_workspace_task` for one-off tasks. In the goal engine, a recurring task is a recurring Goal, not a
 separate task system or just an abstract objective. Chat workers must use `create_recurring_goal` for repeated
-work (weekdays or an interval such as `every: 5m` or `every: 2d`); `create_workspace_task` is strictly one-off. Sub-day intervals run continuously from activation and need no time window. A recurring goal stays proposed until the user approves activation.
+work (weekdays or an interval such as `every: 5m` or `every: 2d`); `create_workspace_task` is strictly one-off. Sub-day intervals run continuously from activation and need no time window. A recurring goal is created active by default (`activate=yes`); pass `activate=no` to keep it proposed until the user approves activation.
 session ensures its parent goal scheduler is running, so an active
 one-off task queued by a worker is consumed by the goal engine. The dashboard's Create & run action creates
 an active manual goal and queues it through the same scheduler. Workspace agents also expose `architecture_overview`

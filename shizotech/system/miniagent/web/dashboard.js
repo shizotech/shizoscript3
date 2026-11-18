@@ -129,6 +129,7 @@ function toast(message, kind = 'info', timeout = 4200) {
 /* ── status vocabulary ── */
 const statusClass = (status) => {
   const s = String(status || '').toLowerCase();
+  if (s === 'queued') return 'queued';
   if (['running', 'starting', 'waiting', 'planned', 'generating', 'dispatching', 'checkpoint'].includes(s)) return 'running';
   if (['done', 'finished', 'completed'].includes(s)) return 'done';
   if (s === 'question') return 'question';
@@ -137,10 +138,10 @@ const statusClass = (status) => {
 };
 const statusLabel = (status) => {
   const s = String(status || 'idle').toLowerCase();
-  const map = { done: 'finished', waiting: 'ready', starting: 'starting', question: 'needs input' };
+  const map = { done: 'finished', waiting: 'ready', starting: 'starting', question: 'needs input', queued: 'queued' };
   return map[s] || s;
 };
-const isActive = (status) => ['starting', 'running', 'waiting'].includes(String(status || '').toLowerCase());
+const isActive = (status) => ['starting', 'running', 'waiting', 'queued'].includes(String(status || '').toLowerCase());
 const isGenerating = (status) => String(status || '').toLowerCase() === 'running';
 const isTerminal = (status) => ['done', 'failed', 'question', 'stopped'].includes(String(status || '').toLowerCase());
 
@@ -1558,10 +1559,11 @@ function goalCard(g, nodeId, wsId) {
 
 function sessionCard(s, nodeId, wsId) {
   const raw = String(s.state || s.status || 'planned').toLowerCase();
-  const active = truthy(s.active) || ['running', 'planned', 'starting', 'waiting'].includes(raw);
-  const st = active && !['running', 'planned'].includes(raw) ? 'running' : raw;
+  const active = truthy(s.active) || ['running', 'planned', 'starting', 'waiting', 'queued'].includes(raw);
+  const st = active && !['running', 'planned', 'queued'].includes(raw) ? 'running' : raw;
   let section = 'finished';
   if (raw === 'question') section = 'input';
+  else if (raw === 'queued') section = 'queued';
   else if (active) section = 'running';
   const id = taskIdOf(s);
   const data = ' data-node="' + esc(nodeId) + '" data-ws="' + esc(wsId) + '" data-session="' + esc(id) + '"';
@@ -1580,6 +1582,7 @@ function sessionCard(s, nodeId, wsId) {
 
 const TASK_SECTIONS = [
   ['running', 'Running now'],
+  ['queued', 'Queued — waiting for a free session'],
   ['input', 'Needs input'],
   ['scheduled', 'Scheduled'],
   ['proposed', 'Proposed — waiting for your go'],

@@ -125,6 +125,9 @@ router_map_task_state(state) {
 	if(state == "planned") {
 		return "queued";
 	}
+	if(state == "queued") {
+		return "queued";
+	}
 	if(state == "research") {
 		return "generating";
 	}
