@@ -1,0 +1,45 @@
+// shz bundle - a standalone copy of a script project for this machine (issue shizoscript3_source#966)
+//
+//   shz bundle <project> [out_dir] [--name <name>] [--with <package>]... [--no-system] [--zip] [--tar] [--app]
+//
+// <project> is a folder with __init__.shio or one .shio file. The bundle (default: <name>_<platform> in the working
+// directory) holds this interpreter as <name>.out / <name>.exe, the project as <name>/, and below shizotech/ only the
+// packages and #include libraries the scripts use, the system scripts and version.json. Started without arguments
+// the executable runs <name>/__init__.shio. What goes in and why: bundle_lib.shio.
+//
+//   --name <name>      name of the executable and of the project folder (default: the project's name)
+//   --with <package>   a package no script imports by a literal name (std.import(variable)); more than once
+//   --no-system        leave out shizotech/system (docs, mcpdocs, help, ... are then missing in the bundle)
+//   --zip              also <out_dir>.zip (needs the zip package; zip keeps no executable bit)
+//   --tar              also <out_dir>.tar.gz (tar of the system)
+//   --app              macOS: <name>.app (Info.plist) in place of <name>.out; <name>/ and shizotech/ stay next to it
+//
+// A folder out_dir that exists must be empty or an earlier bundle (.shzbundle in it): it is replaced.
+// Exit code 0 when the bundle was made, 1 otherwise.
+
+#include "bundle_lib"
+
+bundle_usage()
+{
+	std.print("usage: shz bundle <project folder or .shio> [out_dir] [--name <name>] [--with <package>]... [--no-system] [--zip] [--tar] [--app]");
+}
+
+p = bundle_parse_args(std.argv(), 1, false);
+if(p.help)
+{
+	bundle_usage();
+	std.exitprocess(0);
+}
+if(p.error != "")
+{
+	std.print("bundle: " + p.error);
+	bundle_usage();
+	std.exitprocess(1);
+}
+opt = p.opt;
+if(opt.app && !opt.platform.starts("macos"))
+	std.print("bundle: --app is for macOS only, ignored on " + opt.platform);
+
+res = bundle_make(opt);
+bundle_report(res);
+std.exitprocess(res.ok ? 0 : 1);

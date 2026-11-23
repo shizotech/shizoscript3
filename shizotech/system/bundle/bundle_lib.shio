@@ -1,0 +1,608 @@
+// ============================================================================
+// bundle_lib.shio - make a standalone bundle of a script project (issue shizoscript3_source#966)
+//
+// A bundle is a folder that runs without an installation:
+//
+//   <out>/<name>.out            the interpreter (<name>.exe on Windows). Started without arguments it runs
+//                               <name>/__init__.shio next to it (core/main.cpp: the name of the executable).
+//   <out>/<name>/               the project (a single .shio becomes <name>/__init__.shio)
+//   <out>/shizotech/version.json
+//   <out>/shizotech/packages/   only the packages the scripts import, each with only native/<platform>/
+//                               (the whole folder: FFmpeg of nanogui, the CPython libraries of python, ...)
+//   <out>/shizotech/includes/   only the #include libraries the scripts use (the whole top folder: openai/, mcp/)
+//   <out>/shizotech/system/     the system scripts (docs, mcpdocs, help, ...) except bundle itself; --no-system: none
+//
+// macOS with app = true: <out>/<name>.app/Contents/MacOS/<name> in place of <name>.out; <name>/ and shizotech/ stay
+// next to the .app (mac_app_home in core/main.cpp).
+//
+// Which packages: every `import a, b;`, every `std.import("literal")` of the project files and of the #include files
+// it uses (transitively). A std.import of a computed name cannot be resolved: it is reported, `with` adds packages by
+// hand. Packages a native module needs at run time without an import in a script are not seen either (`with`).
+//
+// Used by shizotech/system/bundle/__init__.shio (`shz bundle`, the host's interpreter and packages) and by
+// compile_scripts/create_bundles_project.shio of the source repository (every platform from release/).
+//
+//   opt = bundle_options("path/to/project", "out_dir");   // host platform, host interpreter, host shizotech/
+//   opt.zip = true;                                        // also <out>.zip   (needs the zip package)
+//   opt.tar = true;                                        // also <out>.tar.gz (tar of the system)
+//   res = bundle_make(opt);                                // res.ok, res.error, res.packages, res.includes, ...
+// ============================================================================
+
+#pragma once
+
+// a path with / only and no / at the end
+bundle_slash(p)
+{
+	var s = std.string(p).replace("\\", "/");
+	for(s.size() > 1 && s.ends("/"))
+		s = s.substr(0, s.size() - 1);
+	return s;
+}
+
+bundle_is_absolute(p)
+{
+	var s = bundle_slash(p);
+	return s.starts("/") || (s.size() >= 2 && s.substr(1, 1) == ":");
+}
+
+// the absolute, normalized path (also of a path that does not exist yet)
+bundle_abs(p)
+{
+	var s = bundle_slash(p);
+	if(!bundle_is_absolute(s))
+		s = bundle_slash(fileio.absolute_path(".")) + "/" + s;
+	return bundle_slash(fileio.absolute_path(s));
+}
+
+// p is root or below it
+bundle_inside(p, root)
+{
+	return p == root || p.starts(root + "/");
+}
+
+// one argument for a command of std.system
+bundle_quote(s, platform)
+{
+	if(std.string(platform).starts("windows"))
+		return "\"" + s + "\"";
+	return "'" + std.string(s).replace("'", "'\\''") + "'";
+}
+
+// linux_x64, linux_arm64, macos_arm64, macos_x64, windows_x64: the folder name below native/ of a package
+bundle_host_platform()
+{
+	var exe = std.string(std.local_executable()).lowercase();
+	if(exe.ends(".exe"))
+		return "windows_x64";
+	// into a file: the capture of std.system(cmd, 1) also prints the output
+	static u = "";
+	if(u == "")
+	{
+		var tmp = std.user_path() + "/bundle_uname_" + std.millis() + ".txt";
+		fileio.mkdir(std.user_path());
+		std.system("uname -sm > " + bundle_quote(tmp, "linux"));
+		u = std.string(fileio.read_text(tmp)).lowercase();
+		fileio.remove(tmp);
+	}
+	var os = u.contains("darwin") ? "macos" : "linux";
+	var arch = (u.contains("arm64") || u.contains("aarch64")) ? "arm64" : "x64";
+	return os + "_" + arch;
+}
+
+// The options of bundle_make. project: a folder with __init__.shio or one .shio file. out: the bundle folder
+// ("" = <name>_<platform> in the working directory).
+bundle_options(project, out)
+{
+	var platform = bundle_host_platform();
+	var exe = std.local_executable();
+	return [
+		project = project,
+		out = out,
+		name = "",                 // "" = the name of the project folder / file
+		platform = platform,       // which native/<platform>/ of the packages, the name of the executable
+		shz = exe,                 // the interpreter that is copied (for another platform: its binary)
+		shizotech = fileio.file_dir(exe) + "/shizotech", // where packages/, includes/, system/ come from
+		with = [],                 // packages added by hand
+		system = true,             // copy shizotech/system (without bundle)
+		system_exclude = ["bundle"],
+		zip = false,
+		tar = false,
+		app = false                // macOS: <name>.app
+	];
+}
+
+// the path of a script `name` (#include "name") in dir: name, name.shio, name/__init__.shio; "" if none
+bundle_find_script(dir, name)
+{
+	for(c : [name, name + ".shio", name + "/__init__.shio"])
+	{
+		var p = dir + "/" + c;
+		if(fileio.exists(p) && !fileio.is_directory(p))
+			return bundle_abs(p);
+	}
+	return "";
+}
+
+// the text between the first pair of "" (or <>) of s, "" if none
+bundle_quoted(s)
+{
+	var a = s.find("\"");
+	var close = "\"";
+	if(a < 0)
+	{
+		a = s.find("<");
+		close = ">";
+	}
+	if(a < 0)
+		return "";
+	var rest = s.substr(a + 1);
+	var b = rest.find(close);
+	if(b < 0)
+		return "";
+	return rest.substr(0, b);
+}
+
+bundle_add_package(&st, name)
+{
+	var n = std.string(name).trim();
+	if(n != "")
+		st.packages[n] = 1;
+}
+
+def bundle_scan_file(&st, path);
+
+bundle_add_include(&st, dir, inc, from)
+{
+	var p = bundle_find_script(dir, inc);
+	if(p == "")
+		p = bundle_find_script(st.root, inc);
+	if(p != "" && bundle_inside(p, st.root))
+	{
+		st.project_files[p] = 1;
+		bundle_scan_file(st, p);
+		return;
+	}
+	if(p == "" || !bundle_inside(p, st.includes))
+	{
+		var lib = bundle_find_script(st.includes, inc);
+		if(lib != "")
+			p = lib;
+	}
+	if(p != "" && bundle_inside(p, st.includes))
+	{
+		var rel = p.substr(st.includes.size() + 1);
+		var slash = rel.find("/");
+		st.include_dirs[slash < 0 ? rel : rel.substr(0, slash)] = 1;
+		bundle_scan_file(st, p);
+		return;
+	}
+	if(p != "")
+		st.outside.push(from + ": #include \"" + inc + "\" is " + p + ", outside the project: not copied");
+	else
+		st.outside.push(from + ": #include \"" + inc + "\" not found");
+}
+
+// collects the imports and includes of one script (and of the scripts it includes)
+bundle_scan_file(&st, path)
+{
+	if(st.scanned.has(path))
+		return;
+	st.scanned[path] = 1;
+	var text = std.string(fileio.read_text(path));
+	var dir = fileio.file_dir(path);
+	for(line : text.split("\n"))
+	{
+		var l = line.trim();
+		if(l.starts("//"))
+			continue;
+		if(l.starts("#include"))
+		{
+			var inc = bundle_quoted(l.substr(8));
+			if(inc != "")
+				bundle_add_include(st, dir, inc, path);
+			continue;
+		}
+		if(l.starts("import ") || l.starts("import\t"))
+		{
+			var names = l.substr(7);
+			var end = names.find(";");
+			if(end >= 0)
+				names = names.substr(0, end);
+			for(n : names.split(","))
+				bundle_add_package(st, n);
+		}
+		var rest = l;
+		var pos = rest.find("std.import(");
+		for(pos >= 0)
+		{
+			rest = rest.substr(pos + 11).trim();
+			var q = rest.starts("\"") ? bundle_quoted(rest) : "";
+			if(q != "")
+				bundle_add_package(st, q);
+			else
+				st.unresolved.push(path + ": " + l);
+			pos = rest.find("std.import(");
+		}
+	}
+}
+
+// the script files of the project (every .shio below the folder)
+bundle_project_scripts(root)
+{
+	var out = [];
+	for(f : fileio.files(root))
+	{
+		var rel = bundle_slash(f);
+		if(rel.ends(".shio") && !rel.starts(".git/"))
+			out.push(root + "/" + rel);
+	}
+	return out;
+}
+
+bundle_copy(&res, src, dst)
+{
+	if(!fileio.copy(src, dst))
+	{
+		res.failed.push(src + " -> " + dst);
+		return false;
+	}
+	return true;
+}
+
+// the folder out may be (re)made: it does not exist, is empty, or is an earlier bundle (it has .shzbundle)
+bundle_prepare_out(&res, out)
+{
+	if(!fileio.exists(out))
+		return fileio.mkdir(out);
+	if(!fileio.is_directory(out))
+	{
+		res.error = out + " exists and is no folder";
+		return false;
+	}
+	var empty = fileio.files(out, false).size() == 0 && fileio.dirs(out, false).size() == 0;
+	if(!empty && !fileio.exists(out + "/.shzbundle"))
+	{
+		res.error = out + " exists and is not a bundle (no .shzbundle in it): remove it or choose another folder";
+		return false;
+	}
+	if(!empty)
+		fileio.remove(out);
+	return fileio.mkdir(out);
+}
+
+bundle_info_plist(name, version)
+{
+	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+		"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
+		"<plist version=\"1.0\">\n<dict>\n" +
+		"\t<key>CFBundleExecutable</key>\n\t<string>" + name + "</string>\n" +
+		"\t<key>CFBundleIdentifier</key>\n\t<string>com.shizotech.bundle." + name + "</string>\n" +
+		"\t<key>CFBundleInfoDictionaryVersion</key>\n\t<string>6.0</string>\n" +
+		"\t<key>CFBundleName</key>\n\t<string>" + name + "</string>\n" +
+		"\t<key>CFBundlePackageType</key>\n\t<string>APPL</string>\n" +
+		"\t<key>CFBundleShortVersionString</key>\n\t<string>" + version + "</string>\n" +
+		"\t<key>CFBundleVersion</key>\n\t<string>" + version + "</string>\n" +
+		"\t<key>NSHighResolutionCapable</key>\n\t<true/>\n" +
+		"</dict>\n</plist>\n";
+}
+
+// <out>.zip with the folder <out name>/ in it, through the zip package (loaded here, so a bundle without zip works)
+bundle_write_zip(&res, out, archive)
+{
+	if(!std.import("zip"))
+	{
+		res.error = "zip: the zip package cannot be loaded";
+		return false;
+	}
+	var m = std.module();
+	var code = "import zip;\n" +
+		"make(base, files, archive) {\n" +
+		"\tvar z = zip.file();\n" +
+		"\tfor(f : files) { z.add_file(base + \"/\" + f[0], f[1]); }\n" +
+		"\treturn z.save(archive);\n" +
+		"}\n";
+	if(!m.load_code(code))
+	{
+		res.error = "zip: the zip package cannot be loaded";
+		return false;
+	}
+	var base = fileio.file_name(out);
+	var files = [];
+	for(f : fileio.files(out))
+	{
+		var rel = bundle_slash(f);
+		if(rel != ".shzbundle")
+			files.push([rel, out + "/" + rel]);
+	}
+	if(fileio.exists(archive))
+		fileio.remove(archive);
+	if(!m.call("make", base, files, archive) || !fileio.exists(archive))
+	{
+		res.error = "zip: " + archive + " was not written";
+		return false;
+	}
+	res.archives.push(archive);
+	return true;
+}
+
+// <out>.tar.gz with the folder <out name>/ in it (keeps the executable bit, unlike zip)
+bundle_write_tar(&res, out, archive, host)
+{
+	if(fileio.exists(archive))
+		fileio.remove(archive);
+	var cmd = "tar -czf " + bundle_quote(archive, host) + " --exclude=.shzbundle -C " +
+		bundle_quote(fileio.file_dir(out), host) + " " + bundle_quote(fileio.file_name(out), host);
+	var code = std.system(cmd);
+	if(code != 0 || !fileio.exists(archive))
+	{
+		res.error = "tar: '" + cmd + "' failed (exit code " + code + ")";
+		return false;
+	}
+	res.archives.push(archive);
+	return true;
+}
+
+// Makes the bundle. Returns [ok, error, out, binary, packages, includes, missing, unresolved, outside, failed,
+// archives].
+bundle_make(opt)
+{
+	var res = [ok = false, error = "", out = "", binary = "", packages = [], includes = [], missing = [],
+		unresolved = [], outside = [], failed = [], archives = []];
+
+	var project = bundle_abs(opt.project);
+	if(!fileio.exists(project))
+	{
+		res.error = "project not found: " + opt.project;
+		return res;
+	}
+	var single = !fileio.is_directory(project);
+	var root = single ? bundle_slash(fileio.file_dir(project)) : project;
+	var main = single ? project : project + "/__init__.shio";
+	if(single && !project.ends(".shio"))
+	{
+		res.error = "a project is a folder with __init__.shio or one .shio file: " + opt.project;
+		return res;
+	}
+	if(!fileio.exists(main))
+	{
+		res.error = "the project folder has no __init__.shio: " + project;
+		return res;
+	}
+	var name = std.string(opt.name);
+	if(name == "")
+		name = single ? fileio.pure_name(project) : fileio.file_name(project);
+	var platform = std.string(opt.platform);
+	var windows = platform.starts("windows");
+	var app = opt.app && platform.starts("macos");
+	var host = bundle_host_platform();
+
+	var out = std.string(opt.out) == "" ? bundle_abs(name + "_" + platform) : bundle_abs(opt.out);
+	res.out = out;
+	if(bundle_inside(out, root) || bundle_inside(root, out))
+	{
+		res.error = "the bundle folder " + out + " and the project " + root + " must not contain each other";
+		return res;
+	}
+	var shztech = bundle_abs(opt.shizotech);
+	var shz = bundle_abs(opt.shz);
+	if(!fileio.exists(shz) || fileio.is_directory(shz))
+	{
+		res.error = "interpreter not found: " + opt.shz;
+		return res;
+	}
+	if(!fileio.is_directory(shztech + "/packages"))
+	{
+		res.error = "no packages folder in " + shztech;
+		return res;
+	}
+
+	// what the scripts use
+	var st = [root = root, includes = bundle_abs(shztech + "/includes"), scanned = std.json(), packages = std.json(),
+		include_dirs = std.json(), project_files = std.json(), unresolved = [], outside = []];
+	st.project_files[main] = 1;
+	if(single)
+		bundle_scan_file(st, main);
+	else
+	{
+		for(f : bundle_project_scripts(root))
+			bundle_scan_file(st, f);
+	}
+	for(p : opt.with)
+		bundle_add_package(st, p);
+	res.unresolved = st.unresolved;
+	res.outside = st.outside;
+
+	if(!bundle_prepare_out(res, out))
+	{
+		if(res.error == "")
+			res.error = "cannot create " + out;
+		return res;
+	}
+	fileio.write_text(out + "/.shzbundle", "made by shz bundle (shizotech/system/bundle) from " + project + "\n");
+
+	// the interpreter
+	if(app)
+	{
+		var contents = out + "/" + name + ".app/Contents";
+		res.binary = contents + "/MacOS/" + name;
+		bundle_copy(res, shz, res.binary);
+		var ver = 1;
+		if(fileio.exists(shztech + "/version.json"))
+			ver = fileio.read_json(shztech + "/version.json").version ?? 1;
+		fileio.write_text(contents + "/Info.plist", bundle_info_plist(name, std.string(ver)));
+		fileio.write_text(contents + "/PkgInfo", "APPL????");
+	}
+	else
+	{
+		res.binary = out + "/" + name + (windows ? ".exe" : ".out");
+		bundle_copy(res, shz, res.binary);
+	}
+	if(!windows && !host.starts("windows"))
+		std.system("chmod +x " + bundle_quote(res.binary, host));
+
+	// the project
+	var dst = out + "/" + name;
+	fileio.mkdir(dst);
+	if(single)
+	{
+		for(f, v : st.project_files)
+		{
+			var rel = f == main ? "__init__.shio" : f.substr(root.size() + 1);
+			bundle_copy(res, f, dst + "/" + rel);
+		}
+	}
+	else
+	{
+		for(f : fileio.files(root, false))
+			bundle_copy(res, root + "/" + f, dst + "/" + f);
+		for(d : fileio.dirs(root, false))
+		{
+			if(d != ".git")
+				bundle_copy(res, root + "/" + d, dst + "/" + d);
+		}
+	}
+
+	// shizotech/
+	var tech = out + "/shizotech";
+	fileio.mkdir(tech + "/packages");
+	if(fileio.exists(shztech + "/version.json"))
+		bundle_copy(res, shztech + "/version.json", tech + "/version.json");
+	for(pkg, v : st.packages)
+	{
+		var src = shztech + "/packages/" + pkg;
+		if(!fileio.exists(src + "/package.shz"))
+		{
+			// a package folder of the project itself goes with the project
+			if(!fileio.exists(root + "/" + pkg + "/package.shz"))
+				res.missing.push(pkg);
+			continue;
+		}
+		res.packages.push(pkg);
+		for(f : fileio.files(src, false))
+			bundle_copy(res, src + "/" + f, tech + "/packages/" + pkg + "/" + f);
+		for(d : fileio.dirs(src, false))
+		{
+			if(d != "native")
+				bundle_copy(res, src + "/" + d, tech + "/packages/" + pkg + "/" + d);
+		}
+		if(fileio.is_directory(src + "/native/" + platform))
+			bundle_copy(res, src + "/native/" + platform, tech + "/packages/" + pkg + "/native/" + platform);
+		else if(fileio.is_directory(src + "/native"))
+			res.missing.push(pkg + " (no native/" + platform + ")");
+	}
+	if(st.include_dirs.size() > 0)
+		fileio.mkdir(tech + "/includes");
+	for(inc, v : st.include_dirs)
+	{
+		res.includes.push(inc);
+		bundle_copy(res, st.includes + "/" + inc, tech + "/includes/" + inc);
+	}
+	if(opt.system && fileio.is_directory(shztech + "/system"))
+	{
+		fileio.mkdir(tech + "/system");
+		for(f : fileio.files(shztech + "/system", false))
+			bundle_copy(res, shztech + "/system/" + f, tech + "/system/" + f);
+		for(d : fileio.dirs(shztech + "/system", false))
+		{
+			var skip = false;
+			for(x : opt.system_exclude)
+			{
+				if(x == d)
+					skip = true;
+			}
+			if(!skip)
+				bundle_copy(res, shztech + "/system/" + d, tech + "/system/" + d);
+		}
+	}
+
+	if(res.failed.size() > 0)
+	{
+		res.error = "copy failed: " + res.failed[0];
+		return res;
+	}
+	if(opt.zip && !bundle_write_zip(res, out, out + ".zip"))
+		return res;
+	if(opt.tar && !bundle_write_tar(res, out, out + ".tar.gz", host))
+		return res;
+	res.ok = true;
+	return res;
+}
+
+// prints what bundle_make did
+bundle_report(res)
+{
+	if(!res.ok)
+	{
+		std.print("bundle: FAILED: " + res.error);
+		return;
+	}
+	std.print("bundle: " + res.out);
+	std.print("  run:       " + res.binary);
+	std.print("  packages:  " + (res.packages.size() ? res.packages.combine_string(", ").removesuffix(", ") : "(none)"));
+	std.print("  includes:  " + (res.includes.size() ? res.includes.combine_string(", ").removesuffix(", ") : "(none)"));
+	for(a : res.archives)
+		std.print("  archive:   " + a);
+	for(m : res.missing)
+		std.print("  WARNING: package not found: " + m);
+	for(o : res.outside)
+		std.print("  WARNING: " + o);
+	for(u : res.unresolved)
+		std.print("  WARNING: std.import of a computed name (add it with --with <package>): " + u);
+}
+
+// The command line of `shz bundle` (and of compile_scripts/create_bundles_project.shio): args from index first on.
+// platforms = true also takes --platform <p> (more than once). Returns [opt, platforms, error, help]; error "" when
+// the arguments are right.
+bundle_parse_args(args, first, platforms)
+{
+	var r = [opt = bundle_options("", ""), platforms = [], error = "", help = false];
+	var positional = [];
+	for(i = first; i < args.size(); i++)
+	{
+		var a = std.string(args[i]);
+		if(a == "--help" || a == "-h")
+		{
+			r.help = true;
+			return r;
+		}
+		if(a == "--name" || a == "--with" || (platforms && a == "--platform"))
+		{
+			if(i + 1 >= args.size())
+			{
+				r.error = a + " needs a value";
+				return r;
+			}
+			i++;
+			if(a == "--name")
+				r.opt.name = args[i];
+			else if(a == "--with")
+				r.opt.with.push(args[i]);
+			else
+				r.platforms.push(args[i]);
+		}
+		else if(a == "--no-system")
+			r.opt.system = false;
+		else if(a == "--zip")
+			r.opt.zip = true;
+		else if(a == "--tar")
+			r.opt.tar = true;
+		else if(a == "--app")
+			r.opt.app = true;
+		else if(a.starts("--"))
+		{
+			r.error = "unknown option " + a;
+			return r;
+		}
+		else
+			positional.push(a);
+	}
+	if(positional.size() < 1 || positional.size() > 2)
+	{
+		r.error = "one project and at most one output folder";
+		return r;
+	}
+	r.opt.project = positional[0];
+	if(positional.size() == 2)
+		r.opt.out = positional[1];
+	return r;
+}
