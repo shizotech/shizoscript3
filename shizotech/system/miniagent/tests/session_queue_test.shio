@@ -6,7 +6,7 @@
 // A fake spawn subclass simulates a worker start by setting the session status.
 // No model/API calls are made.
 
-#include "workspaces"
+#include "../workspaces"
 
 passed = 0;
 failed = 0;

@@ -1,4 +1,4 @@
-#include "workspaces"
+#include "../../workspaces"
 
 class FakeSessionManager : SessionManager {
     spawn_status = "waiting";
