@@ -45,7 +45,7 @@ web/
   sentence being thought; a tool call is one item with its state. Both open on a click
   (`fillDetail`: the body is made when it is opened): the whole reasoning, every parameter of
   the call and the result; the square opens the same in a window with a copy button. The
-  text of a long transcript is drawn 160 items at a time ("Show earlier").
+  text of a long transcript is drawn 160 items at a time ("Show earlier"). The live stream is bounded too: while the chat is at the bottom the pane keeps at most 320 items (960 if scrolled up), moves older finished ones to `chat.earlier` (at most 800 kept), so a turn or session that runs for hours does not grow the DOM without limit. On a long transcript only the latest 800 undrawn items stay in memory; older items beyond that window are not kept in the page.
 * Markdown of a streaming answer is rendered at most every 70 ms (the whole block again per
   token was quadratic); the chat follows the stream only while it is at the bottom, otherwise
   a button to jump down shows.
@@ -53,7 +53,8 @@ web/
   the page closes it on error and opens a new one with the current position.
 * A session started somewhere else (a gateway, a scheduled goal) appears through the live
   feed; opening it works the same. A finished session that is continued elsewhere comes back
-  to life in the open chat (the feed says it runs, the page reloads it).
+  to life in the open chat (the feed says it runs; the page takes the new turn from the
+  stream instead of reloading the whole transcript).
 
 Notes for changes:
 
@@ -65,9 +66,7 @@ Notes for changes:
 * The session SSE URL is `/api/sessions/<id>/stream?token=<t>&since=<seq>`. EventSource cannot
   send headers, so the token is accepted as a query value; `since` stops the page from
   replaying the history it already rendered. The route sets `Content-Type: text/event-stream`.
-* Selecting a session loads the complete transcript from `chat.json` (via `GET /api/sessions/<id>`)
-   and the in-flight `live_text`, then starts the stream at the latest sequence. The bounded
-   `session.json.events` window is only a live/replay buffer, never the chat transcript.
+* Selecting a session loads the newest transcript chunk from `chat.json` (via `GET /api/sessions/<id>?history_max_bytes=4194304&history_view=web`) with `chat_history_total` / `chat_history_offset` / `chat_history_more`, then starts the stream at the latest sequence. The older items come from the node on "Show earlier" (`history_before`), so a long transcript (images, huge tool results) does not time out over ShizoNet. `history_view=web` drops image / audio payloads the page does not draw and clips very long text; the complete history is still available without those parameters. The bounded `session.json.events` window is only a live/replay buffer, never the chat transcript.
    A terminal `done`/`failed` report is rendered from the session's `report` (or the `done`
    event) even when `chat.json` already contains the final assistant text; switching away and
    back therefore keeps the finalize report bubble.

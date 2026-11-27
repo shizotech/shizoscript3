@@ -37,6 +37,7 @@ WS_SAVE_DELTA_MS = 1000;        // session.json is rewritten at most this often 
 WS_EVENT_RESULT_MAX = 16000;    // characters of a tool result kept in an event (chat.json has all of it)
 WS_TURN_ITEMS_MAX = 600;        // items of the running turn kept for a page that opens the session
 WS_TURN_TEXT_MAX = 400000;      // characters of one text / reasoning item of the running turn
+WS_HISTORY_CHUNK_BYTES = 4 * 1024 * 1024; // default chunk of a session history over ShizoNet
 
 // ── small helpers ──────────────────────────────────────────────────────────
 ws_str(v, def = "") {
@@ -188,6 +189,113 @@ ws_clip_event_action(action) {
     out.tool_end.result_chars = n;
 
     return out;
+}
+
+// Keep a long text in the middle: its head and tail, the rest counted out.
+ws_clip_middle(text, max_chars) {
+    t = ws_str(text);
+
+    if(t.length() <= max_chars)
+        return t;
+
+    head = max_chars * 3 / 4;
+    tail = max_chars - head;
+
+    return t.substr(0, head) + "\n… [" + std.string(t.length() - head - tail) + " characters left out] …\n" + t.substr(t.length() - tail);
+}
+
+// A message of a chat.json as the web page reads it: the image / audio payloads
+// are dropped (the dashboard draws only text) and a very long text is clipped.
+// The agent's own chat.json is not touched.
+ws_history_message_web(msg) {
+    if(!std.is_json(msg))
+        return msg;
+
+    out = msg.copy();
+    content = msg.content;
+
+    if(std.is_json(content) && std.is_list(content)) {
+        parts = [];
+
+        for(p : content) {
+            if(std.is_json(p) && std.is_string(p.text))
+                parts.push_back([type = "text", text = ws_str(p.text)]);
+        }
+
+        out.content = parts;
+    } else if(std.is_string(content)) {
+        t = ws_str(content);
+
+        if(t.length() > WS_TURN_TEXT_MAX)
+            out.content = ws_clip_middle(t, WS_TURN_TEXT_MAX);
+    }
+
+    if(msg.has("reasoning_content")) {
+        r = ws_str(msg.reasoning_content);
+
+        if(r.length() > WS_TURN_TEXT_MAX)
+            out.reasoning_content = ws_clip_middle(r, WS_TURN_TEXT_MAX);
+    }
+
+    return out;
+}
+
+// A slice of a chat history: `before` is the exclusive end index, `limit` the
+// most messages, `max_bytes` the most serialized bytes. Scans from the end when
+// a byte budget is given, so the newest messages are the ones that arrive.
+// -> [messages, offset, count, total]; offset is the first message of the slice.
+ws_history_slice(history, before = -1, limit = 0, max_bytes = 0, web = false) {
+    total = std.is_list(history) ? history.size() : 0;
+    before = std.int(before);
+    limit = std.int(limit);
+    max_bytes = std.int(max_bytes);
+
+    if(before < 0 || before > total)
+        before = total;
+
+    if(before < 0)
+        before = 0;
+
+    start = 0;
+
+    if(limit > 0) {
+        start = before - limit;
+
+        if(start < 0)
+            start = 0;
+    }
+
+    out = [];
+
+    if(max_bytes > 0) {
+        bytes = 0;
+
+        for(i = before - 1; i >= start; i--) {
+            m = web ? ws_history_message_web(history[i]) : history[i];
+            size = std.string(m).length();
+
+            // one message may be bigger than the budget; it still arrives
+            if(out.size() && bytes + size > max_bytes)
+                break;
+
+            out.push_back(m);
+            bytes += size;
+        }
+
+        rev = [];
+
+        for(i = out.size() - 1; i >= 0; i--)
+            rev.push_back(out[i]);
+
+        out = rev;
+    } else {
+        for(i = start; i < before; i++)
+            out.push_back(web ? ws_history_message_web(history[i]) : history[i]);
+    }
+
+    offset = before - out.size();
+
+    return [messages = out, offset = offset, count = out.size(), total = total];
 }
 
 // A short project-agent note for every real workspace. Generic and never
@@ -3727,6 +3835,33 @@ workspaces_api_register(server, cfg, api_token, registry = None) {
         s.turn = ctx.manager.turn_log(sid);
         s.turn_seq = now_s ? now_s.seq : s.seq;
         s.status = now_s ? now_s.status : s.status;
+
+        // The web page asks for a chunk: a long transcript (images, huge tool
+        // results) would not travel over ShizoNet in one answer. Without these
+        // parameters the complete history is returned, as before.
+        total = history.size();
+        before = node_api_int(req.query_params, "history_before", total);
+        limit = node_api_int(req.query_params, "history_limit", 0);
+        max_bytes = node_api_int(req.query_params, "history_max_bytes", 0);
+        web_view = node_api_get(req.query_params, "history_view") == "web";
+
+        part = ws_history_slice(history, before, limit, max_bytes, web_view);
+
+        s.chat_history = part.messages;
+        s.chat_history_total = part.total;
+        s.chat_history_offset = part.offset;
+        s.chat_history_count = part.count;
+        s.chat_history_more = json.bool(part.offset > 0);
+
+        if(web_view) {
+            t = ws_str(s.live_text);
+
+            if(t.length() > WS_TURN_TEXT_MAX)
+                t = ws_clip_middle(t, WS_TURN_TEXT_MAX);
+
+            s.live_text = t;
+        }
+
         return node_api_ok(s);
     });
 

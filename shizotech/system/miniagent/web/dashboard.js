@@ -119,6 +119,7 @@ function toast(message, kind = 'info', timeout = 4200) {
   const box = $('toasts');
   const t = el('div', 'toast ' + kind, String(message || ''));
   box.appendChild(t);
+  while (box.children.length > 6) box.children[0].remove();
   setTimeout(() => {
     t.style.opacity = '0';
     t.style.transform = 'translateX(18px)';
@@ -356,7 +357,14 @@ function applyLive(id, snap) {
         // that another page or a gateway continued) the feed brings it back to life
         if (!state.stream && state.session.status !== live.status) {
           state.session.status = live.status;
-          if (isActive(live.status)) reloadSession();
+          if (isActive(live.status)) {
+            // the feed says the session runs again (a gateway or the scheduler started
+            // a new turn). Keep the transcript in the pane and take the new events from
+            // the stream; a full reload of chat.json is not needed.
+            renderSessionHeader();
+            renderTree();
+            openStream();
+          }
         }
       }
     }
@@ -666,10 +674,18 @@ const chat = {
   tools: new Map(),          // tool id -> element
   stick: true,
   earlier: [],               // items of the transcript that are not drawn yet (older ones)
+  historyOffset: 0,          // index of the first transcript message loaded from the node
+  historyTotal: 0,           // all messages of the session
+  historyMore: false,        // the node has messages older than the loaded chunk
+  loadingEarlier: false,
 };
 
 const SYSTEM_MARKS = ['<---SYTEM MESSAGE--->', '<!---SYTEM MESSAGE---!>'];
 const PAGE_ITEMS = 160;
+const CHAT_MAX = PAGE_ITEMS * 2;      // drawn at the bottom; older finished items wait in chat.earlier
+const CHAT_HARD_MAX = PAGE_ITEMS * 6; // even far from the bottom the pane never grows past this
+const EARLIER_MAX = 800;              // kept for "Show earlier"; older items are dropped
+const HISTORY_CHUNK_BYTES = 4 * 1024 * 1024; // one session-history chunk over ShizoNet
 
 function chatBox() { return $('chatMessages'); }
 
@@ -679,6 +695,10 @@ function chatReset() {
   chat.reasonEl = null;
   chat.tools = new Map();
   chat.earlier = [];
+  chat.historyOffset = 0;
+  chat.historyTotal = 0;
+  chat.historyMore = false;
+  chat.loadingEarlier = false;
   chat.stick = true;
   $('btnScrollDown').classList.add('hidden');
 }
@@ -708,7 +728,30 @@ function appendMsg(node, before) {
   if (empty) empty.remove();
   if (before) chatBox().insertBefore(node, before);
   else chatBox().appendChild(node);
+  if (!before) trimChat();
   return node;
+}
+
+/* Keep the drawn chat bounded: a turn can stream for hours and append hundreds of
+ * items. At the bottom the oldest finished ones move to `chat.earlier`; the pane
+ * keeps at most CHAT_MAX items. Items above the pane are not drawn until asked for. */
+function trimChat() {
+  const box = chatBox();
+  const msgs = Array.from(box.querySelectorAll(':scope > .msg'));
+  const limit = chat.stick ? CHAT_MAX : CHAT_HARD_MAX;
+  if (msgs.length <= limit) return;
+  while (msgs.length > limit) {
+    const oldest = msgs[0];
+    if (!oldest._item) break;
+    if (oldest === chat.textEl || oldest === chat.reasonEl) break;
+    if (oldest._tool && oldest._tool.state === 'running') break;
+    chat.earlier.push(oldest._item);
+    oldest.remove();
+    msgs.shift();
+  }
+  if (chat.earlier.length > EARLIER_MAX) chat.earlier.splice(0, chat.earlier.length - EARLIER_MAX);
+  drawEarlierButton();
+  if (chat.stick) box.scrollTop = box.scrollHeight;
 }
 
 function endRun() {           // what follows starts a new text / reasoning block
@@ -724,6 +767,7 @@ function addUser(text, before) {
   const m = el('div', 'msg user');
   m.innerHTML = '<div class="msg-label"><span>You</span></div><div class="msg-body"></div>';
   m.lastChild.textContent = text;
+  m._item = { kind: 'user', text };
   return appendMsg(m, before);
 }
 
@@ -731,6 +775,7 @@ function makeText(text, before) {
   const m = el('div', 'msg agent');
   m.innerHTML = '<div class="msg-label"><span>Agent</span></div><div class="msg-body"></div>';
   m.lastChild.innerHTML = mdRender(text);
+  m._item = { kind: 'text', text: String(text || '') };
   return appendMsg(m, before);
 }
 
@@ -742,6 +787,7 @@ function addTextDelta(text) {
     chat.textRaw = '';
   }
   chat.textRaw += text;
+  if (chat.textEl && chat.textEl._item) chat.textEl._item.text = chat.textRaw;
   // markdown of the whole block again per token is quadratic: draw at most every 70 ms
   if (!chat.textTimer) chat.textTimer = setTimeout(flushText, 70);
 }
@@ -749,6 +795,7 @@ function addTextDelta(text) {
 function flushText() {
   if (chat.textTimer) { clearTimeout(chat.textTimer); chat.textTimer = 0; }
   if (chat.textEl) {
+    if (chat.textEl._item) chat.textEl._item.text = chat.textRaw;
     chat.textEl.lastChild.innerHTML = mdRender(chat.textRaw);
     scrollChat();
   }
@@ -778,6 +825,7 @@ function makeReasoning(text, before, live) {
     '<div class="detail-body"></div>';
   m._kind = 'reasoning';
   m._text = text || '';
+  m._item = { kind: 'reasoning', text: m._text };
   paintReasoning(m);
   return appendMsg(m, before);
 }
@@ -794,6 +842,7 @@ function addReasoningDelta(text) {
   chat.textEl = null; chat.textRaw = '';
   if (!chat.reasonEl) chat.reasonEl = makeReasoning('', null, true);
   chat.reasonEl._text += text;
+  if (chat.reasonEl._item) chat.reasonEl._item.text = chat.reasonEl._text;
   if (!chat.reasonEl._raf) {
     const m = chat.reasonEl;
     m._raf = requestAnimationFrame(() => { m._raf = 0; paintReasoning(m); scrollChat(); });
@@ -847,7 +896,8 @@ function makeTool(t, before) {
     '</button>' +
     '<div class="detail-body"></div>';
   m._kind = 'tool';
-  m._tool = Object.assign({ state: 'running' }, t, { args: cleanArgs(t.args) });
+  m._tool = Object.assign({ kind: 'tool', state: 'running' }, t, { args: cleanArgs(t.args) });
+  m._item = m._tool;
   paintTool(m);
   return appendMsg(m, before);
 }
@@ -958,6 +1008,7 @@ function addReport(text, status, before) {
   const label = st === 'failed' ? 'Failed' : st === 'question' ? 'Question' : st === 'stopped' ? 'Stopped' : 'Report';
   const m = el('div', 'msg report' + cls);
   m.innerHTML = '<div class="msg-label"><span>' + label + '</span></div><div class="msg-body">' + mdRender(text) + '</div>';
+  m._item = { kind: 'report', text: String(text || ''), status: st };
   return appendMsg(m, before);
 }
 
@@ -966,13 +1017,16 @@ function addError(text, before) {
   const m = el('div', 'msg error');
   m.innerHTML = '<div class="msg-label"><span>Error</span></div><div class="msg-body"></div>';
   m.lastChild.textContent = text;
+  m._item = { kind: 'error', text: String(text || '') };
   return appendMsg(m, before);
 }
 
 function addNotice(text, before) {
   if (!text) return null;
   if (!before) endRun();
-  return appendMsg(el('div', 'msg notice', text), before);
+  const m = el('div', 'msg notice', text);
+  m._item = { kind: 'notice', text: String(text) };
+  return appendMsg(m, before);
 }
 
 /* one item of a transcript (not streamed) */
@@ -1061,33 +1115,43 @@ function renderSession(session) {
   chatReset();
   const hist = Array.isArray(session.chat_history) ? session.chat_history : arr(session.chat_history);
   const turn = arr(session.turn);
-  const cutAt = Math.min(hist.length, Math.max(0, num(session.chat_history_size_at_prompt)));
+  const histTotal = Math.max(hist.length, num(session.chat_history_total));
+  const histOffset = Math.max(0, Math.min(histTotal, num(session.chat_history_offset)));
+  const cutAt = Math.min(histTotal, Math.max(0, num(session.chat_history_size_at_prompt)));
+  const localCut = Math.max(0, Math.min(hist.length, cutAt - histOffset));
+  const beforePrompt = hist.slice(0, localCut);
+  const afterPrompt = hist.slice(localCut);
   const terminal = isTerminal(session.status);
-  const saved = hist.slice(cutAt);
 
   let items;
-  if (terminal && saved.length) {
-    // the turn has ended and chat.json has all of it
+  if (terminal && afterPrompt.length) {
+    // the turn has ended and chat.json has all of it (this chunk: the newest part)
     items = historyItems(hist);
   } else if (turn.length) {
     // the turn runs (or its end was not saved): the earlier turns from chat.json,
     // this one as the node folded it from the stream
-    items = historyItems(hist.slice(0, cutAt)).concat(turn.map((t) => Object.assign({}, t, { sub: truthy(t.sub) })));
+    items = historyItems(beforePrompt).concat(turn.map((t) => Object.assign({}, t, { sub: truthy(t.sub) })));
   } else {
     items = historyItems(hist);
-    if (session.prompt && !items.some((i) => i.kind === 'user' && i.text === userText(session.prompt)) && !saved.length) {
-      items.push({ kind: 'user', text: userText(session.prompt) });
+    if (session.prompt && !items.some((i) => i.kind === 'user' && i.text === userText(session.prompt))) {
+      items.unshift({ kind: 'user', text: userText(session.prompt) });
     }
   }
 
   if (terminal && session.report) items.push({ kind: 'report', text: session.report, status: session.status === 'done' ? 'finished' : session.status });
   else if (terminal && session.error) items.push({ kind: 'error', text: session.error });
 
+  chat.historyOffset = histOffset;
+  chat.historyTotal = histTotal;
+  chat.historyMore = histOffset > 0;
+
   if (!items.length) { renderChatEmpty(); return; }
 
-  // a long transcript: the newest part now, the rest on request
-  chat.earlier = items.length > PAGE_ITEMS ? items.slice(0, items.length - PAGE_ITEMS) : [];
-  const shown = items.slice(chat.earlier.length);
+  // a long transcript: the newest part now, the rest on request (only the latest
+  // EARLIER_MAX old items are kept in memory; older ones come from the node)
+  const start = Math.max(0, items.length - PAGE_ITEMS - EARLIER_MAX);
+  chat.earlier = items.length > PAGE_ITEMS ? items.slice(start, items.length - PAGE_ITEMS) : [];
+  const shown = items.slice(items.length - PAGE_ITEMS);
   drawEarlierButton();
   shown.forEach((it) => drawItem(it));
 
@@ -1108,14 +1172,20 @@ function renderSession(session) {
 function drawEarlierButton() {
   const old = chatBox().querySelector(':scope > .earlier');
   if (old) old.remove();
-  if (!chat.earlier.length) return;
-  const b = el('button', 'btn btn-small btn-ghost earlier', 'Show ' + Math.min(PAGE_ITEMS, chat.earlier.length) + ' earlier items (' + chat.earlier.length + ' more)');
+  if (!chat.earlier.length && !chat.historyMore) return;
+  const label = chat.earlier.length
+    ? 'Show ' + Math.min(PAGE_ITEMS, chat.earlier.length) + ' earlier items (' + chat.earlier.length + ' kept)'
+    : (chat.loadingEarlier ? 'Loading earlier items…' : 'Show earlier items from the node');
+  const b = el('button', 'btn btn-small btn-ghost earlier', label);
   b.dataset.act = 'earlier';
   b.style.alignSelf = 'center';
+  if (chat.loadingEarlier) b.disabled = true;
   chatBox().insertBefore(b, chatBox().firstChild);
 }
 
-function showEarlier() {
+async function showEarlier() {
+  if (!chat.earlier.length && chat.historyMore) await loadEarlierHistory();
+  if (!chat.earlier.length) return;
   const box = chatBox();
   const take = chat.earlier.splice(Math.max(0, chat.earlier.length - PAGE_ITEMS));
   const btn = box.querySelector(':scope > .earlier');
@@ -1124,6 +1194,37 @@ function showEarlier() {
   take.forEach((it) => drawItem(it, anchor));
   drawEarlierButton();
   box.scrollTop += box.scrollHeight - before;
+  chat.stick = nearBottom();
+  if (!chat.stick) $('btnScrollDown').classList.remove('hidden');
+}
+
+async function loadEarlierHistory() {
+  if (!state.session || !chat.historyMore || chat.loadingEarlier) return;
+  const nodeId = state.sel.node;
+  const sessionId = state.session.id;
+  const gen = state.selGen;
+  chat.loadingEarlier = true;
+  drawEarlierButton();
+  try {
+    const data = await api(nodeId).get(
+      '/api/sessions/' + enc(sessionId) +
+      '?history_before=' + chat.historyOffset +
+      '&history_max_bytes=' + HISTORY_CHUNK_BYTES +
+      '&history_view=web'
+    );
+    if (gen !== state.selGen || !state.session || state.session.id !== sessionId || state.sel.node !== nodeId) return;
+    const messages = Array.isArray(data.chat_history) ? data.chat_history : arr(data.chat_history);
+    const items = historyItems(messages);
+    chat.earlier = items.concat(chat.earlier);
+    chat.historyOffset = num(data.chat_history_offset);
+    chat.historyMore = num(data.chat_history_offset) > 0;
+    chat.historyTotal = num(data.chat_history_total);
+  } catch (e) {
+    toast('Could not load earlier history: ' + e.message, 'warn');
+  } finally {
+    chat.loadingEarlier = false;
+    drawEarlierButton();
+  }
 }
 
 /* ── a session: open, stream ── */
@@ -1139,7 +1240,22 @@ async function openSession(sessionId) {
 
   let s = null;
   try {
-    s = await api(nodeId).get('/api/sessions/' + enc(sessionId));
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        s = await api(nodeId).get(
+          '/api/sessions/' + enc(sessionId) +
+          '?history_max_bytes=' + HISTORY_CHUNK_BYTES +
+          '&history_view=web'
+        );
+        break;
+      } catch (e) {
+        if (attempt === 0) {
+          await sleep(800);
+          continue;
+        }
+        throw e;
+      }
+    }
   } catch (e) {
     if (gen !== state.selGen || state.sel.session !== sessionId) return;
     chatReset();
