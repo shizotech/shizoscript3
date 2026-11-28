@@ -161,6 +161,104 @@ ws_chat_from_events(events) {
     return chat;
 }
 
+// Fold the streamed token deltas of one text / reasoning block into one event.
+// A finished turn must not keep hundreds of one-token delta events in the replay
+// window: `chat.json` has the messages and the folded event is what a later page
+// draws. The seq of the folded event is the seq of the last delta in the block,
+// so the window stays ordered. Agent-wrapped deltas are folded per sub-agent id.
+ws_delta_kind(action) {
+    if(!std.is_json(action))
+        return "";
+
+    inner = action;
+
+    if(action.has("agent") && std.is_json(action.agent) && std.is_json(action.agent.action))
+        inner = action.agent.action;
+
+    if(!std.is_json(inner))
+        return "";
+
+    if(inner.has("text") && !std.is_none(inner.text))
+        return "text";
+
+    if(inner.has("reasoning") && !std.is_none(inner.reasoning))
+        return "reasoning";
+
+    return "";
+}
+
+ws_delta_agent(action) {
+    if(std.is_json(action) && action.has("agent") && std.is_json(action.agent))
+        return ws_str(action.agent.id);
+
+    return "";
+}
+
+ws_delta_text(action, kind) {
+    if(!std.is_json(action))
+        return "";
+
+    inner = action;
+
+    if(action.has("agent") && std.is_json(action.agent) && std.is_json(action.agent.action))
+        inner = action.agent.action;
+
+    if(!std.is_json(inner))
+        return "";
+
+    return ws_str(inner[kind]);
+}
+
+ws_delta_set(action, kind, value) {
+    if(!std.is_json(action))
+        return;
+
+    inner = action;
+
+    if(action.has("agent") && std.is_json(action.agent) && std.is_json(action.agent.action))
+        inner = action.agent.action;
+
+    if(std.is_json(inner))
+        inner[kind] = value;
+}
+
+ws_fold_events(events) {
+    out = [];
+
+    for(event : events) {
+        if(!std.is_json(event)) {
+            out.push_back(event);
+            continue;
+        }
+
+        if(event.type != "delta" || !std.is_json(event.action)) {
+            out.push_back(event.copy());
+            continue;
+        }
+
+        kind = ws_delta_kind(event.action);
+
+        if(!kind) {
+            out.push_back(event.copy());
+            continue;
+        }
+
+        last = out.size() ? out[out.size() - 1] : None;
+
+        if(std.is_json(last) && last.type == "delta" && std.is_json(last.action) &&
+           ws_delta_kind(last.action) == kind && ws_delta_agent(last.action) == ws_delta_agent(event.action)) {
+            merged = ws_delta_text(last.action, kind) + ws_delta_text(event.action, kind);
+            ws_delta_set(last.action, kind, merged);
+            last.seq = event.seq;
+            continue;
+        }
+
+        out.push_back(event.copy());
+    }
+
+    return out;
+}
+
 // A tool result in the event window is for the eyes of the owner: a huge one (a
 // whole file, a long command output) is cut to its head and tail there. The
 // agent's own copy in chat.json is not touched.
@@ -2338,6 +2436,11 @@ class SessionManager {
             token_usage = s.token_usage,
         ]);
         live_text_seqs[s.id] = e.seq;
+
+        // the turn is over: the replay window keeps one event per text/reasoning
+        // block, not hundreds of streamed deltas.
+        s.events = ws_fold_events(s.events);
+
         save_session(s.id);
         emit_finished_task(s);
 

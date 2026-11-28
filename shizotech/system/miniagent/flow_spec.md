@@ -104,7 +104,8 @@ scheduler immediately.
    pushes SSE events, calls the workspace `GoalScheduler` finished listener and the Node's
    additive listeners. `file` / `notify` protocol lines become listener events on the
    `SessionManager` (and fan out through `Node`). The chat itself is loaded from `chat.json`;
-   `session.json.events` is only a bounded replay window, not a second transcript. The session
+   `session.json.events` is only a bounded replay window, not a second transcript; on a terminal
+    turn it is folded so one reasoning / text block is one delta event instead of hundreds of tokens. The session
    agent serializes and retries `chat.json` snapshots after each turn and at tool starts; a transient
    save failure is a `warning`, not a terminal `error`, so the live answer still streams.
 10. A new prompt while the turn is running:

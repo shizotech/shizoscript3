@@ -359,6 +359,22 @@ if(!cfg.load(config_path, false)) {
     check(manager.turn_log(tl).size() == 1 && manager.turn_log(tl)[0].text == "next", "a new prompt starts a new turn log");
     manager.turn_log_reset(tl, "");
 
+    // A terminal turn folds the raw streamed deltas in the replay window into one
+    // event per reasoning / text block, including per sub-agent.
+    folded_events = ws_fold_events([
+        [seq = 1, type = "delta", action = [reasoning = "First. "]],
+        [seq = 2, type = "delta", action = [reasoning = "Second."]],
+        [seq = 3, type = "delta", action = [text = "Looking."]],
+        [seq = 4, type = "delta", action = [text = " more."]],
+        [seq = 5, type = "delta", action = [tool_start = [id = "c1", name = "read_file"]]],
+        [seq = 6, type = "delta", action = [agent = [id = "sub1", action = [text = "a"]]]],
+        [seq = 7, type = "delta", action = [agent = [id = "sub1", action = [text = "b"]]]],
+    ]);
+    check(folded_events.size() == 4 && folded_events[0].action.reasoning == "First. Second." && folded_events[0].seq == 2, "reasoning deltas of one block fold into one event");
+    check(folded_events[1].action.text == "Looking. more." && folded_events[1].seq == 4, "text deltas of one block fold into one event");
+    check(folded_events[2].action.tool_start.id == "c1", "a tool event stays separate");
+    check(folded_events[3].action.agent.action.text == "ab" && folded_events[3].seq == 7, "sub-agent deltas fold per agent id");
+
     active_task_id = "active-task-selftest";
     manager.sessions[active_task_id] = [
         id = active_task_id,
@@ -543,7 +559,7 @@ if(!cfg.load(config_path, false)) {
     error_manager.pump(error_id);
     failed_session = error_manager.get_session(error_id);
     live_state = error_manager.session_live_state(error_id);
-    check(failed_session.status == "failed" && failed_session.events.size() == WS_EVENT_KEPT && failed_session.events[WS_EVENT_KEPT - 2].type == "error" && failed_session.events[WS_EVENT_KEPT - 1].type == "done", "agent errors terminate with a bounded replay event window");
+    check(failed_session.status == "failed" && failed_session.events.size() == 3 && failed_session.events[0].type == "delta" && failed_session.events[0].action.text.contains("chunk-" + std.string(WS_EVENT_KEPT + 4) + " ") && failed_session.events[1].type == "error" && failed_session.events[2].type == "done", "agent errors terminate with a folded replay event window");
     check(live_state.text == expected_live_text, "the complete current response survives more than 300 deltas without truncation");
 }
 

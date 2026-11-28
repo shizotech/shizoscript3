@@ -40,6 +40,11 @@ The session agent writes the full conversation to `chat.json` after each agent t
 tool start (so a crash keeps the latest conversation), and a matching terminal result to
 `chat.json.result.json` before announcing completion. `chat.json` is the only source of truth
 for the UI's chat; `session.json.events` is a bounded live/replay window, not a transcript copy.
+When a turn reaches a terminal status, `SessionManager.finish_terminal` folds the replay window
+(`ws_fold_events`): consecutive reasoning / text deltas of one block become one `delta` event
+with the block's full text and the last delta's `seq`, so a finished session does not keep
+hundreds of one-token events. The stream while the turn runs is still raw, and `chat.json`
+remains the transcript.
 
 Workspaces are bound to physical directories and can be nested. `parent` is a workspace id;
 a child created without an explicit path goes below the parent's directory. A top-level
